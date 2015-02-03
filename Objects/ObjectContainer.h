@@ -34,10 +34,14 @@ public:
 	int getRootSize();
 	Object* getGenRoot(int slot);
 	void clearRemSet();
+	int getRootsetSlot(int thread);
+	int getRootsetIndexByID(int thread, int id);
+	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
 	int countElements();
 private:
 	int getListSlot();
+
 	int getRemSetSlot();
 	//two dimensional rootset [threadNum][rootsetSize]
 	vector<vector<Object*> > rootset;

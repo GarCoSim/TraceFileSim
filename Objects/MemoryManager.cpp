@@ -156,8 +156,12 @@ void MemoryManager::addRootToContainers(Object* object, int thread,
 	}
 }
 
-int MemoryManager::allocateObjectToRootset(int thread, int rootsetIndex, int id,
+int MemoryManager::allocateObjectToRootset(int thread, int id,
 		int size, int refCount) {
+
+	//find empty rootset slot. resize rootset if needed
+	int rootsetIndex = myObjectContainers[GENERATIONS-1]->getRootsetSlot(thread);
+
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Add Root %d,%d with id %d\n", gLineInTrace,
 				thread, rootsetIndex, id);
@@ -172,24 +176,24 @@ int MemoryManager::allocateObjectToRootset(int thread, int rootsetIndex, int id,
 	}
 
 	//remove old root from remSets
-	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread,
-			rootsetIndex);
-	if (oldRoot) {
-		int i;
-		for (i = oldRoot->getGeneration(); i < GENERATIONS - 1; i++) {
-			if (WRITE_DETAILED_LOG == 1) {
-				fprintf(gDetLog, "(%d) Removing %d from remset %d (addRoot)\n",
-						gLineInTrace, oldRoot->getID(), i);
-			}
-			int status = myObjectContainers[i]->removeFromGenRoot(oldRoot);
-			if (status == -1) {
-				fprintf(stderr,
-						"ERROR (Line %d): (allocateObjectToRootset)could not remove oldRoot %d from remset %d\n",
-						gLineInTrace, oldRoot->getID(), i);
-				exit(1);
-			}
-		}
-	}
+	// Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread,
+	// 		rootsetIndex);
+	// if (oldRoot) {
+	// 	int i;
+	// 	for (i = oldRoot->getGeneration(); i < GENERATIONS - 1; i++) {
+	// 		if (WRITE_DETAILED_LOG == 1) {
+	// 			fprintf(gDetLog, "(%d) Removing %d from remset %d (addRoot)\n",
+	// 					gLineInTrace, oldRoot->getID(), i);
+	// 		}
+	// 		int status = myObjectContainers[i]->removeFromGenRoot(oldRoot);
+	// 		if (status == -1) {
+	// 			fprintf(stderr,
+	// 					"ERROR (Line %d): (allocateObjectToRootset)could not remove oldRoot %d from remset %d\n",
+	// 					gLineInTrace, oldRoot->getID(), i);
+	// 			exit(1);
+	// 		}
+	// 	}
+	// }
 
 	//create Object
 	Object* object = new Object(id, size, refCount, address);
@@ -204,14 +208,23 @@ int MemoryManager::allocateObjectToRootset(int thread, int rootsetIndex, int id,
 	return 0;
 }
 
-int MemoryManager::requestRootDelete(int thread, int root){
-	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread,root);
-	myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread,root);
+int MemoryManager::requestRootDelete(int thread, int id){
+	int rootsetIndex = myObjectContainers[GENERATIONS-1]->getRootsetIndexByID(thread,id);
+	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread,rootsetIndex);
+	myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread,rootsetIndex);
 	//remove the root from rem sets.
 	int i;
 	for(i=0;i<GENERATIONS-1;i++){
 		myObjectContainers[i]->removeFromGenRoot(oldRoot);
 	}
+	return 0;
+
+}
+
+int MemoryManager::requestRootAdd(int thread, int id){
+	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
+	int rootSlot = myObjectContainers[GENERATIONS-1]->getRootsetSlot(thread);
+	myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread, rootSlot);
 	return 0;
 
 }

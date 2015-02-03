@@ -27,6 +27,7 @@ private:
 	void allocateObject(string line);
 	void referenceOperation(string line);
 	void deleteRoot(string line);
+	void addToRoot(string line);
 	ifstream myTraceFile;
 	int myLastStepWorked;
 	int outputCounter;

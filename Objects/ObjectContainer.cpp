@@ -84,10 +84,10 @@ int ObjectContainer::addToRoot(Object* newObject, int thread, int rootSlot) {
 Object* ObjectContainer::getByID(int id) {
 	unsigned int i;
 	for (i = 0; i < objectList.size(); i++) {
-		if (objectList[i]) {
-			int currentId = objectList[i]->getID();
+		if (objectList.at(i) != NULL) {
+			int currentId = objectList.at(i)->getID();
 			if (id == currentId) {
-				return objectList[i];
+				return objectList.at(i);
 			}
 		}
 	}
@@ -160,6 +160,8 @@ Object* ObjectContainer::getGenRoot(int slot) {
 	return remSet.at(slot);
 }
 
+
+
 int ObjectContainer::getRemSetSlot() {
 	unsigned int i;
 	//fprintf(stderr, "(%d) size: %d\n", gLineInTrace,remSet.size());
@@ -183,6 +185,24 @@ int ObjectContainer::getRemSetSlot() {
 	return -1;
 }
 
+int ObjectContainer::getRootsetSlot(int thread){
+	unsigned int i;
+	for (i = 0 ; i < rootset.at(thread).size() ; i++){
+		if(!rootset.at(thread).at(i)){
+			return i;
+		}
+
+		//resize
+		if(i + 1 == rootset.at(thread).size()){
+			rootset.at(thread).resize(rootset.at(thread).size()*2);
+			//return i+1;
+		}
+	}
+	//error occured
+	fprintf(stderr, "(%d)Could not find rootset index.\n",gLineInTrace);
+	return -1;
+}
+
 int ObjectContainer::getListSlot() {
 	unsigned int i;
 	for (i = 0; i < objectList.size(); i++) {
@@ -195,6 +215,9 @@ int ObjectContainer::getListSlot() {
 	}
 	fprintf(stderr, "listSlotERror: no list slot found\n");
 	return -1;
+}
+int ObjectContainer::getRootsetSize(int thread){
+	return rootset.at(thread).size();
 }
 
 void ObjectContainer::clearRemSet(){
@@ -231,6 +254,16 @@ void ObjectContainer::clearRemSet(){
 //	fprintf(file, "}\n");
 //	fclose(file);
 //}
+int ObjectContainer::getRootsetIndexByID(int thread, int id){
+	unsigned int i;
+	for(i = 0 ; i < rootset.at(thread).size() ; i++){
+		if(rootset.at(thread).at(i) && rootset.at(thread).at(i)->getID() == id){
+			return i;
+		}
+	}
+	fprintf(stderr, "No root with id %d found in thread %d.\n",id, thread);
+	return -1;
+}
 
 int ObjectContainer::countElements() {
 	int result = 0;

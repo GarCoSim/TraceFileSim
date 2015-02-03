@@ -131,7 +131,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 		myMemManager->clearRemSets();
 
 		for (i = 0; i < NUM_THREADS; i++) {
-			for (j = 0; j < ROOTSET_SIZE; j++) {
+			for (j = 0; j < myObjectContainer->getRootsetSize(i) ; j++) {
 				currentObj = myObjectContainer->getRoot(i, j);
 				if (currentObj && currentObj->getVisited() == 0) {
 					currentObj->setVisited(1);

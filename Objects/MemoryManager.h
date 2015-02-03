@@ -21,9 +21,10 @@ public:
 	MemoryManager(int heapSize, int highWatermark);
 	virtual ~MemoryManager();
 	//operations possible from trace file
-	int allocateObjectToRootset(int thread, int rootsetIndex, int id, int size, int refCount);
+	int allocateObjectToRootset(int thread, int id, int size, int refCount);
 	int allocateObject(int thread, int parentID, int parentSlot, int id, int size, int refCount);
-	int requestRootDelete(int thread, int root);
+	int requestRootDelete(int thread, int id);
+	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);
 	void requestDelete(Object* object, int gGC);
 	void requestFree(Object* object);
