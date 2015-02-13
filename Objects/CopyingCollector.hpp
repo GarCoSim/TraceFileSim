@@ -1,19 +1,19 @@
 /*
- * CopyingCollector.h
+ * CopyingCollector.hpp
  *
  *  Created on: 2013-09-04
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#ifndef CopyingCollector_H_
-#define CopyingCollector_H_
+#ifndef CopyingCollector_HPP_
+#define CopyingCollector_HPP_
 
-//#include "GarbageCollector.h"
-#include "Allocator.h"
-#include "ObjectContainer.h"
+#include "Allocator.hpp"
+#include "ObjectContainer.hpp"
 #include <queue>
 
 using namespace std;
+
 namespace traceFileSimulator {
 
 class CopyingCollector {
@@ -23,10 +23,8 @@ public:
 	void collect(int reason);
 //	void checkWatermark();
 	void printStats();
+	
 private:
-	Allocator* myAllocator;
-	ObjectContainer* myObjectContainer;
-	queue<Object *> myQueue;
 	void mark();
 	void sweep();
 	void compact();
@@ -36,6 +34,11 @@ private:
 	void postCollect();
 	void freeAllLiveObjects();
 	void reallocateAllLiveObjects();
+	
+	Allocator* myAllocator;
+	ObjectContainer* myObjectContainer;
+	queue<Object *> myQueue;
+	
 	//indicates if this is the young generation part of a gen. gc
 	int statGcNumber;
 	int statFreedObjects;
@@ -47,5 +50,5 @@ private:
 	int statHeapSide;
 };
 
-} /* namespace gcKons */
-#endif /* CopyingCollector_H_ */
+} 
+#endif /* CopyingCollector_HPP_ */

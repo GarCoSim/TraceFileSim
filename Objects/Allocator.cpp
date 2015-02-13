@@ -2,33 +2,34 @@
  * Allocator.cpp
  *
  *  Created on: 2013-09-03
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "Allocator.h"
+#include "Allocator.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <climits>
-#include "../defines.h"
-//for stats
+#include "../defines.hpp"
 #include <string>
 
 extern int gLineInTrace;
 
 using namespace std;
+
 namespace traceFileSimulator {
 
 Allocator::Allocator(int heapSize) {
 	myHeapBitMap = new char[heapSize / 8 + 1];
+
 	myHeapSize = heapSize;
 	myLastSuccessAddress = 0;
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
-	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
+	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
 		allocLog = fopen("alloc.log", "w+");
 	}
-	if (DEBUG_MODE == 1 && WRITE_HEAPMAP == 1) {
+	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
 
@@ -36,9 +37,11 @@ Allocator::Allocator(int heapSize) {
 
 void Allocator::freeAllSectors() {
 	int i;
+
 	for (i = 0; i < myHeapSize; i++) {
 		setBitUnused(i);
 	}
+
 	statBytesAllocated = 0;
 }
 
@@ -46,6 +49,7 @@ int Allocator::gcAllocate(int size) {
 	if (size <= 0) {
 		return -1;
 	}
+
 	//hope for the best, assume the worst
 	int address = 0;
 	int contiguous = 0;
@@ -53,8 +57,10 @@ int Allocator::gcAllocate(int size) {
 	int i, bit;
 	int passedBoundOnce = 0;
 	int end = (myLastSuccessAddress - 1);
+
 	for (i = myLastSuccessAddress; i != end; i++) {
 		bit = isBitSet(i);
+
 		if (i == myHeapSize) {
 			if (passedBoundOnce == 1) {
 				return -1;
@@ -64,6 +70,7 @@ int Allocator::gcAllocate(int size) {
 			address = i + 1;
 			passedBoundOnce = 1;
 		}
+
 		if (bit == 1) {
 			address = i + 1;
 			contiguous = 0;
@@ -78,10 +85,11 @@ int Allocator::gcAllocate(int size) {
 			}
 		}
 	}
+
 	return -1;
 }
 
-int Allocator::gcFree(Object* object) {
+void Allocator::gcFree(Object* object) {
 	int address = object->getAddress();
 	int size = object->getPayloadSize();
 
@@ -90,7 +98,6 @@ int Allocator::gcFree(Object* object) {
 
 	statLiveObjects--;
 	statBytesAllocated -= size;
-	return 1;
 }
 
 //used mainly by garbage collector
@@ -101,6 +108,7 @@ int Allocator::getFreeSize() {
 void Allocator::setAllocated(int address, int size) {
 	int i;
 	int pointer = address;
+
 	for (i = 0; i < size; i++) {
 		setBitUsed(pointer);
 		pointer++;
@@ -110,6 +118,7 @@ void Allocator::setAllocated(int address, int size) {
 void Allocator::setFree(int address, int size) {
 	int i;
 	int pointer = address;
+
 	for (i = 0; i < size; i++) {
 		setBitUnused(pointer);
 		pointer++;
@@ -120,24 +129,26 @@ int Allocator::getHeapSize() {
 	return myHeapSize;
 }
 
-/*YAY, bit operation functions ( All nice and private in this class) */
-
-inline int Allocator::isBitSet(unsigned int address) {
+inline bool Allocator::isBitSet(unsigned int address) {
 	if (address > (unsigned int) myHeapSize) {
 		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
 				gLineInTrace, address);
 	}
+
 	int byteNR = address / 8;
+
 	if ((unsigned char) myHeapBitMap[byteNR] == 255) {
-		return 1;
+		return true;
 	}
 
 	int bit = 7 - address % 8;
 	int value = myHeapBitMap[byteNR] & 1 << bit;
-	if (value > 0)
-		return 1;
-	else
-		return 0;
+
+	if (value > 0) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void Allocator::setBitUsed(unsigned int address) {
@@ -147,30 +158,29 @@ void Allocator::setBitUsed(unsigned int address) {
 				gLineInTrace, address);
 		exit(1);
 	}
+
 	int byte = address / 8;
 	int bit = 7 - address % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] | 1 << bit;
-//	char result = myHeapBitMap[byte];
-//	int i = 1;
 }
 
 void Allocator::setBitUnused(unsigned int address) {
 	if (address > (unsigned int) myHeapSize) {
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
+
 	int byte = address / 8;
 	int bit = 7 - address % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
-//	char result = myHeapBitMap[byte];
-//	int i = 1;
 }
 
 void Allocator::printMap() {
-	//filename.insert(filename.begin(), (char)gcCount);
 	fprintf(heapMap, "%7d", gLineInTrace);
+
 	int i;
+
 	for (i = 0; i < myHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			fprintf(heapMap, "X");
@@ -178,15 +188,20 @@ void Allocator::printMap() {
 			fprintf(heapMap, "_");
 		}
 	}
+
 	fprintf(heapMap, "\n");
 }
+
 void Allocator::printStats() {
-	if (DEBUG_MODE == 1 && WRITE_HEAPMAP == 1) {
+	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		printMap();
 	}
+
 	int bytesAllocated = 0;
+
 	//traverse all heap and count allocated bits
 	int i;
+
 	for (i = 0; i < myHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			bytesAllocated++;
@@ -208,4 +223,4 @@ void Allocator::setAllocationSeearchStart(int address) {
 Allocator::~Allocator() {
 }
 
-} /* namespace gcKons */
+}

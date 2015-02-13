@@ -2,14 +2,14 @@
  * MarkSweepCollector.cpp
  *
  *  Created on: 2013-09-04
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "MarkSweepCollector.h"
-#include "MemoryManager.h"
+#include "MarkSweepCollector.hpp"
+#include "MemoryManager.hpp"
 #include <stdio.h>
 #include <ctime>
-#include "../defines.h"
+#include "../defines.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -346,4 +346,4 @@ void MarkSweepCollector::reallocateAllLiveObjects() {
 MarkSweepCollector::~MarkSweepCollector() {
 }
 
-} /* namespace gcKons */
+} 

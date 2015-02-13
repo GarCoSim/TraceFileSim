@@ -1,17 +1,18 @@
 /*
- * Simulator.h
+ * Simulator.hpp
  *
  *  Created on: Sep 3, 2013
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#ifndef SIMULATOR_H_
-#define SIMULATOR_H_
+#ifndef SIMULATOR_HPP_
+#define SIMULATOR_HPP_
 #include <stdio.h>
 #include <fstream>
-#include "MemoryManager.h"
+#include "MemoryManager.hpp"
 
 using namespace std;
+
 namespace traceFileSimulator {
 
 class Simulator {
@@ -21,6 +22,7 @@ public:
 	int lastStepWorked();
 	int doNextStep();
 	void printStats();
+
 private:
 	string getNextLine();
 	void allocateToRootset(string line);
@@ -28,12 +30,15 @@ private:
 	void referenceOperation(string line);
 	void deleteRoot(string line);
 	void addToRoot(string line);
+
 	ifstream myTraceFile;
 	int myLastStepWorked;
 	int outputCounter;
 	MemoryManager* myMemManager;
+	
 	//debug
 	int counter;
-};//class Sumulator
-} /* namespace gcKons */
-#endif /* SIMULATOR_H_ */
+};
+
+} 
+#endif /* SIMULATOR_HPP_ */

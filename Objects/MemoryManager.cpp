@@ -2,12 +2,12 @@
  * MemoryManager.cpp
  *
  *  Created on: 2013-09-03
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "MemoryManager.h"
-#include "MarkSweepCollector.h"
-#include "../defines.h"
+#include "MemoryManager.hpp"
+#include "MarkSweepCollector.hpp"
+#include "../defines.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -175,33 +175,13 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		exit(1);
 	}
 
-	//remove old root from remSets
-	// Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread,
-	// 		rootsetIndex);
-	// if (oldRoot) {
-	// 	int i;
-	// 	for (i = oldRoot->getGeneration(); i < GENERATIONS - 1; i++) {
-	// 		if (WRITE_DETAILED_LOG == 1) {
-	// 			fprintf(gDetLog, "(%d) Removing %d from remset %d (addRoot)\n",
-	// 					gLineInTrace, oldRoot->getID(), i);
-	// 		}
-	// 		int status = myObjectContainers[i]->removeFromGenRoot(oldRoot);
-	// 		if (status == -1) {
-	// 			fprintf(stderr,
-	// 					"ERROR (Line %d): (allocateObjectToRootset)could not remove oldRoot %d from remset %d\n",
-	// 					gLineInTrace, oldRoot->getID(), i);
-	// 			exit(1);
-	// 		}
-	// 	}
-	// }
-
 	//create Object
 	Object* object = new Object(id, size, refCount, address);
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread, rootsetIndex);
 
-	if (DEBUG_MODE == 1) {
+	if (DEBUG_MODE == 1) {	
 		myGarbageCollectors[GENERATIONS - 1]->collect(3);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
@@ -255,26 +235,6 @@ void MemoryManager::requestDelete(Object* object, int gGC) {
 					gLineInTrace, object->getID(), objGeneration, i);
 		}
 	}
-	//commented out for 2 gen gc. of more are used, it has to be fixed and added again.
-	//remove children from remSets in necessary
-	/*for (i = 0; i < object->getPointersMax(); i++) {
-		Object* child = object->getReferenceTo(i);
-		if (child && child->getGeneration() < object->getGeneration()) {
-			for (j = child->getGeneration(); j < objGeneration; j++) {
-				if (WRITE_DETAILED_LOG == 1) {
-					fprintf(gDetLog,
-							"(%d) Removing %d from remset %d (addRoot(child of deletedObject))\n",
-							gLineInTrace, child->getID(), i);
-				}
-				myObjectContainers[j]->removeFromGenRoot(child);
-//				if (status == -1) {
-//					fprintf(stderr,
-//							"ERROR(Line %d): Could not remove child with id %d form rootset %d\n",
-//							gLineInTrace, child->getID(), j);
-//				}
-			}
-		}
-	}*/
 
 	//now free in allocator and delete object
 	myAllocators[objGeneration]->gcFree(object);
@@ -559,4 +519,4 @@ void MemoryManager::printStats() {
 MemoryManager::~MemoryManager() {
 }
 
-} /* namespace gcKons */
+}

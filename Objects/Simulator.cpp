@@ -2,10 +2,10 @@
  * Simulator.cpp
  *
  *  Created on: Sep 3, 2013
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "Simulator.h"
+#include "Simulator.hpp"
 #include <string>
 #include <stdlib.h>
 
@@ -15,9 +15,6 @@ extern int gLineInTrace;
 extern int gAllocations;
 
 namespace traceFileSimulator {
-
-
-
 
 Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark) {
 	myLastStepWorked = 1;
@@ -51,27 +48,9 @@ int Simulator::doNextStep(){
 		printf("\nLine:%7d\n",gLineInTrace);
 		outputCounter = 10000;
 	}
-//	if(gLineInTrace > 66000){
-//		printf("Line:%7d\n",gLineInTrace);
-//	}
 	if(myLastStepWorked){
 		//if content exists, advice the MM(memory manager) to execute
 		char firstChar = traceLine.at(0);
-		// if(firstChar == 'r'){
-		// 	referenceOperation(traceLine);
-		// } else if (firstChar == 'a'){//allocation
-		// 	gAllocations++;
-		// 	//allocation operation
-		// 	//if we have a Root info, it is a rootset allocation
-		// 	if(traceLine.find('R') != string::npos){
-		// 		allocateToRootset(traceLine);
-		// 	} else {
-		// 		allocateObject(traceLine);
-		// 	}
-		// }else {//root delete
-		// 	deleteRoot(traceLine);
-		// }
-
 		switch(firstChar) {
 			case 'w':
 				referenceOperation(traceLine);
@@ -236,4 +215,4 @@ Simulator::~Simulator() {
 
 }
 
-} /* namespace gcKons */
+}

@@ -1,12 +1,12 @@
 /*
- * Object.h
+ * Object.hpp
  *
  *  Created on: Jul 30, 2013
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#ifndef OBJECT_H_
-#define OBJECT_H_
+#ifndef OBJECT_HPP_
+#define OBJECT_HPP_
 
 #include <vector>
 
@@ -78,5 +78,5 @@ private:
 
 };
 
-} /* namespace gcKons */
-#endif /* OBJECT_H_ */
+} 
+#endif /* OBJECT_HPP_ */
