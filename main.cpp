@@ -2,10 +2,10 @@
  * main.cpp
  *
  *  Created on: Sep 3, 2013
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "Objects/Simulator.h"
+#include "Objects/Simulator.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctime>
@@ -19,16 +19,15 @@ FILE* gLogFile;
 FILE* gDetLog;
 
 int main(int argc, char *argv[]) {
-	if(argc != 4){
-		fprintf(stderr,"Not enough arguments provided. \n"
-				"Usage: GCKons traceFile heapsize highWatermark\n");
+	if(argc != 4) {
+		fprintf(stderr, "Not enough arguments provided. \n"
+				        "Usage: TraceFileSimulator traceFile heapSize highWatermarkPercentage\n");
 		exit(1);
 	}
 
-	if(WRITE_DETAILED_LOG == 1){
+	if(WRITE_DETAILED_LOG == 1) {
 		gDetLog = fopen("detailed.log","w+");
 	}
-
 
 	//set up global logfile
 	gLogFile = fopen("gcLog.log", "w+");
@@ -37,8 +36,8 @@ int main(int argc, char *argv[]) {
 			"LINE", "GC REASON", "Total GCs:", "Objects freed:", "live objects:",
 			"heap used:", "free heap:");
 
-	char* filename = argv[1];
-	int heapSize = atoi(argv[2]);
+	char* filename    = argv[1];
+	int heapSize      = atoi(argv[2]);
 	int highWatermark = atoi(argv[3]);
 
 	//start measuring time
@@ -46,26 +45,24 @@ int main(int argc, char *argv[]) {
 
 	Simulator* simulator = new Simulator(filename, heapSize, highWatermark);
 
-	while(simulator->lastStepWorked() == 1){
+	while(simulator->lastStepWorked() == 1) {
 		simulator->doNextStep();
-		if(WRITE_DETAILED_LOG == 1){
+		if(WRITE_DETAILED_LOG == 1) {
 			fflush(gDetLog);
 		}
-
 	}
-	//
 	simulator->printStats();
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
-	printf("End. Execution took: %f seconds\n", elapsed_secs);
+	printf("Simulation ended successfully, execution took: %.3f seconds\n", elapsed_secs);
 	fprintf(gLogFile,"Execution finished after %f seconds\n", elapsed_secs);
 
 
 	fclose(gLogFile);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 

@@ -1,19 +1,19 @@
 /*
- * MarkSweepCollector.h
+ * MarkSweepCollector.hpp
  *
  *  Created on: 2013-09-04
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#ifndef MARKSWEEPCOLLECTOR_H_
-#define MARKSWEEPCOLLECTOR_H_
+#ifndef MARKSWEEPCOLLECTOR_HPP_
+#define MARKSWEEPCOLLECTOR_HPP_
 
-//#include "GarbageCollector.h"
-#include "Allocator.h"
-#include "ObjectContainer.h"
+#include "Allocator.hpp"
+#include "ObjectContainer.hpp"
 #include <queue>
 
 using namespace std;
+
 namespace traceFileSimulator {
 
 class MemoryManager;
@@ -27,10 +27,8 @@ public:
 	void checkWatermark();
 	void printStats();
 	int promotionPhase();
+
 private:
-	Allocator* myAllocator;
-	ObjectContainer* myObjectContainer;
-	queue<Object *> myQueue;
 	void mark();
 	void sweep();
 	void compact();
@@ -40,6 +38,11 @@ private:
 	void postCollect();
 	void freeAllLiveObjects();
 	void reallocateAllLiveObjects();
+
+	Allocator* myAllocator;
+	ObjectContainer* myObjectContainer;
+	queue<Object *> myQueue;
+	
 	int statGcNumber;
 	int statFreedObjects;
 	int statLiveObjectCount;
@@ -50,8 +53,9 @@ private:
 	int myGeneration;
 	int statFreedDuringThisGC;
 	int gcsSinceLastPromotionPhase;
+	
 	MemoryManager* myMemManager;
 };
 
-} /* namespace gcKons */
-#endif /* MARKSWEEPCOLLECTOR_H_ */
+} 
+#endif /* MARKSWEEPCOLLECTOR_HPP_ */

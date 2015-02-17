@@ -1,8 +1,8 @@
 /*
- * defines.h
+ * defines.hpp
  *
  *  Created on: 2013-09-04
- *      Author: kons
+ *      Author: GarCoSim
  */
 
 #define NUM_THREADS		50

@@ -2,11 +2,11 @@
  * Object.cpp
  *
  *  Created on: Jul 30, 2013
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "Object.h"
-#include "stdio.h"
+#include "Object.hpp"
+#include <stdio.h>
 #include <stdlib.h>
 
 namespace traceFileSimulator {
@@ -97,4 +97,4 @@ void Object::setVisited(int value){
 
 Object::~Object() {}
 
-} /* namespace gcKons */
+}

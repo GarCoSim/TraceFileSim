@@ -2,10 +2,10 @@
  * Simulator.cpp
  *
  *  Created on: Sep 3, 2013
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "Simulator.h"
+#include "Simulator.hpp"
 #include <string>
 #include <stdlib.h>
 
@@ -15,9 +15,6 @@ extern int gLineInTrace;
 extern int gAllocations;
 
 namespace traceFileSimulator {
-
-
-
 
 Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark) {
 	myLastStepWorked = 1;
@@ -51,26 +48,32 @@ int Simulator::doNextStep(){
 		printf("\nLine:%7d\n",gLineInTrace);
 		outputCounter = 10000;
 	}
-//	if(gLineInTrace > 66000){
-//		printf("Line:%7d\n",gLineInTrace);
-//	}
 	if(myLastStepWorked){
 		//if content exists, advice the MM(memory manager) to execute
 		char firstChar = traceLine.at(0);
-		if(firstChar == 'r'){
-			referenceOperation(traceLine);
-		} else if (firstChar == 'a'){//allocation
-			gAllocations++;
-			//allocation operation
-			//if we have a Root info, it is a rootset allocation
-			if(traceLine.find('R') != string::npos){
+		switch(firstChar) {
+			case 'w':
+				referenceOperation(traceLine);
+				break;
+			case 'a':
 				allocateToRootset(traceLine);
-			} else {
-				allocateObject(traceLine);
-			}
-		}else {//root delete
-			deleteRoot(traceLine);
+				//next line is a '+', which we skip since it adds the newly created object
+				//to the rootset, which already happened in the simulator
+				getNextLine();
+				gLineInTrace++;
+				break;
+			case '+':
+				//allocateToRootset(traceLine);
+				addToRoot(traceLine);
+				break;
+			case '-':
+				deleteRoot(traceLine);
+				break;
+			default:
+				//gLineInTrace++;
+			break;
 		}
+
 	}
 
 	/*This line calls a garbage collec after each line. Usually useful
@@ -95,16 +98,16 @@ int Simulator::lastStepWorked(){
 
 
 void Simulator::allocateToRootset(string line){
-	int thread, rootsetIndex, id, size, refCount;
+	int thread, id, size, refCount;
 	int pos, length;
 
 	pos = line.find('T')+1;
 	length = line.find(' ',pos)-pos;
 	thread = atoi(line.substr(pos,length).c_str());
 
-	pos = line.find('R')+1;
-	length = line.find(' ',pos)-pos;
-	rootsetIndex = atoi(line.substr(pos,length).c_str());
+	// pos = line.find('R')+1;
+	// length = line.find(' ',pos)-pos;
+	// rootsetIndex = atoi(line.substr(pos,length).c_str());
 
 	pos = line.find('O')+1;
 	length = line.find(' ',pos)-pos;
@@ -118,22 +121,37 @@ void Simulator::allocateToRootset(string line){
 	length = line.find('\n',pos)-pos;
 	refCount = atoi(line.substr(pos,length).c_str());
 
-	myMemManager->allocateObjectToRootset(thread, rootsetIndex, id, size, refCount);
+	myMemManager->allocateObjectToRootset(thread, id, size, refCount);
 }
 
 void Simulator::deleteRoot(string line){
-	int thread, root;
+	int thread, id;
 	int pos, length;
 
 	pos = line.find('T')+1;
 	length = line.find(' ',pos)-pos;
 	thread = atoi(line.substr(pos,length).c_str());
 
-	pos = line.find('R')+1;
+	pos = line.find('O')+1;
 	length = line.find(' ',pos)-pos;
-	root = atoi(line.substr(pos,length).c_str());
+	id = atoi(line.substr(pos,length).c_str());
 
-	myMemManager->requestRootDelete(thread, root);
+	myMemManager->requestRootDelete(thread, id);
+}
+
+void Simulator::addToRoot(string line){
+	int thread, id;
+	int pos, length;
+
+	pos = line.find('T')+1;
+	length = line.find(' ',pos)-pos;
+	thread = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('O')+1;
+	length = line.find(' ',pos)-pos;
+	id = atoi(line.substr(pos,length).c_str());
+
+	myMemManager->requestRootAdd(thread, id);
 }
 
 void Simulator::allocateObject(string line){
@@ -197,4 +215,4 @@ Simulator::~Simulator() {
 
 }
 
-} /* namespace gcKons */
+}

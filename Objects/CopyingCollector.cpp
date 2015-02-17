@@ -2,13 +2,12 @@
  * CopyingCollector.cpp
  *
  *  Created on: 2013-09-04
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#include "CopyingCollector.h"
+#include "CopyingCollector.hpp"
 #include <stdio.h>
-#include "../defines.h"
-
+#include "../defines.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -222,4 +221,4 @@ void CopyingCollector::reallocateAllLiveObjects() {
 
 CopyingCollector::~CopyingCollector() {}
 
-} /* namespace gcKons */
+} 

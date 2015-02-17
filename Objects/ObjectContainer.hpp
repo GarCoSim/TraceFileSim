@@ -1,15 +1,15 @@
 /*
- * ObjectContainer.h
+ * ObjectContainer.hpp
  *
  *  Created on: 2013-09-03
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#ifndef OBJECTCONTAINER_H_
-#define OBJECTCONTAINER_H_
+#ifndef OBJECTCONTAINER_HPP_
+#define OBJECTCONTAINER_HPP_
 
 #include <vector>
-#include "Object.h"
+#include "Object.hpp"
 
 namespace traceFileSimulator {
 
@@ -34,19 +34,23 @@ public:
 	int getRootSize();
 	Object* getGenRoot(int slot);
 	void clearRemSet();
+	int getRootsetSlot(int thread);
+	int getRootsetIndexByID(int thread, int id);
+	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
 	int countElements();
 private:
 	int getListSlot();
+	bool doesObjectExistInList(Object *queryObject);
 	int getRemSetSlot();
-	//two dimensional rootset [threadNum][rootsetSize]
+
 	vector<vector<Object*> > rootset;
-	//collection of all objects (dynamic)
 	vector<Object*> objectList;
 	vector<Object*> remSet;
+
 	int rootCount;
 	int remCount;
 };
 
-} /* namespace gcKons */
-#endif /* OBJECTCONTAINER_H_ */
+}
+#endif /* OBJECTCONTAINER_HPP_ */

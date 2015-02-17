@@ -1,18 +1,18 @@
 /*
- * MemoryManager.h
+ * MemoryManager.hpp
  *
  *  Created on: 2013-09-03
- *      Author: kons
+ *      Author: GarCoSim
  */
 
-#ifndef MEMORYMANAGER_H_
-#define MEMORYMANAGER_H_
+#ifndef MEMORYMANAGER_HPP_
+#define MEMORYMANAGER_HPP_
 
-#include "Object.h"
-#include "ObjectContainer.h"
-#include "Allocator.h"
-#include "MarkSweepCollector.h"
-#include "../defines.h"
+#include "Object.hpp"
+#include "ObjectContainer.hpp"
+#include "Allocator.hpp"
+#include "MarkSweepCollector.hpp"
+#include "../defines.hpp"
 
 namespace traceFileSimulator {
 
@@ -21,9 +21,10 @@ public:
 	MemoryManager(int heapSize, int highWatermark);
 	virtual ~MemoryManager();
 	//operations possible from trace file
-	int allocateObjectToRootset(int thread, int rootsetIndex, int id, int size, int refCount);
+	int allocateObjectToRootset(int thread, int id, int size, int refCount);
 	int allocateObject(int thread, int parentID, int parentSlot, int id, int size, int refCount);
-	int requestRootDelete(int thread, int root);
+	int requestRootDelete(int thread, int id);
+	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);
 	void requestDelete(Object* object, int gGC);
 	void requestFree(Object* object);
@@ -48,6 +49,7 @@ private:
 	void addRootToContainers(Object* object, int thread, int rootsetIndex);
 	void addToContainers(Object* object);
 	int shift(int size);
+	
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];
 	MarkSweepCollector* myGarbageCollectors[GENERATIONS];
@@ -55,5 +57,5 @@ private:
 
 };
 
-} /* namespace gcKons */
-#endif /* MEMORYMANAGER_H_ */
+} 
+#endif /* MEMORYMANAGER_HPP_ */
