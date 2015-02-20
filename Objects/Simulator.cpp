@@ -207,6 +207,12 @@ void Simulator::allocateObject(string line) {
 	length = line.find('\n', pos) - pos;
 	refCount = atoi(line.substr(pos, length).c_str());
 
+	//check objectID for NULL object.
+	if(id == 0){
+		fprintf(stderr, "ERROR (%d): Object ID 0 is reserved for a NULL pointer.\n", gLineInTrace);
+		exit(1);
+	}
+
 	myMemManager->allocateObject(thread, parent, parentSlot, id, size,
 			refCount);
 }
