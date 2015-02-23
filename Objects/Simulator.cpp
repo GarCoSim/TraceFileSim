@@ -16,7 +16,7 @@ extern int gAllocations;
 
 namespace traceFileSimulator {
 
-Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark) {
+Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector) {
 	myLastStepWorked = 1;
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
@@ -24,9 +24,10 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark) {
 		return;
 	}
 
-	myMemManager = new MemoryManager(heapSize, highWatermark);
+	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector);
 	counter = 0;
-	outputCounter = 0;
+	start = clock();
+	seconds = 0;
 }
 
 string Simulator::getNextLine(){
@@ -43,10 +44,10 @@ string Simulator::getNextLine(){
 int Simulator::doNextStep(){
 	string traceLine = getNextLine();
 	gLineInTrace++;
-	outputCounter--;
-	if(outputCounter <= 0){
-		printf("\nLine:%7d\n",gLineInTrace);
-		outputCounter = 10000;
+	if (ONE_SECOND_PASSED) {
+		start = clock();
+		seconds++;
+		printf("[%3ds] Line in tracefile: %7d\n", seconds, gLineInTrace);
 	}
 	if(myLastStepWorked){
 		//if content exists, advice the MM(memory manager) to execute

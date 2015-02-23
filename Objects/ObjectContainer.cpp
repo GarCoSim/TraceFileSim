@@ -175,16 +175,12 @@ Object* ObjectContainer::getGenRoot(int slot) {
 int ObjectContainer::getRemSetSlot() {
 	unsigned int i;
 	for (i = 0; i < remSet.size(); i++) {
-		if(gLineInTrace==77156)
-			fprintf(stderr, "(%d) size: %ld, i: %u\n", gLineInTrace,remSet.size(),i);
 		if (!remSet.at(i)) {
 			return i;
 		}
 
 		if (i + 1 == remSet.size()) {
-			int old = remSet.size();
 			remSet.resize(remSet.size() * 2);
-			fprintf(stderr,"(%d)old:%d new:%d\n",gLineInTrace,old,(int)remSet.size());
 		}
 	}
 	fprintf(stderr, "remSetSlotERror: no list slot found\n");

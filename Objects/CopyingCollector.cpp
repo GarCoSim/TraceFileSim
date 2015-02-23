@@ -14,19 +14,9 @@ extern FILE* gLogFile;
 
 namespace traceFileSimulator {
 
-CopyingCollector::CopyingCollector(Allocator* allocator, ObjectContainer* container){
-	myAllocator = allocator;
-	myObjectContainer = container;
-	//stats
-	statFreedObjects = 0;
-	statGcNumber = 0;
-	statFreeSpaceFragmentCount = 0;
-	statFreeSpaceOnHeap = 0;
-	statLiveObjectCount = 0;
-	statCollectionReason = 0;
-	statFreedDuringThisGC = 0;
-	statHeapSide = 0;
+CopyingCollector::CopyingCollector() {
 }
+
 /**
  * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
  */

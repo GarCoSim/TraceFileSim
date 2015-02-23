@@ -21,24 +21,9 @@ clock_t start, stop;
 
 namespace traceFileSimulator {
 
-MarkSweepCollector::MarkSweepCollector(Allocator* allocator,
-		ObjectContainer* container, MemoryManager* memManager, int watermark,
-		int generation) {
-	myAllocator = allocator;
-	myObjectContainer = container;
-	myWatermark = watermark;
-	myMemManager = memManager;
-	myGeneration = generation;
-	gcsSinceLastPromotionPhase = 0;
-	//stats
-	statFreedObjects = 0;
-	statGcNumber = 0;
-	statFreeSpaceFragmentCount = 0;
-	statFreeSpaceOnHeap = 0;
-	statLiveObjectCount = 0;
-	statCollectionReason = 0;
-	statFreedDuringThisGC = 0;
+MarkSweepCollector::MarkSweepCollector() {
 }
+
 /**
  * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
  */

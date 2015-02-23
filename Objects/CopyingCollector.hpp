@@ -9,6 +9,7 @@
 #define CopyingCollector_HPP_
 
 #include "Allocator.hpp"
+#include "Collector.hpp"
 #include "ObjectContainer.hpp"
 #include <queue>
 
@@ -16,9 +17,11 @@ using namespace std;
 
 namespace traceFileSimulator {
 
-class CopyingCollector {
+class MemoryManager;
+
+class CopyingCollector : public Collector {
 public:
-	CopyingCollector(Allocator* allocator, ObjectContainer* container);
+	CopyingCollector();
 	virtual ~CopyingCollector();
 	void collect(int reason);
 //	void checkWatermark();
@@ -34,20 +37,6 @@ private:
 	void postCollect();
 	void freeAllLiveObjects();
 	void reallocateAllLiveObjects();
-	
-	Allocator* myAllocator;
-	ObjectContainer* myObjectContainer;
-	queue<Object *> myQueue;
-	
-	//indicates if this is the young generation part of a gen. gc
-	int statGcNumber;
-	int statFreedObjects;
-	int statLiveObjectCount;
-	int statFreeSpaceOnHeap;
-	int statFreeSpaceFragmentCount;
-	int statCollectionReason;
-	int statFreedDuringThisGC;
-	int statHeapSide;
 };
 
 } 

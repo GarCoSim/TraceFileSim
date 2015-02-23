@@ -18,10 +18,10 @@ extern int gLineInTrace;
 
 namespace traceFileSimulator {
 
-MemoryManager::MemoryManager(int heapSize, int highWatermark) {
+MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector) {
 	initAllocators(heapSize);
 	initContainers();
-	initGarbageCollectors(highWatermark);
+	initGarbageCollectors(highWatermark, collector);
 }
 
 void MemoryManager::initAllocators(int heapsize) {
@@ -39,11 +39,18 @@ void MemoryManager::initContainers() {
 	}
 }
 
-void MemoryManager::initGarbageCollectors(int highWatermark) {
+void MemoryManager::initGarbageCollectors(int highWatermark, int collector) {
 	int i;
 	for (i = 0; i < GENERATIONS; i++) {
-		myGarbageCollectors[i] = new MarkSweepCollector(myAllocators[i],
-				myObjectContainers[i], (MemoryManager*) this, highWatermark, i);
+		switch ((collectorEnum)collector) {
+			case copyingGC:
+				myGarbageCollectors[i] = new CopyingCollector();
+				break;
+			case markSweepGC:
+				myGarbageCollectors[i] = new MarkSweepCollector();
+				break;
+		}
+		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i);
 	}
 }
 

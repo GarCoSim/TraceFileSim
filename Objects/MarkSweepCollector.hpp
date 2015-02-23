@@ -9,6 +9,7 @@
 #define MARKSWEEPCOLLECTOR_HPP_
 
 #include "Allocator.hpp"
+#include "Collector.hpp"
 #include "ObjectContainer.hpp"
 #include <queue>
 
@@ -18,10 +19,9 @@ namespace traceFileSimulator {
 
 class MemoryManager;
 
-class MarkSweepCollector {
+class MarkSweepCollector : public Collector {
 public:
-	MarkSweepCollector(Allocator* allocator, ObjectContainer* container,
-			MemoryManager* memManager, int watermark, int generation);
+	MarkSweepCollector();
 	virtual ~MarkSweepCollector();
 	void collect(int reason);
 	void checkWatermark();
@@ -38,23 +38,6 @@ private:
 	void postCollect();
 	void freeAllLiveObjects();
 	void reallocateAllLiveObjects();
-
-	Allocator* myAllocator;
-	ObjectContainer* myObjectContainer;
-	queue<Object *> myQueue;
-	
-	int statGcNumber;
-	int statFreedObjects;
-	int statLiveObjectCount;
-	int statFreeSpaceOnHeap;
-	int statFreeSpaceFragmentCount;
-	int statCollectionReason;
-	int myWatermark;
-	int myGeneration;
-	int statFreedDuringThisGC;
-	int gcsSinceLastPromotionPhase;
-	
-	MemoryManager* myMemManager;
 };
 
 } 

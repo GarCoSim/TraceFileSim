@@ -23,6 +23,7 @@ Allocator::Allocator(int heapSize) {
 
 	myHeapSize = heapSize;
 	myLastSuccessAddress = 0;
+	myLastSuccessAddressNewSpace = heapSize / 2;
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
@@ -32,7 +33,103 @@ Allocator::Allocator(int heapSize) {
 	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
+	newSpaceOffset = 0;
+	overallHeapSize = heapSize;
 
+}
+
+void Allocator::setHalfHeapSize(bool value) {
+	if (value)
+		myHeapSize = overallHeapSize / 2;
+	else
+		myHeapSize = overallHeapSize;
+}
+
+void Allocator::moveObject(Object *object) {
+	int size = object->getPayloadSize();
+	object->updateAddress(allocateInNewSpace(size));
+}
+
+int Allocator::allocateInNewSpace(int size) {
+	if (size <= 0) {
+		return -1;
+	}
+
+	//hope for the best, assume the worst
+	int address = 0;
+	int contiguous = 0;
+	//nextFit search
+	int i, bit;
+	int passedBoundOnce = 0;
+	int end = (myLastSuccessAddressNewSpace - 1);
+
+	for (i = myLastSuccessAddressNewSpace; i != end; i++) {
+		bit = isBitSet(i);
+
+		if (newSpaceOffset == 0) {
+			if (i == myHeapSize) {
+				if (passedBoundOnce == 1) {
+					return -1;
+				}
+				i = 0;
+				contiguous = 0;
+				address = i + 1;
+				passedBoundOnce = 1;
+			}
+		} else {
+			if (i == overallHeapSize) {
+				if (passedBoundOnce == 1) {
+					return -1;
+				}
+				i = 0;
+				contiguous = 0;
+				address = i + 1;
+				passedBoundOnce = 1;
+			}
+		}
+
+		if (bit == 1) {
+			address = i + 1;
+			contiguous = 0;
+		} else {
+			contiguous++;
+			if (contiguous == size) {
+				setAllocated(address, size);
+				statBytesAllocated += size;
+				statLiveObjects++;
+				myLastSuccessAddressNewSpace = address;
+				return address;
+			}
+		}
+	}
+
+	return -1;
+}
+
+bool Allocator::isInNewSpace(Object *object) {
+	int address = object->getAddress();
+	
+	if (newSpaceOffset == 0) {
+		if (address >= 0 && address < overallHeapSize / 2)
+			return true;
+	} else {
+		if (address >= overallHeapSize / 2 && address < overallHeapSize)
+			return true;
+	}
+
+	return false;
+}
+
+void Allocator::swapHeaps() {
+	int temp;
+
+	newSpaceOffset = (newSpaceOffset == 0) ? overallHeapSize / 2 : 0;
+
+	temp = myLastSuccessAddress;
+	myLastSuccessAddress = myLastSuccessAddressNewSpace;
+	myLastSuccessAddressNewSpace = temp;
+
+	myHeapSize = newSpaceOffset;
 }
 
 void Allocator::freeAllSectors() {

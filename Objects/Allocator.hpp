@@ -30,6 +30,12 @@ public:
 	void printStats();
 	void freeAllSectors();
 
+	void setHalfHeapSize(bool value);
+	void moveObject(Object *object);
+	void swapHeaps();
+
+	bool isInNewSpace(Object *object);
+
 private:
 	virtual ~Allocator();
 
@@ -38,6 +44,7 @@ private:
 	void setBitUnused(unsigned int address);
 	void setAllocated(int address, int size);
 	void setFree(int address, int size);
+	int allocateInNewSpace(int size);
 
 	char* myHeapBitMap;
 	int myHeapSize;
@@ -46,6 +53,9 @@ private:
 	FILE* allocLog;
 	FILE* heapMap;
 	int myLastSuccessAddress;
+	int newSpaceOffset;
+	int overallHeapSize;
+	int myLastSuccessAddressNewSpace;
 };
 
 } 
