@@ -5,6 +5,9 @@
  *      Author: GarCoSim
  */
 
+#ifndef _DEFINES_HPP_
+#define _DEFINES_HPP_
+
 #define NUM_THREADS		50
 #define ROOTSET_SIZE    50
 #define VISUALIZE_GCS 	1
@@ -23,3 +26,10 @@
 #define PROMOTIONAGEFACTOR 0
 #define SHIFTING 1
 #define SHIFTINGFACTOR 2
+
+enum collectorEnum {
+						copyingGC = 0,
+						markSweepGC
+				};
+
+#endif

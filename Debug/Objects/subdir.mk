@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../Objects/Allocator.cpp \
+../Objects/Collector.cpp \
 ../Objects/CopyingCollector.cpp \
 ../Objects/MarkSweepCollector.cpp \
 ../Objects/MemoryManager.cpp \
@@ -14,6 +15,7 @@ CPP_SRCS += \
 
 OBJS += \
 ./Objects/Allocator.o \
+./Objects/Collector.o \
 ./Objects/CopyingCollector.o \
 ./Objects/MarkSweepCollector.o \
 ./Objects/MemoryManager.o \
@@ -23,6 +25,7 @@ OBJS += \
 
 CPP_DEPS += \
 ./Objects/Allocator.d \
+./Objects/Collector.d \
 ./Objects/CopyingCollector.d \
 ./Objects/MarkSweepCollector.d \
 ./Objects/MemoryManager.d \

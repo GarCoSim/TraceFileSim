@@ -7,9 +7,13 @@
 
 #ifndef SIMULATOR_HPP_
 #define SIMULATOR_HPP_
+ 
 #include <stdio.h>
 #include <fstream>
+#include <ctime>
 #include "MemoryManager.hpp"
+
+#define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
 
 using namespace std;
 
@@ -17,7 +21,7 @@ namespace traceFileSimulator {
 
 class Simulator {
 public:
-	Simulator(char* traceFilePath, int heapSize, int highWatermark);
+	Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector);
 	virtual ~Simulator();
 	int lastStepWorked();
 	int doNextStep();
@@ -34,11 +38,12 @@ private:
 
 	ifstream myTraceFile;
 	int myLastStepWorked;
-	int outputCounter;
 	MemoryManager* myMemManager;
 	
 	//debug
 	int counter;
+	clock_t start;
+	int seconds;
 };
 
 } 
