@@ -6,7 +6,6 @@
  */
 
 #include "MemoryManager.hpp"
-#include "MarkSweepCollector.hpp"
 #include "../defines.hpp"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,17 +17,27 @@ extern int gLineInTrace;
 
 namespace traceFileSimulator {
 
-MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector) {
-	initAllocators(heapSize);
+MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int traversal, int allocator) {
+	initAllocators(allocator, collector, heapSize);
 	initContainers();
-	initGarbageCollectors(highWatermark, collector);
+	initGarbageCollectors(highWatermark, collector, traversal);
 }
 
-void MemoryManager::initAllocators(int heapsize) {
+void MemoryManager::initAllocators(int allocator, int collector, int heapsize) {
 	int i;
 	int* genSizes = computeHeapsizes(heapsize);
 	for (i = 0; i < GENERATIONS; i++) {
-		myAllocators[i] = new Allocator(genSizes[i]);
+		switch ((allocatorEnum)allocator) {
+			case realAlloc:
+				myAllocators[i] = new RealAllocator();
+				break;
+			case simulatedAlloc:
+				myAllocators[i] = new SimulatedAllocator();
+				break;
+		}
+		myAllocators[i]->initializeHeap(genSizes[i]);
+		if ((collectorEnum)collector == traversalGC)
+			myAllocators[i]->setHalfHeapSize(true);
 	}
 }
 
@@ -39,7 +48,7 @@ void MemoryManager::initContainers() {
 	}
 }
 
-void MemoryManager::initGarbageCollectors(int highWatermark, int collector) {
+void MemoryManager::initGarbageCollectors(int highWatermark, int collector, int traversal) {
 	int i;
 	for (i = 0; i < GENERATIONS; i++) {
 		switch ((collectorEnum)collector) {
@@ -49,8 +58,11 @@ void MemoryManager::initGarbageCollectors(int highWatermark, int collector) {
 			case markSweepGC:
 				myGarbageCollectors[i] = new MarkSweepCollector();
 				break;
+			case traversalGC:
+				myGarbageCollectors[i] = new TraversalCollector();
+				break;
 		}
-		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i);
+		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, traversal);
 	}
 }
 
@@ -431,16 +443,9 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 				parentID, parentSlot, childID);
 	}
 	Object* parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
-
-	//id 0 represents the NULL object.
-	Object* child = NULL;
-	int childGeneration = -1;
-	if(childID != 0){
-		child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
-		childGeneration = child->getGeneration();
-	}
+	Object* child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
 	int parentGeneration = parent->getGeneration();
-
+	int childGeneration = child->getGeneration();
 
 	//check old child, if it created remSet entries and delete them
 	Object* oldChild = parent->getReferenceTo(parentSlot);
@@ -463,8 +468,7 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 	}
 
 	parent->setPointer(parentSlot, child);
-	//childID 0 would mean a NULL object, which does not need to be remembered
-	if (parentGeneration > childGeneration && childID != 0) {
+	if (parentGeneration > childGeneration) {
 		int i;
 		for (i = childGeneration; i < parentGeneration; i++) {
 			myObjectContainers[i]->addToGenRoot(child);

@@ -8,9 +8,9 @@
 #ifndef CopyingCollector_HPP_
 #define CopyingCollector_HPP_
 
-#include "Allocator.hpp"
+#include "../Allocators/Allocator.hpp"
 #include "Collector.hpp"
-#include "ObjectContainer.hpp"
+#include "../Main/ObjectContainer.hpp"
 #include <queue>
 
 using namespace std;

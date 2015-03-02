@@ -1,12 +1,12 @@
 /*
- * MarkSweepCollector.cpp
+ * TraversalCollector.cpp
  *
- *  Created on: 2013-09-04
+ *  Created on: 2015-02-16
  *      Author: GarCoSim
  */
 
-#include "MarkSweepCollector.hpp"
-#include "MemoryManager.hpp"
+#include "TraversalCollector.hpp"
+#include "../Main/MemoryManager.hpp"
 #include <stdio.h>
 #include <ctime>
 #include "../defines.hpp"
@@ -15,35 +15,28 @@ extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 
-FILE* gcFile;
+extern FILE* gcFile;
 
-clock_t start, stop;
+extern clock_t start, stop;
 
 namespace traceFileSimulator {
 
-MarkSweepCollector::MarkSweepCollector() {
+TraversalCollector::TraversalCollector() {
 }
 
 /**
  * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
  */
-void MarkSweepCollector::collect(int reason) {
+void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
 	preCollect();
 	//easy as 1, 2, 3 :)
-	mark();
-	sweep();
-
-	//comment in order to have mark/sweep only
-	if (statFreedDuringThisGC > 0) {
-		//only compact if you actually freed something
-		compact();
-	}
+	copy();
 
 	postCollect();
 }
 
-void MarkSweepCollector::checkWatermark() {
+void TraversalCollector::checkWatermark() {
 	int size = myAllocator->getHeapSize();
 	int free = myAllocator->getFreeSize();
 	int ratio = 100 - (100 * free / size);
@@ -52,64 +45,44 @@ void MarkSweepCollector::checkWatermark() {
 	}
 }
 
-void MarkSweepCollector::mark() {
-	int i;
+void TraversalCollector::emptyHelpers() {
+	while (!myQueue.empty())
+		myQueue.pop();
+	while (!myStack.empty())
+		myStack.pop();
+}
+
+void TraversalCollector::copy() {
 	//set all objects to dead and not visible firs
 	initializeMarkPhase();
 
-	enqueueAllRoots();
+	emptyHelpers();
 
-	//breadth first through the tree
-	while (!myQueue.empty()) {
-		Object* currentObj = myQueue.front();
-		myQueue.pop();
-		Object* child;
-		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(1);
-		currentObj->setAge(currentObj->getAge() + 1);
-		for (i = 0; i < kids; i++) {
-			child = currentObj->getReferenceTo(i);
-			//no matter if the child was processed before or not, add it to the rem set.
-			if(child && child->getGeneration() < currentObj->getGeneration()){
-				myMemManager->requestRemSetAdd(child);
-			}
-			if (child && child->getVisited() == 0
-					&& child->getGeneration() <= myGeneration) {
-				child->setVisited(1);
-				child->setIsAlive(1);
+	getAllRoots();
 
-				myQueue.push(child);
-			}
-		}
-	}
-
-}
-
-void MarkSweepCollector::sweep() {
-	Object* currentObj;
-	int i, gGC;
-	for (i = 0; i < myObjectContainer->getSize(); i++) {
-		currentObj = myObjectContainer->getbySlotNr(i);
-		if (currentObj) {
-			//int id = currentObj->getID();
-			if(myGeneration == GENERATIONS -1){
-				gGC = 1;
-			} else {
-				gGC = 0;
-			}
-			if (currentObj && currentObj->getIsAlive() == 0) {
-				myMemManager->requestDelete(currentObj, gGC);
-				statFreedObjects++;
-				statFreedDuringThisGC++;
-			}
-		}
+	switch(order) {
+		case breadthFirst:
+			fprintf(stderr, "breadth first\n");
+			breadthFirstCopying();
+			break;
+		case depthFirst:
+			fprintf(stderr, "depth first\n");
+			depthFirstCopying();
+			break;
+		case hotness:
+			fprintf(stderr, "hotness\n");
+			hotnessCopying();
+			break;
+		default:
+			break;
 	}
 }
 
-
-void MarkSweepCollector::enqueueAllRoots() {
+void TraversalCollector::getAllRoots() {
 	Object* currentObj;
 	int i, j;
+
+	// enqueue all roots
 	if (myGeneration == GENERATIONS - 1) {
 		//we are performing a glolab GC and can use it to fix possible rem set problems
 		//we clear all rem sets and fill them again while performing the marking
@@ -120,13 +93,13 @@ void MarkSweepCollector::enqueueAllRoots() {
 				currentObj = myObjectContainer->getRoot(i, j);
 				if (currentObj && currentObj->getVisited() == 0) {
 					currentObj->setVisited(1);
-					currentObj->setIsAlive(1);
 					//currentObj->setAge(currentObj->getAge() + 1);
 					//add to rem set if the root is in a younger generation.
 					if (currentObj->getGeneration() < myGeneration) {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
 					myQueue.push(currentObj);
+					myStack.push(currentObj);
 				}
 			}
 		}
@@ -135,15 +108,60 @@ void MarkSweepCollector::enqueueAllRoots() {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && currentObj->getVisited() == 0) {
 				currentObj->setVisited(1);
-				currentObj->setIsAlive(1);
 				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
+				myStack.push(currentObj);
 			}
 		}
 	}
 }
 
-void MarkSweepCollector::initializeMarkPhase() {
+void TraversalCollector::breadthFirstCopying() {
+	int i;
+	Object* currentObj;
+	Object* child;
+
+	//breadth first through the tree
+	while (!myQueue.empty()) {
+		currentObj = myQueue.front();
+		myQueue.pop();
+		int kids = currentObj->getPointersMax();
+		myAllocator->moveObject(currentObj);
+		currentObj->setAge(currentObj->getAge() + 1);
+		for (i = 0; i < kids; i++) {
+			child = currentObj->getReferenceTo(i);
+			//no matter if the child was processed before or not, add it to the rem set.
+			if(child && child->getGeneration() < currentObj->getGeneration()){
+				myMemManager->requestRemSetAdd(child);
+			}
+			if (child && child->getVisited() == 0
+					&& child->getGeneration() <= myGeneration) {
+				child->setVisited(1);
+
+				myQueue.push(child);
+			}
+		}
+	}
+
+	for (i = 0; i < myObjectContainer->getSize(); i++) {
+		currentObj = myObjectContainer->getbySlotNr(i);
+		if (currentObj)
+			if (!myAllocator->isInNewSpace(currentObj))
+				myObjectContainer->deleteObject(currentObj);
+	}
+
+	myAllocator->swapHeaps();
+}
+
+void TraversalCollector::depthFirstCopying() {
+	//TODO
+}
+
+void TraversalCollector::hotnessCopying() {
+	//TODO
+}
+
+void TraversalCollector::initializeMarkPhase() {
 	Object* currentObj;
 	int i;
 	for (i = 0; i < myObjectContainer->getSize(); i++) {
@@ -159,7 +177,7 @@ void MarkSweepCollector::initializeMarkPhase() {
 	}
 }
 
-void MarkSweepCollector::preCollect() {
+void TraversalCollector::preCollect() {
 	start = clock();
 	statFreedDuringThisGC = 0;
 	statGcNumber++;
@@ -168,7 +186,7 @@ void MarkSweepCollector::preCollect() {
 //	}
 }
 
-void MarkSweepCollector::compact() {
+void TraversalCollector::compact() {
 	/*only alive objects are left in the container. If I traverse
 	 through the live list, I get all elements*/
 	//free everything.
@@ -180,7 +198,7 @@ void MarkSweepCollector::compact() {
 	myMemManager->statAfterCompact(myGeneration);
 }
 
-void MarkSweepCollector::postCollect() {
+void TraversalCollector::postCollect() {
 	printStats();
 	gcsSinceLastPromotionPhase++;
 	stop = clock();
@@ -191,7 +209,7 @@ void MarkSweepCollector::postCollect() {
 	fclose(gcFile);
 }
 
-void MarkSweepCollector::printStats() {
+void TraversalCollector::printStats() {
 	statFreeSpaceOnHeap = myAllocator->getFreeSize();
 	int heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
 	statLiveObjectCount = myObjectContainer->countElements();
@@ -215,33 +233,9 @@ void MarkSweepCollector::printStats() {
 	statCollectionReason = 0;
 }
 
-void MarkSweepCollector::freeAllLiveObjects() {
+void TraversalCollector::freeAllLiveObjects() {
 	int i;
-	//set all objects to dead and not visible firs
-//	initializeMarkPhase();
-//
-//	enqueueAllRoots();
-//
-//	//breadth first through the tree
-//	while (!myQueue.empty()) {
-//		Object* currentObj = myQueue.front();
-//		myQueue.pop();
-//
-//		//the actual work is just one line
-//		myMemManager->requestFree(currentObj);
-//
-//		Object* child;
-//		int kids = currentObj->getPointersMax();
-//		currentObj->setIsAlive(1);
-//		for (i = 0; i < kids; i++) {
-//			child = currentObj->getReferenceTo(i);
-//			if (child && child->getVisited() == 0) {
-//				child->setVisited(1);
-//				currentObj->setIsAlive(1);
-//				myQueue.push(child);
-//			}
-//		}
-//	}
+	
 	int end = myObjectContainer->getSize();
 	for (i = 0; i < end; i++) {
 		Object* currentObj = myObjectContainer->getbySlotNr(i);
@@ -252,7 +246,7 @@ void MarkSweepCollector::freeAllLiveObjects() {
 	//myAllocator->freeAllSectors();
 }
 
-int MarkSweepCollector::promotionPhase() {
+int TraversalCollector::promotionPhase() {
 	if (gcsSinceLastPromotionPhase == 0) {
 		//nothing to do here
 		return 0;
@@ -291,33 +285,8 @@ int MarkSweepCollector::promotionPhase() {
 	return 0;
 }
 
-void MarkSweepCollector::reallocateAllLiveObjects() {
+void TraversalCollector::reallocateAllLiveObjects() {
 	int i;
-	//set all objects to dead and not visible firs
-//	initializeMarkPhase();
-//
-//	enqueueAllRoots();
-//
-//	//breadth first through the tree
-//	while (!myQueue.empty()) {
-//		Object* currentObj = myQueue.front();
-//		myQueue.pop();
-//
-//		//the actual work
-//		myMemManager->requestReallocate(currentObj);
-//
-//		Object* child;
-//		int kids = currentObj->getPointersMax();
-//		currentObj->setIsAlive(1);
-//		for (i = 0; i < kids; i++) {
-//			child = currentObj->getReferenceTo(i);
-//			if (child && child->getVisited() == 0) {
-//				child->setVisited(1);
-//				currentObj->setIsAlive(1);
-//				myQueue.push(child);
-//			}
-//		}
-//	}
 	int end = myObjectContainer->getSize();
 	for (i = 0; i < end; i++) {
 		Object* currentObj = myObjectContainer->getbySlotNr(i);
@@ -328,7 +297,7 @@ void MarkSweepCollector::reallocateAllLiveObjects() {
 
 }
 
-MarkSweepCollector::~MarkSweepCollector() {
+TraversalCollector::~TraversalCollector() {
 }
 
 } 

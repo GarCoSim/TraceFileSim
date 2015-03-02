@@ -1,21 +1,23 @@
 /*
- * Allocator.hpp
+ * SimulatedAllocator.hpp
  *
  *  Created on: 2013-09-03
  *      Author: GarCoSim
  */
 
-#ifndef ALLOCATOR_HPP_
-#define ALLOCATOR_HPP_
+#ifndef _SIMULATEDALLOCATOR_HPP_
+#define _SIMULATEDALLOCATOR_HPP_
 
-#include "Object.hpp"
+#include "Allocator.hpp"
+#include "../Main/Object.hpp"
 #include <stdio.h>
 
 namespace traceFileSimulator {
 
-class Allocator {
+class SimulatedAllocator : public Allocator {
 public:
-	Allocator(int heapSize);
+	SimulatedAllocator();
+	virtual ~SimulatedAllocator();
 
 	int gcAllocate(int size);
 	void gcFree(Object* object);
@@ -36,27 +38,16 @@ public:
 
 	bool isInNewSpace(Object *object);
 
-private:
-	virtual ~Allocator();
+	void initializeHeap(int heapSize);
 
+private:
 	inline bool isBitSet(unsigned int address);
 	void setBitUsed(unsigned int address);
 	void setBitUnused(unsigned int address);
 	void setAllocated(int address, int size);
 	void setFree(int address, int size);
 	int allocateInNewSpace(int size);
-
-	char* myHeapBitMap;
-	int myHeapSize;
-	int statBytesAllocated;
-	int statLiveObjects;
-	FILE* allocLog;
-	FILE* heapMap;
-	int myLastSuccessAddress;
-	int newSpaceOffset;
-	int overallHeapSize;
-	int myLastSuccessAddressNewSpace;
 };
 
 } 
-#endif /* ALLOCATOR_HPP_ */
+#endif /* SIMULATEDALLOCATOR_HPP_ */

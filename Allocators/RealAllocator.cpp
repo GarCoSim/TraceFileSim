@@ -1,11 +1,11 @@
 /*
- * Allocator.cpp
+ * RealAllocator.cpp
  *
  *  Created on: 2013-09-03
  *      Author: GarCoSim
  */
 
-#include "Allocator.hpp"
+#include "RealAllocator.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <climits>
@@ -18,7 +18,17 @@ using namespace std;
 
 namespace traceFileSimulator {
 
-Allocator::Allocator(int heapSize) {
+RealAllocator::RealAllocator() {
+}
+
+void RealAllocator::setHalfHeapSize(bool value) {
+	if (value)
+		myHeapSize = overallHeapSize / 2;
+	else
+		myHeapSize = overallHeapSize;
+}
+
+void RealAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[heapSize / 8 + 1];
 
 	myHeapSize = heapSize;
@@ -36,21 +46,17 @@ Allocator::Allocator(int heapSize) {
 	newSpaceOffset = 0;
 	overallHeapSize = heapSize;
 
+	// here we do the actual instantiation of the heap, no simulating like in the other allocator :)
+	heap = malloc(heapSize);
 }
 
-void Allocator::setHalfHeapSize(bool value) {
-	if (value)
-		myHeapSize = overallHeapSize / 2;
-	else
-		myHeapSize = overallHeapSize;
-}
 
-void Allocator::moveObject(Object *object) {
+void RealAllocator::moveObject(Object *object) {
 	int size = object->getPayloadSize();
 	object->updateAddress(allocateInNewSpace(size));
 }
 
-int Allocator::allocateInNewSpace(int size) {
+int RealAllocator::allocateInNewSpace(int size) {
 	if (size <= 0) {
 		return -1;
 	}
@@ -106,8 +112,8 @@ int Allocator::allocateInNewSpace(int size) {
 	return -1;
 }
 
-bool Allocator::isInNewSpace(Object *object) {
-	int address = object->getAddress();
+bool RealAllocator::isInNewSpace(Object *object) {
+	int address = &object;
 	
 	if (newSpaceOffset == 0) {
 		if (address >= 0 && address < overallHeapSize / 2)
@@ -120,7 +126,7 @@ bool Allocator::isInNewSpace(Object *object) {
 	return false;
 }
 
-void Allocator::swapHeaps() {
+void RealAllocator::swapHeaps() {
 	int temp;
 
 	newSpaceOffset = (newSpaceOffset == 0) ? overallHeapSize / 2 : 0;
@@ -132,7 +138,7 @@ void Allocator::swapHeaps() {
 	myHeapSize = newSpaceOffset;
 }
 
-void Allocator::freeAllSectors() {
+void RealAllocator::freeAllSectors() {
 	int i;
 
 	for (i = 0; i < myHeapSize; i++) {
@@ -142,7 +148,7 @@ void Allocator::freeAllSectors() {
 	statBytesAllocated = 0;
 }
 
-int Allocator::gcAllocate(int size) {
+int RealAllocator::gcAllocate(int size) {
 	if (size <= 0) {
 		return -1;
 	}
@@ -186,7 +192,7 @@ int Allocator::gcAllocate(int size) {
 	return -1;
 }
 
-void Allocator::gcFree(Object* object) {
+void RealAllocator::gcFree(Object* object) {
 	int address = object->getAddress();
 	int size = object->getPayloadSize();
 
@@ -198,11 +204,11 @@ void Allocator::gcFree(Object* object) {
 }
 
 //used mainly by garbage collector
-int Allocator::getFreeSize() {
+int RealAllocator::getFreeSize() {
 	return myHeapSize - statBytesAllocated;
 }
 
-void Allocator::setAllocated(int address, int size) {
+void RealAllocator::setAllocated(int address, int size) {
 	int i;
 	int pointer = address;
 
@@ -212,7 +218,7 @@ void Allocator::setAllocated(int address, int size) {
 	}
 }
 
-void Allocator::setFree(int address, int size) {
+void RealAllocator::setFree(int address, int size) {
 	int i;
 	int pointer = address;
 
@@ -222,11 +228,11 @@ void Allocator::setFree(int address, int size) {
 	}
 }
 
-int Allocator::getHeapSize() {
+int RealAllocator::getHeapSize() {
 	return myHeapSize;
 }
 
-inline bool Allocator::isBitSet(unsigned int address) {
+inline bool RealAllocator::isBitSet(unsigned int address) {
 	if (address > (unsigned int) myHeapSize) {
 		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
 				gLineInTrace, address);
@@ -248,7 +254,7 @@ inline bool Allocator::isBitSet(unsigned int address) {
 	}
 }
 
-void Allocator::setBitUsed(unsigned int address) {
+void RealAllocator::setBitUsed(unsigned int address) {
 	if (address > (unsigned int) myHeapSize) {
 		fprintf(stderr,
 				"ERROR(Line %d): setBitUsed request to illegal slot %d\n",
@@ -262,7 +268,7 @@ void Allocator::setBitUsed(unsigned int address) {
 	myHeapBitMap[byte] = myHeapBitMap[byte] | 1 << bit;
 }
 
-void Allocator::setBitUnused(unsigned int address) {
+void RealAllocator::setBitUnused(unsigned int address) {
 	if (address > (unsigned int) myHeapSize) {
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
@@ -273,7 +279,7 @@ void Allocator::setBitUnused(unsigned int address) {
 	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
 }
 
-void Allocator::printMap() {
+void RealAllocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);
 
 	int i;
@@ -289,7 +295,7 @@ void Allocator::printMap() {
 	fprintf(heapMap, "\n");
 }
 
-void Allocator::printStats() {
+void RealAllocator::printStats() {
 	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		printMap();
 	}
@@ -309,7 +315,7 @@ void Allocator::printStats() {
 			bytesAllocated, statLiveObjects);
 }
 
-void Allocator::setAllocationSeearchStart(int address) {
+void RealAllocator::setAllocationSeearchStart(int address) {
 	if (address > myHeapSize) {
 		return;
 	}
@@ -317,7 +323,7 @@ void Allocator::setAllocationSeearchStart(int address) {
 	myLastSuccessAddress = address;
 }
 
-Allocator::~Allocator() {
+RealAllocator::~RealAllocator() {
 }
 
 }

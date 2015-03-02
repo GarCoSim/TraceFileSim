@@ -21,7 +21,7 @@ namespace traceFileSimulator {
 
 class Simulator {
 public:
-	Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector);
+	Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector, int traversal, int allocator);
 	virtual ~Simulator();
 	int lastStepWorked();
 	int doNextStep();
@@ -34,7 +34,6 @@ private:
 	void referenceOperation(string line);
 	void deleteRoot(string line);
 	void addToRoot(string line);
-	void checkLineAfterAlloc(int thread, int id);
 
 	ifstream myTraceFile;
 	int myLastStepWorked;

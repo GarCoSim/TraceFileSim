@@ -27,9 +27,26 @@
 #define SHIFTING 1
 #define SHIFTINGFACTOR 2
 
+enum traversalEnum {
+					breadthFirst = 0,
+					depthFirst,
+					hotness
+				};
+
 enum collectorEnum {
 						copyingGC = 0,
-						markSweepGC
+						markSweepGC,
+						traversalGC
 				};
+
+enum allocatorEnum {
+						realAlloc = 0,
+						simulatedAlloc
+				};
+
+// create some fancy strings for debug output
+#define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : (traversal == (int)depthFirst ? "depthFirst" : "hotness"))
+#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : "copying"))
+#define ALLOCATOR_STRING (allocator == (int)simulatedAlloc ? "simulated" : "real")
 
 #endif

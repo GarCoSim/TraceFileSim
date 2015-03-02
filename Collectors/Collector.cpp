@@ -16,13 +16,14 @@ Collector::Collector() {
 
 }
 
-void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation) {
+void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation, int traversal) {
 	myAllocator = allocator;
 	myObjectContainer = container;
 	myWatermark = watermark;
 	myMemManager = memManager;
 	myGeneration = generation;
 	gcsSinceLastPromotionPhase = 0;
+	myTraversal = traversal;
 	//stats
 	statFreedObjects = 0;
 	statGcNumber = 0;
@@ -31,6 +32,8 @@ void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container,
 	statLiveObjectCount = 0;
 	statCollectionReason = 0;
 	statFreedDuringThisGC = 0;
+
+	order = (traversalEnum)traversal;
 }
 
 void Collector::collect(int reason) {

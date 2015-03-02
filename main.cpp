@@ -5,7 +5,7 @@
  *      Author: GarCoSim
  */
 
-#include "Objects/Simulator.hpp"
+#include "Main/Simulator.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctime>
@@ -30,6 +30,20 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)copyingGC;
 				if (!strcmp(argv[i + 1], "markSweep"))
 					return (int)markSweepGC;
+				if (!strcmp(argv[i + 1], "traversal"))
+					return (int)traversalGC;
+			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
+				if (!strcmp(argv[i + 1], "breadthFirst"))
+					return (int)breadthFirst;
+				if (!strcmp(argv[i + 1], "depthFirst"))
+					return (int)depthFirst;
+				if (!strcmp(argv[i + 1], "hotness"))
+					return (int)hotness;
+			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
+				if (!strcmp(argv[i + 1], "real"))
+					return (int)realAlloc;
+				if (!strcmp(argv[i + 1], "simulated"))
+					return (int)simulatedAlloc;
 			} else
 				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
 		}
@@ -44,7 +58,9 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: 200000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, default: markSweep)\n"
+						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, traversal, default: traversal)\n" \
+						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
+						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: simulated)\n" \
 						);
 		exit(1);
 	}
@@ -63,21 +79,29 @@ int main(int argc, char *argv[]) {
 	char* filename    = argv[1];
 	int heapSize      = setArgs(argc, argv, "--heapsize",  "-h");
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
+	int traversal     = setArgs(argc, argv, "--traversal", "-t");
 	int collector     = setArgs(argc, argv, "--collector", "-c");
+	int allocator     = setArgs(argc, argv, "--allocator", "-a");
 
 	if (heapSize == -1)
 		heapSize = 200000;
 	if (highWatermark == -1)
 		highWatermark = 90;
+	if (traversal == -1)
+		traversal = (int)breadthFirst;
 	if (collector == -1)
-		collector = (int)markSweepGC;
+		collector = (int)traversalGC;
+	if (allocator == -1)
+		allocator = (int)simulatedAlloc;
 
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
+	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
+	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
 
 	//start measuring time
 	clock_t start = clock();
 
-	Simulator* simulator = new Simulator(filename, heapSize, highWatermark, collector);
+	Simulator* simulator = new Simulator(filename, heapSize, highWatermark, collector, traversal, allocator);
 
 	while(simulator->lastStepWorked() == 1) {
 		simulator->doNextStep();

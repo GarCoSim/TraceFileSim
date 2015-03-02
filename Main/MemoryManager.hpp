@@ -10,17 +10,20 @@
 
 #include "Object.hpp"
 #include "ObjectContainer.hpp"
-#include "Allocator.hpp"
-#include "Collector.hpp"
-#include "MarkSweepCollector.hpp"
-#include "CopyingCollector.hpp"
+#include "../Allocators/Allocator.hpp"
+#include "../Allocators/RealAllocator.hpp"
+#include "../Allocators/SimulatedAllocator.hpp"
+#include "../Collectors/Collector.hpp"
+#include "../Collectors/MarkSweepCollector.hpp"
+#include "../Collectors/CopyingCollector.hpp"
+#include "../Collectors/TraversalCollector.hpp"
 #include "../defines.hpp"
 
 namespace traceFileSimulator {
 
 class MemoryManager {
 public:
-	MemoryManager(int heapSize, int highWatermark, int collector);
+	MemoryManager(int heapSize, int highWatermark, int collector, int traversal, int allocator);
 	virtual ~MemoryManager();
 	//operations possible from trace file
 	int allocateObjectToRootset(int thread, int id, int size, int refCount);
@@ -44,9 +47,9 @@ public:
 
 private:
 	int* computeHeapsizes(int heapSize);
-	void initAllocators(int heapsize);
+	void initAllocators(int allocator, int collector, int heapsize);
 	void initContainers();
-	void initGarbageCollectors(int highWatermark, int collector);
+	void initGarbageCollectors(int highWatermark, int collector, int traversal);
 	int allocate(int size, int generation);
 	void addRootToContainers(Object* object, int thread, int rootsetIndex);
 	void addToContainers(Object* object);

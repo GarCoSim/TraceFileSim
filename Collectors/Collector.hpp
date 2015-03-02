@@ -8,8 +8,8 @@
 #ifndef COLLECTOR_HPP_
 #define COLLECTOR_HPP_
 
-#include "Allocator.hpp"
-#include "ObjectContainer.hpp"
+#include "../Allocators/Allocator.hpp"
+#include "../Main/ObjectContainer.hpp"
 #include <queue>
 #include <stack>
 #include "../defines.hpp"
@@ -23,7 +23,7 @@ class MemoryManager;
 class Collector {
 public:
 	Collector();
-	void setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation);
+	void setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation, int traversal);
 	virtual ~Collector();
 	virtual void collect(int reason);
 	virtual void checkWatermark();
@@ -46,9 +46,12 @@ protected:
 	int myGeneration;
 	int statFreedDuringThisGC;
 	int gcsSinceLastPromotionPhase;
+	int myTraversal;
 	int statHeapSide;
 	
 	MemoryManager* myMemManager;
+
+	traversalEnum order;
 };
 
 } 
