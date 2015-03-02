@@ -113,7 +113,7 @@ int RealAllocator::allocateInNewSpace(int size) {
 }
 
 bool RealAllocator::isInNewSpace(Object *object) {
-	int address = &object;
+	int address = object->getAddress();
 	
 	if (newSpaceOffset == 0) {
 		if (address >= 0 && address < overallHeapSize / 2)
