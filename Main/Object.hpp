@@ -16,6 +16,7 @@ namespace traceFileSimulator {
 class Object {
 public:
 	Object(int id, int payloadSize, int maxPointers, int address);
+	void setArgs(int id, int payloadSize, int maxPointers);
 	virtual ~Object();
 	int 	getAddress();
 	void 	updateAddress(int newAddress);
@@ -55,7 +56,7 @@ private:
 
 	/*The actual object I am storing information about
 	 * (not interesting for our purpose, it only has a size) */
-	int  	myPayoadSize;
+	int  	myPayloadSize;
 
 	/*How many objects am I pointing at? How many am I allowed to point at?*/
 	int 	myPointersMax;

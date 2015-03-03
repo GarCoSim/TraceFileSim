@@ -18,7 +18,7 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-	virtual int gcAllocate(int size);
+	virtual size_t gcAllocate(int size);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector

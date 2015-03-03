@@ -40,7 +40,7 @@ void Allocator::swapHeaps() {
 void Allocator::freeAllSectors() {
 }
 
-int Allocator::gcAllocate(int size) {
+size_t Allocator::gcAllocate(int size) {
 	return -1;
 }
 

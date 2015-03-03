@@ -19,7 +19,7 @@ public:
 	SimulatedAllocator();
 	virtual ~SimulatedAllocator();
 
-	int gcAllocate(int size);
+	size_t gcAllocate(int size);
 	void gcFree(Object* object);
 
 	//used mainly by garbage collector

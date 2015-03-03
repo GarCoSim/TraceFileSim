@@ -33,7 +33,7 @@ void ObjectContainer::addToGenRoot(Object* object) {
 		fprintf(stderr, "ERROR(Line %d): no remSet slot found\n", gLineInTrace);
 		exit(1);
 	}
-	remSet[remSetSlot] = object;
+	remSet.at(remSetSlot) = object;
 	remCount++;
 }
 
@@ -56,7 +56,7 @@ int ObjectContainer::add(Object* newObject) {
 		return -1;
 	}
 
-	objectList[listSlot] = newObject;
+	objectList.at(listSlot) = newObject;
 	return 0;
 }
 

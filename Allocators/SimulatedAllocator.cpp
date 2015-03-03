@@ -145,7 +145,7 @@ void SimulatedAllocator::freeAllSectors() {
 	statBytesAllocated = 0;
 }
 
-int SimulatedAllocator::gcAllocate(int size) {
+size_t SimulatedAllocator::gcAllocate(int size) {
 	if (size <= 0) {
 		return -1;
 	}

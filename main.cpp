@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: 200000)\n" \
 						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, traversal, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
-						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: simulated)\n" \
+						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: real)\n" \
 						);
 		exit(1);
 	}
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 	if (collector == -1)
 		collector = (int)traversalGC;
 	if (allocator == -1)
-		allocator = (int)simulatedAlloc;
+		allocator = (int)realAlloc;
 
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);

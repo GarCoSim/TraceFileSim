@@ -47,7 +47,7 @@ void RealAllocator::initializeHeap(int heapSize) {
 	overallHeapSize = heapSize;
 
 	// here we do the actual instantiation of the heap, no simulating like in the other allocator :)
-	heap = malloc(heapSize);
+	heap = (unsigned char*)malloc(heapSize * 8);
 }
 
 
@@ -148,7 +148,7 @@ void RealAllocator::freeAllSectors() {
 	statBytesAllocated = 0;
 }
 
-int RealAllocator::gcAllocate(int size) {
+size_t RealAllocator::gcAllocate(int size) {
 	if (size <= 0) {
 		return -1;
 	}
@@ -184,7 +184,7 @@ int RealAllocator::gcAllocate(int size) {
 				statBytesAllocated += size;
 				statLiveObjects++;
 				myLastSuccessAddress = address;
-				return address;
+				return (size_t)&heap[address];
 			}
 		}
 	}

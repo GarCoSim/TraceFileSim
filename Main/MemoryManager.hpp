@@ -47,14 +47,18 @@ public:
 
 private:
 	int* computeHeapsizes(int heapSize);
-	void initAllocators(int allocator, int collector, int heapsize);
+	void initAllocators(int heapsize);
 	void initContainers();
-	void initGarbageCollectors(int highWatermark, int collector, int traversal);
-	int allocate(int size, int generation);
+	void initGarbageCollectors(int highWatermark);
+	size_t allocate(int size, int generation);
 	void addRootToContainers(Object* object, int thread, int rootsetIndex);
 	void addToContainers(Object* object);
-	int shift(int size);
+	size_t shift(int size);
 	
+	allocatorEnum _allocator;
+	collectorEnum _collector;
+	traversalEnum _traversal;
+
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];
 	Collector* myGarbageCollectors[GENERATIONS];

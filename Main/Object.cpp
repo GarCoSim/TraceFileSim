@@ -15,7 +15,7 @@ Object::Object(int id, int payloadSize, int maxPointers, int address) {
 
 	//prepare data structure
 	myId = id;
-	myPayoadSize = payloadSize;
+	myPayloadSize = payloadSize;
 	myPointersCurrent = 0;
 	myPointersMax = maxPointers;
 	pointers = (Object**)malloc(maxPointers*sizeof(Object*));
@@ -23,6 +23,27 @@ Object::Object(int id, int payloadSize, int maxPointers, int address) {
 		pointers[i] = NULL;
 	}
 	myAddress = address;
+	myGeneration = 0;
+	myAge = 0;
+
+	//stat
+	isAlive = 0;
+	isVisited = 0;
+	freed = 0;
+}
+
+// this only needs to be run when we create the objects in the real allocator
+void Object::setArgs(int id, int payloadSize, int maxPointers) {
+
+	//prepare data structure
+	myId = id;
+	myPayloadSize = payloadSize;
+	myPointersCurrent = 0;
+	myPointersMax = maxPointers;
+	pointers = (Object**)malloc(maxPointers*sizeof(Object*));
+	for(int i = 0; i < maxPointers;i++){
+		pointers[i] = NULL;
+	}
 	myGeneration = 0;
 	myAge = 0;
 
@@ -49,7 +70,7 @@ int Object::getID(){
 }
 
 int Object::getPayloadSize(){
-	return myPayoadSize;
+	return myPayloadSize;
 }
 
 int Object::getPointerCount(){

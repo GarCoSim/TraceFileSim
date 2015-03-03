@@ -18,16 +18,20 @@ extern int gLineInTrace;
 namespace traceFileSimulator {
 
 MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int traversal, int allocator) {
-	initAllocators(allocator, collector, heapSize);
+	_allocator = (allocatorEnum)allocator;
+	_collector = (collectorEnum)collector;
+	_traversal = (traversalEnum)traversal;
+
+	initAllocators(heapSize);
 	initContainers();
-	initGarbageCollectors(highWatermark, collector, traversal);
+	initGarbageCollectors(highWatermark);
 }
 
-void MemoryManager::initAllocators(int allocator, int collector, int heapsize) {
+void MemoryManager::initAllocators(int heapsize) {
 	int i;
 	int* genSizes = computeHeapsizes(heapsize);
 	for (i = 0; i < GENERATIONS; i++) {
-		switch ((allocatorEnum)allocator) {
+		switch (_allocator) {
 			case realAlloc:
 				myAllocators[i] = new RealAllocator();
 				break;
@@ -36,7 +40,7 @@ void MemoryManager::initAllocators(int allocator, int collector, int heapsize) {
 				break;
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
-		if ((collectorEnum)collector == traversalGC)
+		if (_collector == traversalGC)
 			myAllocators[i]->setHalfHeapSize(true);
 	}
 }
@@ -48,10 +52,10 @@ void MemoryManager::initContainers() {
 	}
 }
 
-void MemoryManager::initGarbageCollectors(int highWatermark, int collector, int traversal) {
+void MemoryManager::initGarbageCollectors(int highWatermark) {
 	int i;
 	for (i = 0; i < GENERATIONS; i++) {
-		switch ((collectorEnum)collector) {
+		switch (_collector) {
 			case copyingGC:
 				myGarbageCollectors[i] = new CopyingCollector();
 				break;
@@ -62,7 +66,7 @@ void MemoryManager::initGarbageCollectors(int highWatermark, int collector, int 
 				myGarbageCollectors[i] = new TraversalCollector();
 				break;
 		}
-		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, traversal);
+		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, _traversal);
 	}
 }
 
@@ -85,13 +89,13 @@ void MemoryManager::statAfterCompact(int myGeneration) {
 
 }
 
-int MemoryManager::shift(int size){
+size_t MemoryManager::shift(int size){
 	//the idea: if there is still space for this object in the highest generation,
 	//gc until promotes happen rather than crash the application
-	int result = -1;
+	size_t result = -1;
 	int outOfMemory = 0;
 	int spaceOnTop = myAllocators[GENERATIONS-1]->getFreeSize();
-	while(result == -1 && spaceOnTop >= size){
+	while(result == (size_t)-1 && spaceOnTop >= size){
 		if(WRITE_DETAILED_LOG==1){
 			fprintf(gDetLog,"(%d) SHIFTING for %d\n",gLineInTrace,size);
 		}
@@ -111,7 +115,7 @@ int MemoryManager::evalCollect(){
 	return 0;
 }
 
-int MemoryManager::allocate(int size, int generation) {
+size_t MemoryManager::allocate(int size, int generation) {
 	//check if legal generation
 	if (generation < 0 && generation > GENERATIONS - 1) {
 		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
@@ -122,11 +126,11 @@ int MemoryManager::allocate(int size, int generation) {
 //	if(isPromotion == 1){
 //		reason = 4;
 //	}
-	int result = -1;
+	size_t result = -1;
 	int gen = generation;
 	//try allocating in the generation
 	result = myAllocators[generation]->gcAllocate(size);
-	while (result == -1 && gen < GENERATIONS) {
+	while (result == (size_t)-1 && gen < GENERATIONS) {
 		if (WRITE_DETAILED_LOG == 1) {
 			fprintf(gDetLog,
 					"(%d) Trigger Gc in generation %d.\n",
@@ -141,7 +145,7 @@ int MemoryManager::allocate(int size, int generation) {
 		myGarbageCollectors[gen - 1]->promotionPhase();
 	}
 
-	if(result == -1 && SHIFTING == 1){
+	if(result == (size_t)-1 && SHIFTING == 1){
 		//try shifting
 		result = shift(size);
 	}
@@ -186,8 +190,8 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 				thread, rootsetIndex, id);
 	}
 	//get allocation address in Generation 0
-	int address = allocate(size, 0);
-	if (address == -1) {
+	size_t address = allocate(size, 0);
+	if (address == (size_t)-1) {
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
 				size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
@@ -195,7 +199,18 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 	}
 
 	//create Object
-	Object* object = new Object(id, size, refCount, address);
+	Object* object;
+	switch (_allocator) {
+		case realAlloc:
+			fprintf(stderr, "aft: %x\n", address);
+			object = (Object*)address;
+			object->setArgs(id, size, refCount);
+			break;
+		default:
+		case simulatedAlloc:
+			object = new Object(id, size, refCount, address);
+			break;
+	}
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread, rootsetIndex);

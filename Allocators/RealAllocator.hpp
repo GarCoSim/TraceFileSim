@@ -19,7 +19,7 @@ public:
 	RealAllocator();
 	virtual ~RealAllocator();
 
-	int gcAllocate(int size);
+	size_t gcAllocate(int size);
 	void gcFree(Object* object);
 
 	//used mainly by garbage collector
@@ -48,7 +48,7 @@ private:
 	void setFree(int address, int size);
 	int allocateInNewSpace(int size);
 
-	void *heap;
+	unsigned char *heap;
 };
 
 } 
