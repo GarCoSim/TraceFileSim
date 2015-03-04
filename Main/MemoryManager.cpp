@@ -244,7 +244,6 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 	Object* object;
 	switch (_allocator) {
 		case realAlloc:
-			fprintf(stderr, "aft: %zx\n", address);
 			object = (Object*)address;
 			object->setArgs(id, size, refCount, getClassName(classID));
 			break;

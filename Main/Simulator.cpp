@@ -130,6 +130,7 @@ void Simulator::allocateToRootset(string line){
 	pos = line.find('S')+1;
 	length = line.find(' ',pos)-pos;
 	size = atoi(line.substr(pos,length).c_str());
+	size += sizeof(Object);
 
 	pos = line.find('N')+1;
 	length = line.find('\n',pos)-pos;
@@ -199,6 +200,7 @@ void Simulator::allocateObject(string line){
 	pos = line.find('S')+1;
 	length = line.find(' ',pos)-pos;
 	size = atoi(line.substr(pos,length).c_str());
+	size += sizeof(Object);
 
 	pos = line.find('N')+1;
 	length = line.find('\n',pos)-pos;

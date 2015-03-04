@@ -62,15 +62,12 @@ void TraversalCollector::copy() {
 
 	switch(order) {
 		case breadthFirst:
-			fprintf(stderr, "breadth first\n");
 			breadthFirstCopying();
 			break;
 		case depthFirst:
-			fprintf(stderr, "depth first\n");
 			depthFirstCopying();
 			break;
 		case hotness:
-			fprintf(stderr, "hotness\n");
 			hotnessCopying();
 			break;
 		default:
