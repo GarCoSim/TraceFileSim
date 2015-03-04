@@ -35,12 +35,12 @@ bool MemoryManager::loadClassTable(string traceFilePath) {
 	string className = traceFilePath.substr(0, found) + ".cls";
 	string line;
 
+	// we need to push an empty element into the vector as our classes start with id 1
+	classTable.push_back("EMPTY");
+
 	classFile.open(className.c_str());
 	if (!classFile.good())
 		return false;
-
-	// we need to push an empty element into the vector as our classes start with id 1
-	classTable.push_back("PADDING");
 
 	do {
 		if(getline(classFile, line)) {
@@ -55,14 +55,14 @@ bool MemoryManager::loadClassTable(string traceFilePath) {
 	return true;;
 }
 
-const char *MemoryManager::getClassName(int classNumber) {
+char *MemoryManager::getClassName(int classNumber) {
 	if (!hasClassTable())
-		return "CLASS_TABLE_NOT_LOADED";
+		return (char*)"CLASS_TABLE_NOT_LOADED";
 
-	if (classNumber > classTable.size())
-		return "OUT_OF_BOUNDS";
+	if (classNumber > (int)classTable.size())
+		return (char*)"OUT_OF_BOUNDS";
 
-	return classTable.at(classNumber).c_str();
+	return (char*)classTable.at(classNumber).c_str();
 }
 
 bool MemoryManager::hasClassTable() {
@@ -222,7 +222,7 @@ void MemoryManager::addRootToContainers(Object* object, int thread,
 }
 
 int MemoryManager::allocateObjectToRootset(int thread, int id,
-		int size, int refCount) {
+		int size, int refCount, int classID) {
 
 	//find empty rootset slot. resize rootset if needed
 	int rootsetIndex = myObjectContainers[GENERATIONS-1]->getRootsetSlot(thread);
@@ -246,11 +246,11 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		case realAlloc:
 			fprintf(stderr, "aft: %zx\n", address);
 			object = (Object*)address;
-			object->setArgs(id, size, refCount);
+			object->setArgs(id, size, refCount, getClassName(classID));
 			break;
 		default:
 		case simulatedAlloc:
-			object = new Object(id, size, refCount, address);
+			object = new Object(id, size, refCount, address, getClassName(classID));
 			break;
 	}
 	object->setGeneration(0);
@@ -433,7 +433,7 @@ void MemoryManager::addToContainers(Object* object) {
 }
 
 int MemoryManager::allocateObject(int thread, int parentID, int parentSlot,
-		int id, int size, int refCount) {
+		int id, int size, int refCount, int classID) {
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog,
 				"(%d) AllocateObject by thread %d. Parent id:%d, slot: %d with id %d\n",
@@ -469,7 +469,7 @@ int MemoryManager::allocateObject(int thread, int parentID, int parentSlot,
 		}
 	}
 	//create Object
-	Object* object = new Object(id, size, refCount, address);
+	Object* object = new Object(id, size, refCount, address, getClassName(classID));
 	object->setGeneration(0);
 	addToContainers(object);
 	//connect to parent

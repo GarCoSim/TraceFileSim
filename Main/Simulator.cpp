@@ -37,13 +37,19 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 string Simulator::getNextLine(){
 	string line = "";
 	//try parsing next line, we skip empty lines
+
+	if (myTraceFile.eof()) {
+		myLastStepWorked = 0;
+		return line;
+	}
+
 	do {
 		if(getline(myTraceFile, line)){
 			myLastStepWorked = 1;
 		} else {
 			myLastStepWorked = 0;
 		}
-	} while (line.size() == 0 || !myTraceFile.eof()); 
+	} while (line.size() == 0); 
 
 	return line;
 }
@@ -108,6 +114,7 @@ int Simulator::lastStepWorked(){
 void Simulator::allocateToRootset(string line){
 	int thread, id, size, refCount;
 	int pos, length;
+	int classID;
 
 	pos = line.find('T')+1;
 	length = line.find(' ',pos)-pos;
@@ -129,7 +136,14 @@ void Simulator::allocateToRootset(string line){
 	length = line.find('\n',pos)-pos;
 	refCount = atoi(line.substr(pos,length).c_str());
 
-	myMemManager->allocateObjectToRootset(thread, id, size, refCount);
+	if (myMemManager->hasClassTable()) {
+		pos = line.find('C')+1;
+		length = line.find('\n',pos)-pos;
+		classID = atoi(line.substr(pos,length).c_str());
+	} else
+		classID = 0;
+
+	myMemManager->allocateObjectToRootset(thread, id, size, refCount, classID);
 }
 
 void Simulator::deleteRoot(string line){
@@ -165,6 +179,7 @@ void Simulator::addToRoot(string line){
 void Simulator::allocateObject(string line){
 	int thread, parent, parentSlot, id, size, refCount;
 	int pos, length;
+	int classID;
 
 	pos = line.find('T')+1;
 	length = line.find(' ',pos)-pos;
@@ -190,7 +205,14 @@ void Simulator::allocateObject(string line){
 	length = line.find('\n',pos)-pos;
 	refCount = atoi(line.substr(pos,length).c_str());
 
-	myMemManager->allocateObject(thread, parent, parentSlot, id, size, refCount);
+	if (myMemManager->hasClassTable()) {
+		pos = line.find('C')+1;
+		length = line.find('\n',pos)-pos;
+		classID = atoi(line.substr(pos,length).c_str());
+	} else
+		classID = 0;
+
+	myMemManager->allocateObject(thread, parent, parentSlot, id, size, refCount, classID);
 }
 
 void Simulator::referenceOperation(string line){

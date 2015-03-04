@@ -11,7 +11,7 @@
 
 namespace traceFileSimulator {
 
-Object::Object(int id, int payloadSize, int maxPointers, int address) {
+Object::Object(int id, int payloadSize, int maxPointers, int address, char *className) {
 
 	//prepare data structure
 	myId = id;
@@ -25,6 +25,7 @@ Object::Object(int id, int payloadSize, int maxPointers, int address) {
 	myAddress = address;
 	myGeneration = 0;
 	myAge = 0;
+	myName = className;
 
 	//stat
 	isAlive = 0;
@@ -33,7 +34,7 @@ Object::Object(int id, int payloadSize, int maxPointers, int address) {
 }
 
 // this only needs to be run when we create the objects in the real allocator
-void Object::setArgs(int id, int payloadSize, int maxPointers) {
+void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) {
 
 	//prepare data structure
 	myId = id;
@@ -46,6 +47,7 @@ void Object::setArgs(int id, int payloadSize, int maxPointers) {
 	}
 	myGeneration = 0;
 	myAge = 0;
+	myName = className;
 
 	//stat
 	isAlive = 0;

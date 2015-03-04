@@ -31,8 +31,8 @@ public:
 	MemoryManager(int heapSize, int highWatermark, int collector, int traversal, int allocator);
 	virtual ~MemoryManager();
 	//operations possible from trace file
-	int allocateObjectToRootset(int thread, int id, int size, int refCount);
-	int allocateObject(int thread, int parentID, int parentSlot, int id, int size, int refCount);
+	int allocateObjectToRootset(int thread, int id, int size, int refCount, int classID);
+	int allocateObject(int thread, int parentID, int parentSlot, int id, int size, int refCount, int classID);
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);
@@ -49,7 +49,7 @@ public:
 	void createRemSetEntriyRoot(Object* object);
 	void clearRemSets();
 	void requestRemSetAdd(Object* currentObj);
-	const char *getClassName(int classNumber);
+	char *getClassName(int classNumber);
 	bool loadClassTable(string traceFilePath);
 	bool hasClassTable();
 

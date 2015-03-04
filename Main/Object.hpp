@@ -15,8 +15,8 @@ namespace traceFileSimulator {
 
 class Object {
 public:
-	Object(int id, int payloadSize, int maxPointers, int address);
-	void setArgs(int id, int payloadSize, int maxPointers);
+	Object(int id, int payloadSize, int maxPointers, int address, char *className);
+	void setArgs(int id, int payloadSize, int maxPointers, char *className);
 	virtual ~Object();
 	int 	getAddress();
 	void 	updateAddress(int newAddress);
@@ -44,6 +44,10 @@ public:
 
 	int getFreed() const {
 		return freed;
+	}
+
+	const char *getClassName() {
+		return myName;
 	}
 
 	void setFreed(int freed) {
@@ -76,6 +80,8 @@ private:
 	//genCon
 	int myAge;
     int	myGeneration;
+
+    char *myName;
 
 };
 
