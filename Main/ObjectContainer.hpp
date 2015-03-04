@@ -39,6 +39,7 @@ public:
 	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
 	int countElements();
+	bool isAlreadyRoot(int thread, int id);
 private:
 	int getListSlot();
 	bool doesObjectExistInList(Object *queryObject);

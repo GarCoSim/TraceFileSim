@@ -277,7 +277,14 @@ int MemoryManager::requestRootDelete(int thread, int id){
 
 }
 
+bool MemoryManager::isAlreadyRoot(int thread, int id) {
+	return myObjectContainers[GENERATIONS-1]->isAlreadyRoot(thread, id);
+}
+
 int MemoryManager::requestRootAdd(int thread, int id){
+	if (isAlreadyRoot(thread, id))
+		return -1;
+
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
 	int rootSlot = myObjectContainers[GENERATIONS-1]->getRootsetSlot(thread);
 	myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread, rootSlot);

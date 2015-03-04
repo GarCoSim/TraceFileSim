@@ -76,6 +76,17 @@ bool ObjectContainer::doesObjectExistInList(Object *queryObject) {
 	return false;
 }
 
+bool ObjectContainer::isAlreadyRoot(int thread, int id) {
+	Object *obj = getByID(id);
+	int i;
+
+	for (i = 0; i < (int)rootset[thread].size(); i++)
+		if (rootset[thread].at(i) == obj)
+			return true;
+
+	return false;
+}
+
 int ObjectContainer::addToRoot(Object* newObject, int thread, int rootSlot) {
 	if (!doesObjectExistInList(newObject)) {
 		int listSlot = getListSlot();

@@ -54,6 +54,7 @@ public:
 	bool hasClassTable();
 
 private:
+	bool isAlreadyRoot(int thread, int id);
 	int* computeHeapsizes(int heapSize);
 	void initAllocators(int heapsize);
 	void initContainers();
