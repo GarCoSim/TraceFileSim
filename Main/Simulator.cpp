@@ -49,6 +49,7 @@ string Simulator::getNextLine(){
 		} else {
 			myLastStepWorked = 0;
 		}
+		gLineInTrace++;
 	} while (line.size() == 0); 
 
 	return line;
@@ -56,7 +57,6 @@ string Simulator::getNextLine(){
 
 int Simulator::doNextStep(){
 	string traceLine = getNextLine();
-	gLineInTrace++;
 	if (ONE_SECOND_PASSED) {
 		start = clock();
 		seconds++;
@@ -74,7 +74,6 @@ int Simulator::doNextStep(){
 				//next line is a '+', which we skip since it adds the newly created object
 				//to the rootset, which already happened in the simulator
 				getNextLine();
-				gLineInTrace++;
 				break;
 			case '+':
 				//allocateToRootset(traceLine);
