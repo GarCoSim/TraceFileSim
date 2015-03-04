@@ -21,10 +21,14 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
 		fprintf(stderr, "File open failed.\n");
-		return;
+		exit(1);
 	}
 
 	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator);
+
+	if (!myMemManager->loadClassTable((string)traceFilePath))
+		fprintf(stdout, "No class table found\n");
+
 	counter = 0;
 	start = clock();
 	seconds = 0;
@@ -32,12 +36,15 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 
 string Simulator::getNextLine(){
 	string line = "";
-	//try parsing next line
-	if(getline(myTraceFile, line)){
-		myLastStepWorked = 1;
-	} else {
-		myLastStepWorked = 0;
-	}
+	//try parsing next line, we skip empty lines
+	do {
+		if(getline(myTraceFile, line)){
+			myLastStepWorked = 1;
+		} else {
+			myLastStepWorked = 0;
+		}
+	} while (line.size() == 0 || !myTraceFile.eof()); 
+
 	return line;
 }
 

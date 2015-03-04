@@ -36,6 +36,7 @@ private:
 	void addToRoot(string line);
 
 	ifstream myTraceFile;
+	
 	int myLastStepWorked;
 	MemoryManager* myMemManager;
 	

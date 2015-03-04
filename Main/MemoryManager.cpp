@@ -22,9 +22,51 @@ MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int
 	_collector = (collectorEnum)collector;
 	_traversal = (traversalEnum)traversal;
 
+	classTableLoaded = false;
+
 	initAllocators(heapSize);
 	initContainers();
 	initGarbageCollectors(highWatermark);
+}
+
+bool MemoryManager::loadClassTable(string traceFilePath) {
+	ifstream classFile;
+	size_t found = traceFilePath.find(".trace");
+	string className = traceFilePath.substr(0, found) + ".cls";
+	string line;
+
+	classFile.open(className.c_str());
+	if (!classFile.good())
+		return false;
+
+	// we need to push an empty element into the vector as our classes start with id 1
+	classTable.push_back("PADDING");
+
+	do {
+		if(getline(classFile, line)) {
+			found = line.find(": ");
+			line = line.substr(found + 2, line.size() - found - 2);
+			classTable.push_back(line);
+		}
+	} while (!classFile.eof());
+
+	classTableLoaded = true;
+
+	return true;;
+}
+
+const char *MemoryManager::getClassName(int classNumber) {
+	if (!hasClassTable())
+		return "CLASS_TABLE_NOT_LOADED";
+
+	if (classNumber > classTable.size())
+		return "OUT_OF_BOUNDS";
+
+	return classTable.at(classNumber).c_str();
+}
+
+bool MemoryManager::hasClassTable() {
+	return classTableLoaded;
 }
 
 void MemoryManager::initAllocators(int heapsize) {
@@ -202,7 +244,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 	Object* object;
 	switch (_allocator) {
 		case realAlloc:
-			fprintf(stderr, "aft: %x\n", address);
+			fprintf(stderr, "aft: %zx\n", address);
 			object = (Object*)address;
 			object->setArgs(id, size, refCount);
 			break;

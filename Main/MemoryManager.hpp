@@ -18,6 +18,11 @@
 #include "../Collectors/CopyingCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
 #include "../defines.hpp"
+#include <string>
+#include <vector>
+#include <fstream>
+
+using namespace std;
 
 namespace traceFileSimulator {
 
@@ -44,6 +49,9 @@ public:
 	void createRemSetEntriyRoot(Object* object);
 	void clearRemSets();
 	void requestRemSetAdd(Object* currentObj);
+	const char *getClassName(int classNumber);
+	bool loadClassTable(string traceFilePath);
+	bool hasClassTable();
 
 private:
 	int* computeHeapsizes(int heapSize);
@@ -58,6 +66,9 @@ private:
 	allocatorEnum _allocator;
 	collectorEnum _collector;
 	traversalEnum _traversal;
+
+	bool classTableLoaded;
+	vector<string> classTable;
 
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];

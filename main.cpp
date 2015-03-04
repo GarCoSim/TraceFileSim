@@ -52,8 +52,15 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 	return -1;
 }
 
+#define MARCEL_DEBUG 1
+
 int main(int argc, char *argv[]) {
+	char *filename;
+
 	if(argc < 2) {
+#if(MARCEL_DEBUG == 1)
+		filename = (char*)"../../KoMaClass.trace";
+#else
 		fprintf(stderr, "Usage: TraceFileSimulator traceFile [OPTIONS]\n" \
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
@@ -63,6 +70,7 @@ int main(int argc, char *argv[]) {
 						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: real)\n" \
 						);
 		exit(1);
+#endif
 	}
 
 	if(WRITE_DETAILED_LOG) {
@@ -76,7 +84,9 @@ int main(int argc, char *argv[]) {
 			"LINE", "GC REASON", "Total GCs:", "Objects freed:", "Live objects:",
 			"Heap used:", "Free heap:");
 
-	char* filename    = argv[1];
+#if (MARCEL_DEBUG == 0)
+	filename    = argv[1];
+#endif
 	int heapSize      = setArgs(argc, argv, "--heapsize",  "-h");
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
 	int traversal     = setArgs(argc, argv, "--traversal", "-t");
