@@ -40,6 +40,8 @@ public:
 
 	void initializeHeap(int heapSize);
 
+	bool isRealAllocator();
+
 private:
 	inline bool isBitSet(unsigned int address);
 	void setBitUsed(unsigned int address);

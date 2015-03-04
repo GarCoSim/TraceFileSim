@@ -39,6 +39,8 @@ public:
 
 	virtual void initializeHeap(int heapSize);
 
+	virtual bool isRealAllocator();
+
 protected:
 	char* myHeapBitMap;
 	int myHeapSize;

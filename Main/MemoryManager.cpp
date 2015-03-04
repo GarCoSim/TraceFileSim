@@ -320,7 +320,7 @@ void MemoryManager::requestDelete(Object* object, int gGC) {
 
 	//now free in allocator and delete object
 	myAllocators[objGeneration]->gcFree(object);
-	myObjectContainers[objGeneration]->deleteObject(object);
+	myObjectContainers[objGeneration]->deleteObject(object, !myAllocators[objGeneration]->isRealAllocator());
 }
 
 void MemoryManager::requestFree(Object* object) {
