@@ -95,6 +95,9 @@ int ObjectContainer::addToRoot(Object* newObject, int thread, int rootSlot) {
 			return -1;
 		}
 		objectList[listSlot] = newObject;
+		if (newObject->getID() >= 804) {
+			fprintf(stderr, "object %d at ol %d, t %d, r %d\n", newObject->getID(), listSlot, thread, rootSlot);
+		}
 	}
 	rootset[thread][rootSlot] = newObject;
 	rootCount++;

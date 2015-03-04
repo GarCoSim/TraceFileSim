@@ -96,8 +96,12 @@ int main(int argc, char *argv[]) {
 	int collector     = setArgs(argc, argv, "--collector", "-c");
 	int allocator     = setArgs(argc, argv, "--allocator", "-a");
 
-	if (heapSize == -1)
-		heapSize = 400000;
+	if (heapSize == -1) {
+		if (collector != (int)traversalGC)
+			heapSize = 200000;
+		else
+			heapSize = 400000;
+	}
 	if (highWatermark == -1)
 		highWatermark = 90;
 	if (traversal == -1)

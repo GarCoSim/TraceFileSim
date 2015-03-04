@@ -227,10 +227,10 @@ void RealAllocator::setAllocated(int address, int size) {
 void RealAllocator::setFree(int address, int size) {
 	int i;
 	int pointer = address;
-	unsigned char *heapPtr = &heap[address];
+	//unsigned char *heapPtr = &heap[address];
 
 	for (i = 0; i < size; i++) {
-		*heapPtr++ = NULL;
+		//*heapPtr++ = NULL; // overwrite the space
 		setBitUnused(pointer);
 		pointer++;
 	}
