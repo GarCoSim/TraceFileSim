@@ -43,8 +43,12 @@ string Simulator::getNextLine() {
 }
 
 int Simulator::doNextStep() {
-	string traceLine = getNextLine();
-	gLineInTrace++;
+	string traceLine = "";
+	while(traceLine.compare("") == 0){
+		traceLine = getNextLine();
+		gLineInTrace++;
+	}
+
 	if (ONE_SECOND_PASSED) {
 		start = clock();
 		seconds++;
@@ -107,7 +111,7 @@ void Simulator::allocateToRootset(string line) {
 	size = atoi(line.substr(pos, length).c_str());
 
 	pos = line.find('N') + 1;
-	length = line.find('\n', pos) - pos;
+	length = line.find(' ', pos) - pos;
 	refCount = atoi(line.substr(pos, length).c_str());
 
 	if (thread > NUM_THREADS) {
