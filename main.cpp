@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: 200000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, traversal, default: traversal)\n" \
+						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, traversal, default: markSweep)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: real)\n" \
 						);
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 	if (traversal == -1)
 		traversal = (int)breadthFirst;
 	if (collector == -1)
-		collector = (int)traversalGC;
+		collector = (int)markSweepGC;
 	if (allocator == -1)
 		allocator = (int)realAlloc;
 

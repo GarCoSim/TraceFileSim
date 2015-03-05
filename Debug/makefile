@@ -53,6 +53,8 @@ TraceFileSimulator: $(OBJS) $(USER_OBJS)
 # Other Targets
 clean:
 	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) TraceFileSimulator
+	rm -rf gcLog.log
+	rm -rf gcTimes.log
 	-@echo ' '
 
 .PHONY: all clean dependents

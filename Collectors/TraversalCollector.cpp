@@ -22,6 +22,7 @@ extern clock_t start, stop;
 namespace traceFileSimulator {
 
 TraversalCollector::TraversalCollector() {
+	fprintf(stderr, "This collector is WIP, please use a different collector!\n");
 }
 
 /**

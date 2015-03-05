@@ -57,25 +57,25 @@ void Collector::printStats() {
 
 	switch ((gcReason)statCollectionReason) {
 		case reasonUnknown:
-			statCollectionReasonString = "Unknown";
+			statCollectionReasonString = (char*)"Unknown";
 			break;
 		case reasonFailedAlloc:
-			statCollectionReasonString = "Failed Alloc";
+			statCollectionReasonString = (char*)"Failed Alloc";
 			break;
 		case reasonHighWatermark:
-			statCollectionReasonString = "High Watermark";
+			statCollectionReasonString = (char*)"High Watermark";
 			break;
 		case reasonDebug:
-			statCollectionReasonString = "Debug";
+			statCollectionReasonString = (char*)"Debug";
 			break;
 		case reasonShift:
-			statCollectionReasonString = "Shift";
+			statCollectionReasonString = (char*)"Shift";
 			break;
 		case reasonEval:
-			statCollectionReasonString = "Evaluation";
+			statCollectionReasonString = (char*)"Evaluation";
 			break;
 		default:
-			statCollectionReasonString = "ERROR";
+			statCollectionReasonString = (char*)"ERROR";
 			break;
 	}
 
