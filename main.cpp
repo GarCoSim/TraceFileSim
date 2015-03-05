@@ -32,6 +32,7 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)markSweepGC;
 				if (!strcmp(argv[i + 1], "traversal"))
 					return (int)traversalGC;
+				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
 					return (int)breadthFirst;
@@ -39,11 +40,13 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)depthFirst;
 				if (!strcmp(argv[i + 1], "hotness"))
 					return (int)hotness;
+				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
 				if (!strcmp(argv[i + 1], "real"))
 					return (int)realAlloc;
 				if (!strcmp(argv[i + 1], "simulated"))
 					return (int)simulatedAlloc;
+				return -1;
 			} else
 				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
 		}
@@ -52,15 +55,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 	return -1;
 }
 
-#define MARCEL_DEBUG 1
-
 int main(int argc, char *argv[]) {
-	char *filename;
-
 	if(argc < 2) {
-#if(MARCEL_DEBUG == 1)
-		filename = (char*)"../../KoMaClass.trace";
-#else
 		fprintf(stderr, "Usage: TraceFileSimulator traceFile [OPTIONS]\n" \
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
@@ -70,7 +66,6 @@ int main(int argc, char *argv[]) {
 						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: real)\n" \
 						);
 		exit(1);
-#endif
 	}
 
 	if(WRITE_DETAILED_LOG) {
@@ -84,29 +79,19 @@ int main(int argc, char *argv[]) {
 			"LINE", "GC REASON", "Total GCs:", "Objects freed:", "Live objects:",
 			"Heap used:", "Free heap:");
 
-#if (MARCEL_DEBUG == 0)
-	filename    = argv[1];
-#endif
+	char *filename    = argv[1];
 	int heapSize      = setArgs(argc, argv, "--heapsize",  "-h");
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
 	int traversal     = setArgs(argc, argv, "--traversal", "-t");
 	int collector     = setArgs(argc, argv, "--collector", "-c");
 	int allocator     = setArgs(argc, argv, "--allocator", "-a");
 
-<<<<<<< HEAD
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;
 		else
 			heapSize = 400000;
 	}
-=======
-	if (heapSize == -1)
-		heapSize = 200000;
-<<<<<<< HEAD
->>>>>>> parent of da9a9da... Minor bugfixes in real allocator
-=======
->>>>>>> parent of da9a9da... Minor bugfixes in real allocator
 	if (highWatermark == -1)
 		highWatermark = 90;
 	if (traversal == -1)

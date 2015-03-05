@@ -21,6 +21,10 @@ namespace traceFileSimulator {
 SimulatedAllocator::SimulatedAllocator() {
 }
 
+bool SimulatedAllocator::isRealAllocator() {
+	return false;
+}
+
 void SimulatedAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[heapSize / 8 + 1];
 

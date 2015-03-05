@@ -142,9 +142,11 @@ void TraversalCollector::breadthFirstCopying() {
 
 	for (i = 0; i < myObjectContainer->getSize(); i++) {
 		currentObj = myObjectContainer->getbySlotNr(i);
-		if (currentObj)
-			if (!myAllocator->isInNewSpace(currentObj))
-				myObjectContainer->deleteObject(currentObj);
+		if (currentObj) {
+			if (!myAllocator->isInNewSpace(currentObj)) {
+				myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
+			}
+		}
 	}
 
 	myAllocator->swapHeaps();

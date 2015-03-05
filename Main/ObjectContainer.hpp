@@ -27,8 +27,8 @@ public:
 	Object* getbySlotNr(int slot);
 	Object* getRoot(int thread, int rootSlot);
 	int getSize();
-	int deleteObject(Object* object);
-	int deleteObject(int objectID);
+	int deleteObject(Object* object, bool deleteFlag);
+	int deleteObject(int objectID, bool deleteFlag);
 	int getGenRootSize();
 	int getGenRootCount();
 	int getRootSize();

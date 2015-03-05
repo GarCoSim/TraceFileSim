@@ -24,6 +24,10 @@ void Allocator::initializeHeap(int heapSize) {
 Allocator::Allocator() {
 }
 
+bool Allocator::isRealAllocator() {
+	return false;
+}
+
 void Allocator::setHalfHeapSize(bool value) {
 }
 

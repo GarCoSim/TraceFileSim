@@ -34,6 +34,7 @@ void RealAllocator::initializeHeap(int heapSize) {
 	myHeapSize = heapSize;
 	myLastSuccessAddress = 0;
 	myLastSuccessAddressNewSpace = heapSize / 2;
+	myHeapSizeNewSpace = overallHeapSize;
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
@@ -52,9 +53,18 @@ void RealAllocator::initializeHeap(int heapSize) {
 
 
 void RealAllocator::moveObject(Object *object) {
+	// if our object already survived we have nothing to do
+	if (isInNewSpace(object))
+		return;
+
 	int size = object->getPayloadSize();
 	object->updateAddress(allocateInNewSpace(size));
 }
+
+bool RealAllocator::isRealAllocator() {
+	return true;
+}
+
 
 int RealAllocator::allocateInNewSpace(int size) {
 	if (size <= 0) {
@@ -72,26 +82,14 @@ int RealAllocator::allocateInNewSpace(int size) {
 	for (i = myLastSuccessAddressNewSpace; i != end; i++) {
 		bit = isBitSet(i);
 
-		if (newSpaceOffset == 0) {
-			if (i == myHeapSize) {
-				if (passedBoundOnce == 1) {
-					return -1;
-				}
-				i = 0;
-				contiguous = 0;
-				address = i + 1;
-				passedBoundOnce = 1;
+		if (i == myHeapSizeNewSpace) {
+			if (passedBoundOnce == 1) {
+				return -1;
 			}
-		} else {
-			if (i == overallHeapSize) {
-				if (passedBoundOnce == 1) {
-					return -1;
-				}
-				i = 0;
-				contiguous = 0;
-				address = i + 1;
-				passedBoundOnce = 1;
-			}
+			i = 0;
+			contiguous = 0;
+			address = i + 1;
+			passedBoundOnce = 1;
 		}
 
 		if (bit == 1) {
@@ -104,7 +102,7 @@ int RealAllocator::allocateInNewSpace(int size) {
 				statBytesAllocated += size;
 				statLiveObjects++;
 				myLastSuccessAddressNewSpace = address;
-				return address;
+				return (size_t)&heap[address];
 			}
 		}
 	}
@@ -129,13 +127,16 @@ bool RealAllocator::isInNewSpace(Object *object) {
 void RealAllocator::swapHeaps() {
 	int temp;
 
+	myHeapSizeNewSpace = myHeapSize;
+	myHeapSize = (newSpaceOffset == 0) ? overallHeapSize : overallHeapSize / 2 + 1;
+
 	newSpaceOffset = (newSpaceOffset == 0) ? overallHeapSize / 2 : 0;
 
 	temp = myLastSuccessAddress;
 	myLastSuccessAddress = myLastSuccessAddressNewSpace;
 	myLastSuccessAddressNewSpace = temp;
 
-	myHeapSize = newSpaceOffset;
+	
 }
 
 void RealAllocator::freeAllSectors() {
@@ -221,20 +222,10 @@ void RealAllocator::setAllocated(int address, int size) {
 void RealAllocator::setFree(int address, int size) {
 	int i;
 	int pointer = address;
-<<<<<<< HEAD
-<<<<<<< HEAD
 	//unsigned char *heapPtr = &heap[address];
 
 	for (i = 0; i < size; i++) {
 		//*heapPtr++ = NULL; // overwrite the space
-=======
-
-	for (i = 0; i < size; i++) {
->>>>>>> parent of da9a9da... Minor bugfixes in real allocator
-=======
-
-	for (i = 0; i < size; i++) {
->>>>>>> parent of da9a9da... Minor bugfixes in real allocator
 		setBitUnused(pointer);
 		pointer++;
 	}
