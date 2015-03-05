@@ -56,11 +56,6 @@ void RealAllocator::moveObject(Object *object) {
 	object->updateAddress(allocateInNewSpace(size));
 }
 
-bool RealAllocator::isRealAllocator() {
-	return true;
-}
-
-
 int RealAllocator::allocateInNewSpace(int size) {
 	if (size <= 0) {
 		return -1;
@@ -134,14 +129,13 @@ bool RealAllocator::isInNewSpace(Object *object) {
 void RealAllocator::swapHeaps() {
 	int temp;
 
-	myHeapSize = (newSpaceOffset == 0) ? overallHeapSize : overallHeapSize / 2 + 1;
 	newSpaceOffset = (newSpaceOffset == 0) ? overallHeapSize / 2 : 0;
 
 	temp = myLastSuccessAddress;
 	myLastSuccessAddress = myLastSuccessAddressNewSpace;
 	myLastSuccessAddressNewSpace = temp;
 
-	
+	myHeapSize = newSpaceOffset;
 }
 
 void RealAllocator::freeAllSectors() {
@@ -227,10 +221,15 @@ void RealAllocator::setAllocated(int address, int size) {
 void RealAllocator::setFree(int address, int size) {
 	int i;
 	int pointer = address;
+<<<<<<< HEAD
 	//unsigned char *heapPtr = &heap[address];
 
 	for (i = 0; i < size; i++) {
 		//*heapPtr++ = NULL; // overwrite the space
+=======
+
+	for (i = 0; i < size; i++) {
+>>>>>>> parent of da9a9da... Minor bugfixes in real allocator
 		setBitUnused(pointer);
 		pointer++;
 	}

@@ -32,7 +32,6 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)markSweepGC;
 				if (!strcmp(argv[i + 1], "traversal"))
 					return (int)traversalGC;
-				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
 					return (int)breadthFirst;
@@ -40,13 +39,11 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)depthFirst;
 				if (!strcmp(argv[i + 1], "hotness"))
 					return (int)hotness;
-				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
 				if (!strcmp(argv[i + 1], "real"))
 					return (int)realAlloc;
 				if (!strcmp(argv[i + 1], "simulated"))
 					return (int)simulatedAlloc;
-				return -1;
 			} else
 				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
 		}
@@ -96,12 +93,17 @@ int main(int argc, char *argv[]) {
 	int collector     = setArgs(argc, argv, "--collector", "-c");
 	int allocator     = setArgs(argc, argv, "--allocator", "-a");
 
+<<<<<<< HEAD
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;
 		else
 			heapSize = 400000;
 	}
+=======
+	if (heapSize == -1)
+		heapSize = 200000;
+>>>>>>> parent of da9a9da... Minor bugfixes in real allocator
 	if (highWatermark == -1)
 		highWatermark = 90;
 	if (traversal == -1)

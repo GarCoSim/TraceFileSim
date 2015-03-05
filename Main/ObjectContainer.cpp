@@ -128,22 +128,21 @@ Object* ObjectContainer::getRoot(int thread, int rootSlot) {
 	return rootset[thread][rootSlot];
 }
 
-int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
+int ObjectContainer::deleteObject(Object* object) {
 	if (!object)
 		fprintf(stderr, "ERROR(Line %d): trying to delete a non existing object\n", gLineInTrace);
 	int id = object->getID();
-	return deleteObject(id, deleteFlag);
+	return deleteObject(id);
 }
 
-int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
+int ObjectContainer::deleteObject(int objectID) {
 	unsigned int i;
 	Object* temp;
 	for (i = 0; i < objectList.size(); i++) {
 		temp = objectList[i];
 		if (temp && temp->getID() == objectID) {
 			objectList[i] = NULL;
-			if (deleteFlag)
-				delete (temp);
+			delete (temp);
 			return 0;
 		}
 	}

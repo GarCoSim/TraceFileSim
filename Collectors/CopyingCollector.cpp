@@ -80,7 +80,7 @@ void CopyingCollector::sweep(){
 		currentObj = myObjectContainer->getbySlotNr(i);
 		if(currentObj && currentObj->getIsAlive() == 0){
 			myAllocator->gcFree(currentObj);
-			myObjectContainer->deleteObject(currentObj, false);
+			myObjectContainer->deleteObject(currentObj);
 			statFreedObjects++;
 			statFreedDuringThisGC++;
 		}
