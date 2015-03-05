@@ -14,6 +14,8 @@ RM := rm -rf
 -include subdir.mk
 -include objects.mk
 
+VERSION=`cat ../VERSION`
+
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(C++_DEPS)),)
 -include $(C++_DEPS)
@@ -41,6 +43,10 @@ endif
 
 # All Target
 all: TraceFileSimulator
+	@echo "All done building TraceFileSimulator v"$(VERSION)
+
+version:
+	@echo $(VERSION)
 
 # Tool invocations
 TraceFileSimulator: $(OBJS) $(USER_OBJS)

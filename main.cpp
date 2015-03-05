@@ -12,11 +12,6 @@
 #include <string.h>
 #include "defines.hpp"
 
-// always increment it when you have patched something, so that everyone knows what the current version is
-#define VERSION 1.33
-// if you are currently testing something you can add a suffix to the version, e.g. "-testing" or "-pre-release"
-#define VERSION_SUFFIX "-pre-release"
-
 using namespace traceFileSimulator;
 using namespace std;
 //logging vars
@@ -106,7 +101,7 @@ int main(int argc, char *argv[]) {
 	if (allocator == -1)
 		allocator = (int)realAlloc;
 
-	fprintf(stderr, "TraceFileSimulator v%.2f%s\n\n", VERSION, VERSION_SUFFIX);
+	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
