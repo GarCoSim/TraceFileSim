@@ -222,10 +222,15 @@ void RealAllocator::setFree(int address, int size) {
 	int i;
 	int pointer = address;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	//unsigned char *heapPtr = &heap[address];
 
 	for (i = 0; i < size; i++) {
 		//*heapPtr++ = NULL; // overwrite the space
+=======
+
+	for (i = 0; i < size; i++) {
+>>>>>>> parent of da9a9da... Minor bugfixes in real allocator
 =======
 
 	for (i = 0; i < size; i++) {

@@ -103,6 +103,9 @@ int main(int argc, char *argv[]) {
 =======
 	if (heapSize == -1)
 		heapSize = 200000;
+<<<<<<< HEAD
+>>>>>>> parent of da9a9da... Minor bugfixes in real allocator
+=======
 >>>>>>> parent of da9a9da... Minor bugfixes in real allocator
 	if (highWatermark == -1)
 		highWatermark = 90;
