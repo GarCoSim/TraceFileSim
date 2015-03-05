@@ -48,7 +48,7 @@ void MarkSweepCollector::checkWatermark() {
 	int free = myAllocator->getFreeSize();
 	int ratio = 100 - (100 * free / size);
 	if (ratio > myWatermark) {
-		collect(2);
+		collect((int)reasonHighWatermark);
 	}
 }
 
@@ -189,30 +189,6 @@ void MarkSweepCollector::postCollect() {
 	fprintf(gcFile,"%d\t%f\n",gLineInTrace,elapsed_secs);
 	fflush(gcFile);
 	fclose(gcFile);
-}
-
-void MarkSweepCollector::printStats() {
-	statFreeSpaceOnHeap = myAllocator->getFreeSize();
-	int heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
-	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8d | %9d | %10d | %14d "
-			"| %13d | %10d | %10d | %5d |\n", gLineInTrace,
-			statCollectionReason, statGcNumber, statFreedObjects,
-			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration);
-	fflush(gLogFile);
-	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
-		myAllocator->printStats();
-	}
-	if(statCollectionReason == 0){
-		char fl[80];
-		sprintf(fl, "gen%d.log",myGeneration);
-		FILE* genfile = fopen(fl,"a");
-
-		fprintf(genfile,"%d\n",heapUsed);
-		fflush(genfile);
-		fclose(genfile);
-	}
-	statCollectionReason = 0;
 }
 
 void MarkSweepCollector::freeAllLiveObjects() {

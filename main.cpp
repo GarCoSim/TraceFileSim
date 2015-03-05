@@ -74,10 +74,10 @@ int main(int argc, char *argv[]) {
 
 	//set up global logfile
 	gLogFile = fopen("gcLog.log", "w+");
-	fprintf(gLogFile, "%8s | %9s | %9s | %14s "
+	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s |\n",
-			"LINE", "GC REASON", "Total GCs:", "Objects freed:", "Live objects:",
-			"Heap used:", "Free heap:");
+			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
+			"Heap Used", "Free Heap");
 
 	char *filename    = argv[1];
 	int heapSize      = setArgs(argc, argv, "--heapsize",  "-h");

@@ -25,7 +25,6 @@ public:
 	virtual ~MarkSweepCollector();
 	void collect(int reason);
 	void checkWatermark();
-	void printStats();
 	int promotionPhase();
 
 private:

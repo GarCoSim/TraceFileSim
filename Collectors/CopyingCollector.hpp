@@ -25,7 +25,6 @@ public:
 	virtual ~CopyingCollector();
 	void collect(int reason);
 //	void checkWatermark();
-	void printStats();
 	
 private:
 	void mark();

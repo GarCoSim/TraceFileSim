@@ -141,7 +141,7 @@ size_t MemoryManager::shift(int size){
 		if(WRITE_DETAILED_LOG==1){
 			fprintf(gDetLog,"(%d) SHIFTING for %d\n",gLineInTrace,size);
 		}
-		myGarbageCollectors[GENERATIONS-1]->collect(4);
+		myGarbageCollectors[GENERATIONS-1]->collect((int)reasonShift);
 		outOfMemory = myGarbageCollectors[GENERATIONS-1]->promotionPhase();
 		if(outOfMemory==-1){
 			fprintf(stderr,"(%d) OUT OF MEMORY: (%d)\n",gLineInTrace,size);
@@ -153,7 +153,7 @@ size_t MemoryManager::shift(int size){
 }
 
 int MemoryManager::evalCollect(){
-	myGarbageCollectors[GENERATIONS-1]->collect(17);
+	myGarbageCollectors[GENERATIONS-1]->collect((int)reasonEval);
 	return 0;
 }
 
@@ -257,7 +257,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 	addRootToContainers(object, thread, rootsetIndex);
 
 	if (DEBUG_MODE == 1) {	
-		myGarbageCollectors[GENERATIONS - 1]->collect(3);
+		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 	return 0;
@@ -493,7 +493,7 @@ int MemoryManager::allocateObject(int thread, int parentID, int parentSlot,
 		}
 	}
 	if (DEBUG_MODE == 1) {
-		myGarbageCollectors[GENERATIONS - 1]->collect(3);
+		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 	return 0;
@@ -543,7 +543,7 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 		}
 	}
 	if (DEBUG_MODE == 1) {
-		myGarbageCollectors[GENERATIONS - 1]->collect(3);
+		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 	return 0;

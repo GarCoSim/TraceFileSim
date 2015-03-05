@@ -30,10 +30,33 @@ TraversalCollector::TraversalCollector() {
 void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
 	preCollect();
-	//easy as 1, 2, 3 :)
+
 	copy();
 
+	swap();
+
 	postCollect();
+}
+
+void TraversalCollector::swap() {
+	/*
+	 * we need to do this step because we are simulating everything by maintaining an object list
+	 * if we use a real allocator we do not delete the object, we just remove it from the object list
+	 * it will then by overwritten afterwards. the real allocator just removes it from the object list
+	 */
+	int i;
+	Object *currentObj;
+
+	for (i = 0; i < myObjectContainer->getSize(); i++) {
+		currentObj = myObjectContainer->getbySlotNr(i);
+		if (currentObj) {
+			if (!myAllocator->isInNewSpace(currentObj)) {
+				myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
+			}
+		}
+	}
+
+	myAllocator->swapHeaps();
 }
 
 void TraversalCollector::checkWatermark() {
@@ -41,7 +64,7 @@ void TraversalCollector::checkWatermark() {
 	int free = myAllocator->getFreeSize();
 	int ratio = 100 - (100 * free / size);
 	if (ratio > myWatermark) {
-		collect(2);
+		collect((int)reasonHighWatermark);
 	}
 }
 
@@ -139,17 +162,6 @@ void TraversalCollector::breadthFirstCopying() {
 			}
 		}
 	}
-
-	for (i = 0; i < myObjectContainer->getSize(); i++) {
-		currentObj = myObjectContainer->getbySlotNr(i);
-		if (currentObj) {
-			if (!myAllocator->isInNewSpace(currentObj)) {
-				myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
-			}
-		}
-	}
-
-	myAllocator->swapHeaps();
 }
 
 void TraversalCollector::depthFirstCopying() {
@@ -206,30 +218,6 @@ void TraversalCollector::postCollect() {
 	fprintf(gcFile,"%d\t%f\n",gLineInTrace,elapsed_secs);
 	fflush(gcFile);
 	fclose(gcFile);
-}
-
-void TraversalCollector::printStats() {
-	statFreeSpaceOnHeap = myAllocator->getFreeSize();
-	int heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
-	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8d | %9d | %10d | %14d "
-			"| %13d | %10d | %10d | %5d |\n", gLineInTrace,
-			statCollectionReason, statGcNumber, statFreedObjects,
-			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration);
-	fflush(gLogFile);
-	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
-		myAllocator->printStats();
-	}
-	if(statCollectionReason == 0){
-		char fl[80];
-		sprintf(fl, "gen%d.log",myGeneration);
-		FILE* genfile = fopen(fl,"a");
-
-		fprintf(genfile,"%d\n",heapUsed);
-		fflush(genfile);
-		fclose(genfile);
-	}
-	statCollectionReason = 0;
 }
 
 void TraversalCollector::freeAllLiveObjects() {

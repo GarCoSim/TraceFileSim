@@ -44,6 +44,15 @@ enum allocatorEnum {
 						simulatedAlloc
 				};
 
+enum gcReason {
+					reasonUnknown = 0,
+					reasonFailedAlloc,
+					reasonHighWatermark,
+					reasonDebug,
+					reasonShift,
+					reasonEval
+				};
+
 // create some fancy strings for debug output
 #define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : (traversal == (int)depthFirst ? "depthFirst" : "hotness"))
 #define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : "copying"))

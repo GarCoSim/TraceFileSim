@@ -27,7 +27,7 @@ public:
 	virtual ~Collector();
 	virtual void collect(int reason);
 	virtual void checkWatermark();
-	virtual void printStats();
+	void printStats();
 	virtual int promotionPhase();
 
 protected:

@@ -27,7 +27,6 @@ public:
 	virtual ~TraversalCollector();
 	void collect(int reason);
 	void checkWatermark();
-	void printStats();
 	int promotionPhase();
 
 private:
@@ -43,6 +42,7 @@ private:
 	void hotnessCopying();
 	void getAllRoots();
 	void emptyHelpers();
+	void swap();
 };
 
 } 

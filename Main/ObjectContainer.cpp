@@ -246,7 +246,7 @@ int ObjectContainer::getRootsetIndexByID(int thread, int id){
 			return i;
 		}
 	}
-	fprintf(stderr, "No root with id %d found in thread %d.\n",id, thread);
+	fprintf(stderr, "(%d) No root with id %d found in thread %d.\n",gLineInTrace, id, thread);
 	return -1;
 }
 

@@ -43,7 +43,7 @@ void CopyingCollector::collect(int reason){
 //	int free = myAllocator->getFreeSize();
 //	int ratio = 100 - (100*free/size);
 //	if(ratio > myWatermark){
-//		collect(2);
+//		collect(reasonHighWatermark);
 //	}
 //}
 
@@ -133,21 +133,6 @@ void CopyingCollector::compact() {
 void CopyingCollector::postCollect(){
 	printStats();
 }
-
-void CopyingCollector::printStats(){
-	statFreeSpaceOnHeap = myAllocator->getFreeSize();
-	int heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
-	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8d | %9d | %10d | %14d "
-			"| %13d | %10d | %10d |\n",
-			 gLineInTrace, statCollectionReason, statGcNumber,
-			 statFreedObjects, statLiveObjectCount, heapUsed, statFreeSpaceOnHeap);
-	if(DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1){
-		myAllocator->printStats();
-	}
-	statCollectionReason = 0;
-}
-
 
 void CopyingCollector::freeAllLiveObjects() {
 	int i;
