@@ -130,10 +130,6 @@ void CopyingCollector::compact() {
 	reallocateAllLiveObjects();
 }
 
-void CopyingCollector::postCollect(){
-	printStats();
-}
-
 void CopyingCollector::freeAllLiveObjects() {
 	int i;
 	//set all objects to dead and not visible firs

@@ -52,6 +52,7 @@ public:
 	char *getClassName(int classNumber);
 	bool loadClassTable(string traceFilePath);
 	bool hasClassTable();
+	void forceGC();
 
 private:
 	bool isAlreadyRoot(int thread, int id);

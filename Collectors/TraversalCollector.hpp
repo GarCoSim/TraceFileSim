@@ -34,7 +34,6 @@ private:
 	void compact();
 	void initializeMarkPhase();
 	void preCollect();
-	void postCollect();
 	void freeAllLiveObjects();
 	void reallocateAllLiveObjects();
 	void breadthFirstCopying();
@@ -43,6 +42,9 @@ private:
 	void getAllRoots();
 	void emptyHelpers();
 	void swap();
+
+	int liveObjects;
+	int deadObjects;
 };
 
 } 

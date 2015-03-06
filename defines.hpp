@@ -13,19 +13,19 @@
 #define VISUALIZE_GCS 	1
 
 //DEBUGGING
-#define DEBUG_MODE 0
-#define WRITE_DETAILED_LOG 0
-#define WRITE_HEAPMAP 0
+#define DEBUG_MODE            0
+#define WRITE_DETAILED_LOG    0
+#define WRITE_HEAPMAP         0
 #define WRITE_ALLOCATION_INFO 0
 
 //GENERATIONAL GC
-#define GENERATIONS 1
-#define GEN_DEBUG 1
-#define GENRATIO 0.3
-#define PROMOTIONAGE 3
+#define GENERATIONS        1
+#define GEN_DEBUG          0
+#define GENRATIO           0.3
+#define PROMOTIONAGE       3
 #define PROMOTIONAGEFACTOR 0
-#define SHIFTING 1
-#define SHIFTINGFACTOR 2
+#define SHIFTING           1
+#define SHIFTINGFACTOR     2
 
 enum traversalEnum {
 					breadthFirst = 0,
@@ -50,7 +50,8 @@ enum gcReason {
 					reasonHighWatermark,
 					reasonDebug,
 					reasonShift,
-					reasonEval
+					reasonEval,
+					reasonForced
 				};
 
 // create some fancy strings for debug output

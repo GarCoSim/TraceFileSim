@@ -19,11 +19,29 @@ int gLineInTrace;
 int gAllocations;
 FILE* gLogFile;
 FILE* gDetLog;
+int forceAGCAfterEveryStep = 0;
+char *globalFilename;
+
+const char *getLogFilename(string name) {
+	string retString;
+
+	size_t found = name.find(".trace");
+	globalFilename = (char*)name.substr(0, found).c_str();
+	if (forceAGCAfterEveryStep)
+		retString = (string)globalFilename + "Forced.log";
+	else
+		retString = (string)globalFilename + ".log";
+
+	return retString.c_str();
+}
 
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 
 	for (i = 1; i < argc; i++) {
+		if ((!strcmp("--force", option) || !strcmp("-f", shortOption)) && (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption))) {
+			return 1;
+		}
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--collector") || !strcmp(shortOption, "-c")) {
 				if (!strcmp(argv[i + 1], "copying"))
@@ -72,39 +90,47 @@ int main(int argc, char *argv[]) {
 		gDetLog = fopen("detailed.log","w+");
 	}
 
-	//set up global logfile
-	gLogFile = fopen("gcLog.log", "w+");
-	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
-			"| %13s | %10s | %10s |\n",
-			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
-			"Heap Used", "Free Heap");
-
 	char *filename    = argv[1];
 	int heapSize      = setArgs(argc, argv, "--heapsize",  "-h");
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
 	int traversal     = setArgs(argc, argv, "--traversal", "-t");
 	int collector     = setArgs(argc, argv, "--collector", "-c");
 	int allocator     = setArgs(argc, argv, "--allocator", "-a");
+	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
+	if (highWatermark == -1)
+		highWatermark = 90;
+	if (traversal == -1)
+		traversal = (int)breadthFirst;
+	if (collector == -1)
+		collector = (int)traversalGC;
+	if (allocator == -1)
+		allocator = (int)realAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;
 		else
 			heapSize = 400000;
 	}
-	if (highWatermark == -1)
-		highWatermark = 90;
-	if (traversal == -1)
-		traversal = (int)breadthFirst;
-	if (collector == -1)
-		collector = (int)markSweepGC;
-	if (allocator == -1)
-		allocator = (int)realAlloc;
+	if (forceAGCAfterEveryStep == -1)
+		forceAGCAfterEveryStep = 0;
+
+	//set up global logfile
+	gLogFile = fopen(getLogFilename((string)filename), "w+");
+	fprintf(gLogFile, "Collector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d\nWatermark: %d\n", 
+			COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, highWatermark);
+	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
+			"| %13s | %10s | %10s | %10s | %7s\n",
+			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
+			"Heap Used", "Free Heap", "Generation", "GC Time");
+
 
 	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
+	if (forceAGCAfterEveryStep)
+		fprintf(stderr, "Forcing a GC after every step\n");
 
 	//start measuring time
 	clock_t start = clock();

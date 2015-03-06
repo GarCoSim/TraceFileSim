@@ -34,7 +34,6 @@ private:
 	void enqueueAllRoots();
 	void initializeMarkPhase();
 	void preCollect();
-	void postCollect();
 	void freeAllLiveObjects();
 	void reallocateAllLiveObjects();
 };

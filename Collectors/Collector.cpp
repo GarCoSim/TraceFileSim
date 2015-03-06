@@ -74,16 +74,22 @@ void Collector::printStats() {
 		case reasonEval:
 			statCollectionReasonString = (char*)"Evaluation";
 			break;
+		case reasonForced:
+			statCollectionReasonString = (char*)"Forced";
+			break;
 		default:
 			statCollectionReasonString = (char*)"ERROR";
 			break;
 	}
 
+	stop = clock();
+	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+
 	statLiveObjectCount = myObjectContainer->countElements();
 	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
-			"| %13d | %10d | %10d | %5d |\n", gLineInTrace,
+			"| %13d | %10d | %10d | %10d | %4.3f\n", gLineInTrace,
 			statCollectionReasonString, statGcNumber, statFreedObjects,
-			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration);
+			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs);
 	fflush(gLogFile);
 	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
 		myAllocator->printStats();
@@ -99,6 +105,12 @@ void Collector::printStats() {
 	}
 	statCollectionReason = 0;
 }
+
+void Collector::postCollect() {
+	printStats();
+	gcsSinceLastPromotionPhase++;
+}
+
 
 int Collector::promotionPhase() {
 	return -1;
