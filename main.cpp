@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
 	if (allocator == -1)
 		allocator = (int)realAlloc;
 
+	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
