@@ -238,6 +238,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
 				size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
+		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
 
@@ -453,6 +454,7 @@ int MemoryManager::allocateObject(int thread, int parentID, int parentSlot,
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
 				size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
+		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
 	Object* parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
@@ -567,6 +569,10 @@ void MemoryManager::requestRemSetAdd(Object* currentObj){
 
 void MemoryManager::forceGC() {
 	myGarbageCollectors[GENERATIONS-1]->collect((int)reasonForced);
+}
+
+void MemoryManager::lastStats() {
+	myGarbageCollectors[GENERATIONS-1]->lastStats();
 }
 
 int* MemoryManager::computeHeapsizes(int heapSize) {

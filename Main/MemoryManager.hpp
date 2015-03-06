@@ -53,6 +53,7 @@ public:
 	bool loadClassTable(string traceFilePath);
 	bool hasClassTable();
 	void forceGC();
+	void lastStats();
 
 private:
 	bool isAlreadyRoot(int thread, int id);

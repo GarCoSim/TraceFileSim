@@ -56,6 +56,10 @@ string Simulator::getNextLine(){
 	return line;
 }
 
+void Simulator::lastStats() {
+	myMemManager->lastStats();
+}
+
 int Simulator::doNextStep(){
 	string traceLine = getNextLine();
 	if (ONE_SECOND_PASSED) {

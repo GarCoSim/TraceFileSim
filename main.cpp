@@ -117,8 +117,8 @@ int main(int argc, char *argv[]) {
 
 	//set up global logfile
 	gLogFile = fopen(getLogFilename((string)filename), "w+");
-	fprintf(gLogFile, "Collector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d\nWatermark: %d\n", 
-			COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d\nWatermark: %d\n\n", 
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
@@ -144,13 +144,13 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	simulator->printStats();
+	simulator->lastStats();
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
 	printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
 	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
-
 
 	fclose(gLogFile);
 

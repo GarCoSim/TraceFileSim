@@ -20,6 +20,9 @@ extern clock_t start, stop;
 namespace traceFileSimulator {
 
 Collector::Collector() {
+	shortestGC = 999999999;
+	longestGC = 0;
+	allGCs = 0;
 
 }
 
@@ -84,6 +87,11 @@ void Collector::printStats() {
 
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	if (elapsed_secs < shortestGC)
+		shortestGC = elapsed_secs;
+	if (elapsed_secs > longestGC)
+		longestGC = elapsed_secs;
+	allGCs += longestGC;
 
 	statLiveObjectCount = myObjectContainer->countElements();
 	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
@@ -114,6 +122,10 @@ void Collector::postCollect() {
 
 int Collector::promotionPhase() {
 	return -1;
+}
+
+void Collector::lastStats() {
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / statGcNumber));
 }
 
 Collector::~Collector() {

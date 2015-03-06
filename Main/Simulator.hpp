@@ -26,6 +26,7 @@ public:
 	int lastStepWorked();
 	int doNextStep();
 	void printStats();
+	void lastStats();
 
 private:
 	string getNextLine();
