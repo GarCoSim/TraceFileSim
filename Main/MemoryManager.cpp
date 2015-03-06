@@ -14,6 +14,7 @@
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern int gLineInTrace;
+extern char *globalFilename;
 
 namespace traceFileSimulator {
 
@@ -31,8 +32,8 @@ MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int
 
 bool MemoryManager::loadClassTable(string traceFilePath) {
 	ifstream classFile;
-	size_t found = traceFilePath.find(".trace");
-	string className = traceFilePath.substr(0, found) + ".cls";
+	size_t found;
+	string className = (string)globalFilename + ".cls";
 	string line;
 
 	// we need to push an empty element into the vector as our classes start with id 1
@@ -563,6 +564,11 @@ void MemoryManager::requestRemSetAdd(Object* currentObj){
 		myObjectContainers[i]->addToGenRoot(currentObj);
 	}
 }
+
+void MemoryManager::forceGC() {
+	myGarbageCollectors[GENERATIONS-1]->collect((int)reasonForced);
+}
+
 int* MemoryManager::computeHeapsizes(int heapSize) {
 	int heapLeft = heapSize;
 	int* result = (int*) malloc(GENERATIONS * sizeof(int));

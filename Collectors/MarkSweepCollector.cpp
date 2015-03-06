@@ -180,17 +180,6 @@ void MarkSweepCollector::compact() {
 	myMemManager->statAfterCompact(myGeneration);
 }
 
-void MarkSweepCollector::postCollect() {
-	printStats();
-	gcsSinceLastPromotionPhase++;
-	stop = clock();
-	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	gcFile = fopen("gcTimes.log","a");
-	fprintf(gcFile,"%d\t%f\n",gLineInTrace,elapsed_secs);
-	fflush(gcFile);
-	fclose(gcFile);
-}
-
 void MarkSweepCollector::freeAllLiveObjects() {
 	int i;
 	//set all objects to dead and not visible firs

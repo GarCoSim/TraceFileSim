@@ -12,6 +12,7 @@
 #include "../Main/ObjectContainer.hpp"
 #include <queue>
 #include <stack>
+#include <string>
 #include <ctime>
 #include "../defines.hpp"
 
@@ -32,6 +33,8 @@ public:
 	virtual int promotionPhase();
 
 protected:
+	void postCollect();
+
 	Allocator* myAllocator;
 	ObjectContainer* myObjectContainer;
 	queue<Object *> myQueue;

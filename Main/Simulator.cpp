@@ -13,6 +13,7 @@ using namespace std;
 
 extern int gLineInTrace;
 extern int gAllocations;
+extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
@@ -88,6 +89,9 @@ int Simulator::doNextStep(){
 		}
 
 	}
+
+	if (forceAGCAfterEveryStep) 
+		myMemManager->forceGC();
 
 	/*This line calls a garbage collec after each line. Usually useful
 	 * in order to analyse the actual heap use of the file.*/
