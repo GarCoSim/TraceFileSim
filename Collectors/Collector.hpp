@@ -12,6 +12,7 @@
 #include "../Main/ObjectContainer.hpp"
 #include <queue>
 #include <stack>
+#include <ctime>
 #include "../defines.hpp"
 
 using namespace std;
