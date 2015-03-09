@@ -40,7 +40,7 @@ void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container,
 	statFreeSpaceFragmentCount = 0;
 	statFreeSpaceOnHeap = 0;
 	statLiveObjectCount = 0;
-	statCollectionReason = 0;
+	statCollectionReason = (int)reasonStatistics;
 	statFreedDuringThisGC = 0;
 
 	order = (traversalEnum)traversal;
@@ -59,8 +59,8 @@ void Collector::printStats() {
 	char *statCollectionReasonString;
 
 	switch ((gcReason)statCollectionReason) {
-		case reasonUnknown:
-			statCollectionReasonString = (char*)"Unknown";
+		case reasonStatistics:
+			statCollectionReasonString = (char*)"Statistics";
 			break;
 		case reasonFailedAlloc:
 			statCollectionReasonString = (char*)"Failed Alloc";
@@ -102,7 +102,7 @@ void Collector::printStats() {
 	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
 		myAllocator->printStats();
 	}
-	if(statCollectionReason == 0){
+	if(statCollectionReason == (int)reasonStatistics){
 		char fl[80];
 		sprintf(fl, "gen%d.log",myGeneration);
 		FILE* genfile = fopen(fl,"a");
@@ -111,7 +111,7 @@ void Collector::printStats() {
 		fflush(genfile);
 		fclose(genfile);
 	}
-	statCollectionReason = 0;
+	statCollectionReason = (int)reasonStatistics;
 }
 
 void Collector::postCollect() {

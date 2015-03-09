@@ -21,14 +21,24 @@ namespace traceFileSimulator {
 void Allocator::initializeHeap(int heapSize) {
 }
 
+void Allocator::setHalfHeapSize(bool value) {
+	if (value) {
+		myHeapSizeOldSpace = overallHeapSize / 2;
+		newSpaceOffset = myHeapSizeOldSpace;
+		oldSpaceOffset = 0;
+		isSplitHeap = true;
+	}
+	else {
+		myHeapSizeOldSpace = overallHeapSize;
+		isSplitHeap = false;
+	}
+}
+
 Allocator::Allocator() {
 }
 
 bool Allocator::isRealAllocator() {
 	return false;
-}
-
-void Allocator::setHalfHeapSize(bool value) {
 }
 
 void Allocator::moveObject(Object *object) {

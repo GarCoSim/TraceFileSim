@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 	if (collector == -1)
 		collector = (int)traversalGC;
 	if (allocator == -1)
-		allocator = (int)realAlloc;
+		allocator = (int)simulatedAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;
@@ -117,8 +117,8 @@ int main(int argc, char *argv[]) {
 
 	//set up global logfile
 	gLogFile = fopen(getLogFilename((string)filename), "w+");
-	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d\nWatermark: %d\n\n", 
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d%s\nWatermark: %d\n\n", 
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",

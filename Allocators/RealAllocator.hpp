@@ -32,7 +32,6 @@ public:
 	void printStats();
 	void freeAllSectors();
 
-	void setHalfHeapSize(bool value);
 	void moveObject(Object *object);
 	void swapHeaps();
 
@@ -48,11 +47,9 @@ private:
 	void setBitUnused(unsigned int address);
 	void setAllocated(int address, int size);
 	void setFree(int address, int size);
-	int allocateInNewSpace(int size);
+	size_t allocateInNewSpace(int size);
 
 	unsigned char *heap;
-
-	int myHeapSizeNewSpace;
 };
 
 } 

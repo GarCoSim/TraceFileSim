@@ -45,7 +45,7 @@ enum allocatorEnum {
 				};
 
 enum gcReason {
-					reasonUnknown = 0,
+					reasonStatistics = 0,
 					reasonFailedAlloc,
 					reasonHighWatermark,
 					reasonDebug,

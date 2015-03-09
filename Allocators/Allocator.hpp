@@ -31,7 +31,7 @@ public:
 	virtual void printStats();
 	virtual void freeAllSectors();
 
-	virtual void setHalfHeapSize(bool value);
+	void setHalfHeapSize(bool value);
 	virtual void moveObject(Object *object);
 	virtual void swapHeaps();
 
@@ -42,16 +42,21 @@ public:
 	virtual bool isRealAllocator();
 
 protected:
+	bool isSplitHeap;
 	char* myHeapBitMap;
-	int myHeapSize;
+
+	int myHeapSizeOldSpace;
+	int myHeapSizeNewSpace;
+	int myLastSuccessAddressOldSpace;
+	int myLastSuccessAddressNewSpace;
+	int newSpaceOffset;
+	int oldSpaceOffset;
+	int overallHeapSize;
+
 	int statBytesAllocated;
 	int statLiveObjects;
 	FILE* allocLog;
 	FILE* heapMap;
-	int myLastSuccessAddress;
-	int newSpaceOffset;
-	int overallHeapSize;
-	int myLastSuccessAddressNewSpace;
 };
 
 } 

@@ -165,7 +165,7 @@ size_t MemoryManager::allocate(int size, int generation) {
 				gLineInTrace, generation);
 		exit(1);
 	}
-	int reason = 1;
+	int reason = (int)reasonFailedAlloc;
 //	if(isPromotion == 1){
 //		reason = 4;
 //	}

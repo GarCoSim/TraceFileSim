@@ -31,11 +31,6 @@ TraversalCollector::TraversalCollector() {
 void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
 
-	liveObjects = 0;
-	deadObjects = 0;
-
-	fprintf(stderr, "GC %d started\n", statGcNumber);
-
 	preCollect();
 
 	copy();
@@ -43,8 +38,6 @@ void TraversalCollector::collect(int reason) {
 	swap();
 
 	postCollect();
-
-	fprintf(stderr, "GC %d done, live %d dead %d\n", statGcNumber - 1, liveObjects, deadObjects);
 }
 
 void TraversalCollector::swap() {
@@ -60,8 +53,10 @@ void TraversalCollector::swap() {
 		currentObj = myObjectContainer->getbySlotNr(i);
 		if (currentObj) {
 			if (!myAllocator->isInNewSpace(currentObj)) {
-				deadObjects++;
-				myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
+				statFreedObjects++;
+				statFreedDuringThisGC++;
+				myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
+				//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
 			}
 		}
 	}
@@ -128,7 +123,6 @@ void TraversalCollector::getAllRoots() {
 					if (currentObj->getGeneration() < myGeneration) {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
-					liveObjects++;
 					myQueue.push(currentObj);
 					myStack.push(currentObj);
 				}
@@ -139,7 +133,6 @@ void TraversalCollector::getAllRoots() {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && currentObj->getVisited() == 0) {
 				currentObj->setVisited(1);
-				liveObjects++;
 				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
 				myStack.push(currentObj);
@@ -158,7 +151,8 @@ void TraversalCollector::breadthFirstCopying() {
 		currentObj = myQueue.front();
 		myQueue.pop();
 		int kids = currentObj->getPointersMax();
-		myAllocator->moveObject(currentObj);
+		if (!myAllocator->isInNewSpace(currentObj))
+			myAllocator->moveObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);
@@ -170,7 +164,6 @@ void TraversalCollector::breadthFirstCopying() {
 					&& child->getGeneration() <= myGeneration) {
 				child->setVisited(1);
 
-				liveObjects++;
 				myQueue.push(child);
 			}
 		}

@@ -28,9 +28,10 @@ bool SimulatedAllocator::isRealAllocator() {
 void SimulatedAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[heapSize / 8 + 1];
 
-	myHeapSize = heapSize;
-	myLastSuccessAddress = 0;
+	myHeapSizeOldSpace = heapSize;
+	myLastSuccessAddressOldSpace = 0;
 	myLastSuccessAddressNewSpace = heapSize / 2;
+	myHeapSizeNewSpace = heapSize;
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
@@ -40,89 +41,50 @@ void SimulatedAllocator::initializeHeap(int heapSize) {
 	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
-	newSpaceOffset = 0;
+	newSpaceOffset = heapSize / 2;
+	oldSpaceOffset = 0;
 	overallHeapSize = heapSize;
-}
-
-
-void SimulatedAllocator::setHalfHeapSize(bool value) {
-	if (value)
-		myHeapSize = overallHeapSize / 2;
-	else
-		myHeapSize = overallHeapSize;
 }
 
 void SimulatedAllocator::moveObject(Object *object) {
 	int size = object->getPayloadSize();
-	object->updateAddress(allocateInNewSpace(size));
+	gcFree(object); // first we need to reclaim the old space
+	size_t address = (size_t)allocateInNewSpace(size);
+	if (address == (size_t)-1) {
+		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
+		exit(1);
+	}
+
+	object->updateAddress(address);
 }
 
-int SimulatedAllocator::allocateInNewSpace(int size) {
-	if (size <= 0) {
-		return -1;
+int SimulatedAllocator::getUsedSpace(bool newSpace) {
+	int i, usedSpace = 0;
+	if (newSpace) {
+		for (i = newSpaceOffset; i < myHeapSizeNewSpace; i++)
+			if (isBitSet(i))
+				usedSpace++;
+	} else {
+		for (i = oldSpaceOffset; i < myHeapSizeOldSpace; i++)
+			if (isBitSet(i))
+				usedSpace++;
 	}
+	return usedSpace;
+}
 
-	//hope for the best, assume the worst
-	int address = 0;
-	int contiguous = 0;
-	//nextFit search
-	int i, bit;
-	int passedBoundOnce = 0;
-	int end = (myLastSuccessAddressNewSpace - 1);
-
-	for (i = myLastSuccessAddressNewSpace; i != end; i++) {
-		bit = isBitSet(i);
-
-		if (newSpaceOffset == 0) {
-			if (i == myHeapSize) {
-				if (passedBoundOnce == 1) {
-					return -1;
-				}
-				i = 0;
-				contiguous = 0;
-				address = i + 1;
-				passedBoundOnce = 1;
-			}
-		} else {
-			if (i == overallHeapSize) {
-				if (passedBoundOnce == 1) {
-					return -1;
-				}
-				i = 0;
-				contiguous = 0;
-				address = i + 1;
-				passedBoundOnce = 1;
-			}
-		}
-
-		if (bit == 1) {
-			address = i + 1;
-			contiguous = 0;
-		} else {
-			contiguous++;
-			if (contiguous == size) {
-				setAllocated(address, size);
-				statBytesAllocated += size;
-				statLiveObjects++;
-				myLastSuccessAddressNewSpace = address;
-				return address;
-			}
-		}
-	}
-
-	return -1;
+size_t SimulatedAllocator::allocateInNewSpace(int size) {
+	size_t address = (size_t)allocate(size, newSpaceOffset, myHeapSizeNewSpace, myLastSuccessAddressNewSpace);
+	if (address == (size_t)-1)
+		return (size_t)-1;
+	myLastSuccessAddressNewSpace = address;
+	return myLastSuccessAddressNewSpace;
 }
 
 bool SimulatedAllocator::isInNewSpace(Object *object) {
 	int address = object->getAddress();
 	
-	if (newSpaceOffset == 0) {
-		if (address >= 0 && address < overallHeapSize / 2)
-			return true;
-	} else {
-		if (address >= overallHeapSize / 2 && address < overallHeapSize)
-			return true;
-	}
+	if (address >= newSpaceOffset && address < myHeapSizeNewSpace)
+		return true;
 
 	return false;
 }
@@ -130,46 +92,52 @@ bool SimulatedAllocator::isInNewSpace(Object *object) {
 void SimulatedAllocator::swapHeaps() {
 	int temp;
 
-	newSpaceOffset = (newSpaceOffset == 0) ? overallHeapSize / 2 : 0;
+	myHeapSizeNewSpace = myHeapSizeOldSpace;
+	oldSpaceOffset = newSpaceOffset;
+	if (newSpaceOffset == 0) {
+		myHeapSizeOldSpace = overallHeapSize / 2;
+		newSpaceOffset = overallHeapSize / 2;
+	} else {
+		myHeapSizeOldSpace = overallHeapSize;
+		newSpaceOffset = 0;
+	}
 
-	temp = myLastSuccessAddress;
-	myLastSuccessAddress = myLastSuccessAddressNewSpace;
+	temp = myLastSuccessAddressOldSpace;
+	myLastSuccessAddressOldSpace = myLastSuccessAddressNewSpace;
 	myLastSuccessAddressNewSpace = temp;
-
-	myHeapSize = newSpaceOffset;
 }
 
 void SimulatedAllocator::freeAllSectors() {
 	int i;
 
-	for (i = 0; i < myHeapSize; i++) {
+	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
 	}
 
 	statBytesAllocated = 0;
 }
 
-size_t SimulatedAllocator::gcAllocate(int size) {
+size_t SimulatedAllocator::allocate(int size, int lower, int upper, int lastAddress) {
 	if (size <= 0) {
 		return -1;
 	}
 
 	//hope for the best, assume the worst
-	int address = 0;
+	int address = lower;
 	int contiguous = 0;
 	//nextFit search
 	int i, bit;
 	int passedBoundOnce = 0;
-	int end = (myLastSuccessAddress - 1);
+	int end = (lastAddress - 1);
 
-	for (i = myLastSuccessAddress; i != end; i++) {
+	for (i = lastAddress; i != end; i++) {
 		bit = isBitSet(i);
 
-		if (i == myHeapSize) {
+		if (i == upper) {
 			if (passedBoundOnce == 1) {
 				return -1;
 			}
-			i = 0;
+			i = lower;
 			contiguous = 0;
 			address = i + 1;
 			passedBoundOnce = 1;
@@ -184,13 +152,20 @@ size_t SimulatedAllocator::gcAllocate(int size) {
 				setAllocated(address, size);
 				statBytesAllocated += size;
 				statLiveObjects++;
-				myLastSuccessAddress = address;
 				return address;
 			}
 		}
 	}
 
 	return -1;
+}
+
+size_t SimulatedAllocator::gcAllocate(int size) {
+	size_t address = allocate(size, oldSpaceOffset, myHeapSizeOldSpace, myLastSuccessAddressOldSpace);
+	if (address == (size_t)-1)
+		return (size_t)-1;
+	myLastSuccessAddressOldSpace = address;
+	return myLastSuccessAddressOldSpace;
 }
 
 void SimulatedAllocator::gcFree(Object* object) {
@@ -206,7 +181,7 @@ void SimulatedAllocator::gcFree(Object* object) {
 
 //used mainly by garbage collector
 int SimulatedAllocator::getFreeSize() {
-	return myHeapSize - statBytesAllocated;
+	return isSplitHeap ? (overallHeapSize / 2) - statBytesAllocated : overallHeapSize - statBytesAllocated;
 }
 
 void SimulatedAllocator::setAllocated(int address, int size) {
@@ -230,11 +205,11 @@ void SimulatedAllocator::setFree(int address, int size) {
 }
 
 int SimulatedAllocator::getHeapSize() {
-	return myHeapSize;
+	return isSplitHeap ? overallHeapSize / 2: overallHeapSize;
 }
 
 inline bool SimulatedAllocator::isBitSet(unsigned int address) {
-	if (address > (unsigned int) myHeapSize) {
+	if (address > (unsigned int) overallHeapSize) {
 		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
 				gLineInTrace, address);
 	}
@@ -256,7 +231,7 @@ inline bool SimulatedAllocator::isBitSet(unsigned int address) {
 }
 
 void SimulatedAllocator::setBitUsed(unsigned int address) {
-	if (address > (unsigned int) myHeapSize) {
+	if (address > (unsigned int) overallHeapSize) {
 		fprintf(stderr,
 				"ERROR(Line %d): setBitUsed request to illegal slot %d\n",
 				gLineInTrace, address);
@@ -270,7 +245,7 @@ void SimulatedAllocator::setBitUsed(unsigned int address) {
 }
 
 void SimulatedAllocator::setBitUnused(unsigned int address) {
-	if (address > (unsigned int) myHeapSize) {
+	if (address > (unsigned int) overallHeapSize) {
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
 
@@ -285,7 +260,7 @@ void SimulatedAllocator::printMap() {
 
 	int i;
 
-	for (i = 0; i < myHeapSize; i++) {
+	for (i = 0; i < overallHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			fprintf(heapMap, "X");
 		} else {
@@ -306,7 +281,7 @@ void SimulatedAllocator::printStats() {
 	//traverse all heap and count allocated bits
 	int i;
 
-	for (i = 0; i < myHeapSize; i++) {
+	for (i = 0; i < overallHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			bytesAllocated++;
 		}
@@ -317,11 +292,11 @@ void SimulatedAllocator::printStats() {
 }
 
 void SimulatedAllocator::setAllocationSeearchStart(int address) {
-	if (address > myHeapSize) {
+	if (address > overallHeapSize) {
 		return;
 	}
 
-	myLastSuccessAddress = address;
+	myLastSuccessAddressOldSpace = address;
 }
 
 SimulatedAllocator::~SimulatedAllocator() {

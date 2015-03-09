@@ -42,9 +42,6 @@ private:
 	void getAllRoots();
 	void emptyHelpers();
 	void swap();
-
-	int liveObjects;
-	int deadObjects;
 };
 
 } 
