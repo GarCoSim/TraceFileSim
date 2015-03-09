@@ -10,7 +10,10 @@
 
 #include <vector>
 #include "Object.hpp"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include "../defines.hpp"
+ 
 namespace traceFileSimulator {
 
 class ObjectContainer {

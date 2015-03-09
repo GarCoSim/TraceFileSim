@@ -10,6 +10,10 @@
 
 #include "../Main/Object.hpp"
 #include <stdio.h>
+#include <stdlib.h>
+#include <climits>
+#include "../defines.hpp"
+#include <string>
 
 namespace traceFileSimulator {
 
@@ -37,7 +41,7 @@ public:
 
 	bool isInNewSpace(Object *object);
 
-	void initializeHeap(int heapSize);
+	virtual void initializeHeap(int heapSize);
 
 	virtual bool isRealAllocator();
 
@@ -49,7 +53,7 @@ protected:
 	bool isBitSet(unsigned int address);
 	void setBitUsed(unsigned int address);
 	void setBitUnused(unsigned int address);
-	virtual size_t allocate(int size, int lower, int upper, int lastAddress);
+	virtual size_t allocate(int size, int lower, int upper, size_t lastAddress);
 
 
 	bool isSplitHeap;
@@ -57,8 +61,8 @@ protected:
 
 	int myHeapSizeOldSpace;
 	int myHeapSizeNewSpace;
-	int myLastSuccessAddressOldSpace;
-	int myLastSuccessAddressNewSpace;
+	size_t myLastSuccessAddressOldSpace;
+	size_t myLastSuccessAddressNewSpace;
 	int newSpaceOffset;
 	int oldSpaceOffset;
 	int overallHeapSize;

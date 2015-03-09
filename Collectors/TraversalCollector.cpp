@@ -6,10 +6,6 @@
  */
 
 #include "TraversalCollector.hpp"
-#include "../Main/MemoryManager.hpp"
-#include <stdio.h>
-#include <ctime>
-#include "../defines.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;

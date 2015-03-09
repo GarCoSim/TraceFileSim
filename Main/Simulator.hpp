@@ -12,6 +12,8 @@
 #include <fstream>
 #include <ctime>
 #include "MemoryManager.hpp"
+#include <string>
+#include <stdlib.h>
 
 #define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
 

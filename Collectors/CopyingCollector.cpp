@@ -6,8 +6,6 @@
  */
 
 #include "CopyingCollector.hpp"
-#include <stdio.h>
-#include "../defines.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;

@@ -6,8 +6,6 @@
  */
 
 #include "Object.hpp"
-#include <stdio.h>
-#include <stdlib.h>
 
 namespace traceFileSimulator {
 
@@ -63,7 +61,7 @@ int Object::getGeneration(){
 	return myGeneration;
 }
 
-int Object::getAddress(){
+size_t Object::getAddress(){
 	return myAddress;
 }
 
@@ -110,7 +108,7 @@ int Object::getVisited(){
 	return isVisited;
 }
 
-void Object::updateAddress(int newAddress) {
+void Object::updateAddress(size_t newAddress) {
 	myAddress = newAddress;
 }
 

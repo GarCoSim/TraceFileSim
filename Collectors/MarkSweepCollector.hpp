@@ -12,6 +12,10 @@
 #include "Collector.hpp"
 #include "../Main/ObjectContainer.hpp"
 #include <queue>
+#include "../Main/MemoryManager.hpp"
+#include <stdio.h>
+#include <ctime>
+#include "../defines.hpp"
 
 using namespace std;
 

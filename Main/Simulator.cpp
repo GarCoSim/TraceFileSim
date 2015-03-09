@@ -6,8 +6,6 @@
  */
 
 #include "Simulator.hpp"
-#include <string>
-#include <stdlib.h>
 
 using namespace std;
 

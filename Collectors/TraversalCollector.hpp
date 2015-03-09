@@ -14,6 +14,9 @@
 #include <queue>
 #include <stack>
 #include "../defines.hpp"
+#include "../Main/MemoryManager.hpp"
+#include <stdio.h>
+#include <ctime>
 
 using namespace std;
 

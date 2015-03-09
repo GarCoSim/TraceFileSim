@@ -6,11 +6,6 @@
  */
 
 #include "RealAllocator.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <string>
 
 extern int gLineInTrace;
 
@@ -25,6 +20,30 @@ bool RealAllocator::isRealAllocator() {
 	return true;
 }
 
+void RealAllocator::initializeHeap(int heapSize) {
+	myHeapBitMap = new char[heapSize / 8 + 1];
+
+	myHeapSizeOldSpace = heapSize;
+	myLastSuccessAddressOldSpace = 0;
+	myLastSuccessAddressNewSpace = heapSize / 2;
+	myHeapSizeNewSpace = heapSize;
+
+	statBytesAllocated = 0;
+	statLiveObjects = 0;
+	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
+		allocLog = fopen("alloc.log", "w+");
+	}
+	if (DEBUG_MODE && WRITE_HEAPMAP) {
+		heapMap = fopen("heapmap.log", "w+");
+	}
+	newSpaceOffset = heapSize / 2;
+	oldSpaceOffset = 0;
+	overallHeapSize = heapSize;
+
+	heap = (unsigned char*)malloc(heapSize * 8);
+	myLastSuccessAddressOldSpace = (size_t)&heap[0];
+	myLastSuccessAddressNewSpace = (size_t)&heap[0];
+}
 
 void RealAllocator::freeAllSectors() {
 	int i;
@@ -36,7 +55,7 @@ void RealAllocator::freeAllSectors() {
 	statBytesAllocated = 0;
 }
 
-size_t RealAllocator::allocate(int size, int lower, int upper, int lastAddress) {
+size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddress) {
 	if (size <= 0) {
 		return -1;
 	}
@@ -47,9 +66,10 @@ size_t RealAllocator::allocate(int size, int lower, int upper, int lastAddress) 
 	//nextFit search
 	int i, bit;
 	int passedBoundOnce = 0;
-	int end = (lastAddress - 1);
+	//int end = (lastAddress - (size_t)(&heap) - 1);
 
-	for (i = lastAddress; i != end; i++) {
+	for (i = lower; i != upper; i++) {
+	//for (i = lastAddress - (size_t)(&heap); i != end; i++) {
 		bit = isBitSet(i);
 
 		if (i == upper) {
@@ -80,10 +100,20 @@ size_t RealAllocator::allocate(int size, int lower, int upper, int lastAddress) 
 }
 
 void RealAllocator::gcFree(Object* object) {
-	int address = object->getAddress();
+	size_t address = object->getAddress();
 	int size = object->getPayloadSize();
+	size_t i;
 
-	setFree(address, size);
+	// find the address we're looking for
+	for (i = 0; i < (size_t)overallHeapSize; i++) {
+		if (address == (size_t)&heap[i])
+			break;
+	}
+	if (address == (size_t)&heap[i]) {
+		fprintf(stderr, "could not find the address, that shouldn't have happened\n");
+	}
+
+	setFree(i, size);
 	//object->setFreed(1);
 
 	statLiveObjects--;

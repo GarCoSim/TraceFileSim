@@ -6,11 +6,6 @@
  */
 
 #include "Allocator.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <string>
 
 extern int gLineInTrace;
 
@@ -113,24 +108,6 @@ void Allocator::moveObject(Object *object) {
 
 
 void Allocator::initializeHeap(int heapSize) {
-	myHeapBitMap = new char[heapSize / 8 + 1];
-
-	myHeapSizeOldSpace = heapSize;
-	myLastSuccessAddressOldSpace = 0;
-	myLastSuccessAddressNewSpace = heapSize / 2;
-	myHeapSizeNewSpace = heapSize;
-
-	statBytesAllocated = 0;
-	statLiveObjects = 0;
-	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
-		allocLog = fopen("alloc.log", "w+");
-	}
-	if (DEBUG_MODE && WRITE_HEAPMAP) {
-		heapMap = fopen("heapmap.log", "w+");
-	}
-	newSpaceOffset = heapSize / 2;
-	oldSpaceOffset = 0;
-	overallHeapSize = heapSize;
 }
 
 void Allocator::setAllocated(int address, int size) {
@@ -258,7 +235,8 @@ void Allocator::freeAllSectors() {
 void Allocator::gcFree(Object* object) {
 }
 
-size_t Allocator::allocate(int size, int lower, int upper, int lastAddress) {
+size_t Allocator::allocate(int size, int lower, int upper, size_t lastAddress) {
+	return -1;
 }
 
 Allocator::~Allocator() {

@@ -6,10 +6,6 @@
  */
 
 #include "MemoryManager.hpp"
-#include "../defines.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
 extern FILE* gLogFile;
 extern FILE* gDetLog;
@@ -248,6 +244,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		case realAlloc:
 			object = (Object*)address;
 			object->setArgs(id, size, refCount, getClassName(classID));
+			object->updateAddress(address);
 			break;
 		default:
 		case simulatedAlloc:

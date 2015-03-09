@@ -6,9 +6,6 @@
  */
 
 #include "ObjectContainer.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include "../defines.hpp"
 
 extern int gLineInTrace;
 

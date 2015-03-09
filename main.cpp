@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 	if (collector == -1)
 		collector = (int)traversalGC;
 	if (allocator == -1)
-		allocator = (int)simulatedAlloc;
+		allocator = (int)realAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;

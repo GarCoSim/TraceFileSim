@@ -11,6 +11,10 @@
 #include "Allocator.hpp"
 #include "../Main/Object.hpp"
 #include <stdio.h>
+#include <stdlib.h>
+#include <climits>
+#include "../defines.hpp"
+#include <string>
 
 namespace traceFileSimulator {
 
@@ -22,9 +26,10 @@ public:
 	bool isRealAllocator();
 	void freeAllSectors();
 	void gcFree(Object* object);
+	void initializeHeap(int heapSize);
 	
 private:
-	size_t allocate(int size, int lower, int upper, int lastAddress);
+	size_t allocate(int size, int lower, int upper, size_t lastAddress);
 };
 
 } 

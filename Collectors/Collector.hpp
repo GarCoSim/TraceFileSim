@@ -15,6 +15,7 @@
 #include <string>
 #include <ctime>
 #include "../defines.hpp"
+#include <stdio.h>
 
 using namespace std;
 
