@@ -32,6 +32,8 @@ const char *getLogFilename(string name) {
 	else
 		retString = (string)globalFilename + ".log";
 
+	fprintf(stderr, "Writing logfile to '%s'\n", retString.c_str());
+
 	return retString.c_str();
 }
 
@@ -86,6 +88,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
+
 	if(WRITE_DETAILED_LOG) {
 		gDetLog = fopen("detailed.log","w+");
 	}
@@ -124,8 +128,6 @@ int main(int argc, char *argv[]) {
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
 			"Heap Used", "Free Heap", "Generation", "GC Time");
 
-
-	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);

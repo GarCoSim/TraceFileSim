@@ -18,9 +18,6 @@ using namespace std;
 
 namespace traceFileSimulator {
 
-void Allocator::initializeHeap(int heapSize) {
-}
-
 void Allocator::setHalfHeapSize(bool value) {
 	if (value) {
 		myHeapSizeOldSpace = overallHeapSize / 2;
@@ -37,45 +34,231 @@ void Allocator::setHalfHeapSize(bool value) {
 Allocator::Allocator() {
 }
 
-bool Allocator::isRealAllocator() {
-	return false;
+int Allocator::getFreeSize() {
+	return isSplitHeap ? (overallHeapSize / 2) - statBytesAllocated : overallHeapSize - statBytesAllocated;
 }
 
-void Allocator::moveObject(Object *object) {
+
+size_t Allocator::gcAllocate(int size) {
+	size_t address = allocate(size, oldSpaceOffset, myHeapSizeOldSpace, myLastSuccessAddressOldSpace);
+	if (address == (size_t)-1)
+		return (size_t)-1;
+	myLastSuccessAddressOldSpace = address;
+	return myLastSuccessAddressOldSpace;
+}
+
+size_t Allocator::allocateInNewSpace(int size) {
+	size_t address = (size_t)allocate(size, newSpaceOffset, myHeapSizeNewSpace, myLastSuccessAddressNewSpace);
+	if (address == (size_t)-1)
+		return (size_t)-1;
+	myLastSuccessAddressNewSpace = address;
+	return myLastSuccessAddressNewSpace;
 }
 
 bool Allocator::isInNewSpace(Object *object) {
+	int address = object->getAddress();
+	
+	if (address >= newSpaceOffset && address < myHeapSizeNewSpace)
+		return true;
+
 	return false;
 }
 
 void Allocator::swapHeaps() {
+	int temp;
+
+	myHeapSizeNewSpace = myHeapSizeOldSpace;
+	oldSpaceOffset = newSpaceOffset;
+	if (newSpaceOffset == 0) {
+		myHeapSizeOldSpace = overallHeapSize / 2;
+		newSpaceOffset = overallHeapSize / 2;
+	} else {
+		myHeapSizeOldSpace = overallHeapSize;
+		newSpaceOffset = 0;
+	}
+
+	temp = myLastSuccessAddressOldSpace;
+	myLastSuccessAddressOldSpace = myLastSuccessAddressNewSpace;
+	myLastSuccessAddressNewSpace = temp;
+}
+
+int Allocator::getUsedSpace(bool newSpace) {
+	int i, usedSpace = 0;
+	if (newSpace) {
+		for (i = newSpaceOffset; i < myHeapSizeNewSpace; i++)
+			if (isBitSet(i))
+				usedSpace++;
+	} else {
+		for (i = oldSpaceOffset; i < myHeapSizeOldSpace; i++)
+			if (isBitSet(i))
+				usedSpace++;
+	}
+	return usedSpace;
+}
+
+void Allocator::moveObject(Object *object) {
+	if (isInNewSpace(object))
+		return;
+
+	int size = object->getPayloadSize();
+	gcFree(object); // first we need to reclaim the old space
+	size_t address = (size_t)allocateInNewSpace(size);
+	if (address == (size_t)-1) {
+		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
+		exit(1);
+	}
+
+	object->updateAddress(address);
+}
+
+
+void Allocator::initializeHeap(int heapSize) {
+	myHeapBitMap = new char[heapSize / 8 + 1];
+
+	myHeapSizeOldSpace = heapSize;
+	myLastSuccessAddressOldSpace = 0;
+	myLastSuccessAddressNewSpace = heapSize / 2;
+	myHeapSizeNewSpace = heapSize;
+
+	statBytesAllocated = 0;
+	statLiveObjects = 0;
+	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
+		allocLog = fopen("alloc.log", "w+");
+	}
+	if (DEBUG_MODE && WRITE_HEAPMAP) {
+		heapMap = fopen("heapmap.log", "w+");
+	}
+	newSpaceOffset = heapSize / 2;
+	oldSpaceOffset = 0;
+	overallHeapSize = heapSize;
+}
+
+void Allocator::setAllocated(int address, int size) {
+	int i;
+	int pointer = address;
+
+	for (i = 0; i < size; i++) {
+		setBitUsed(pointer);
+		pointer++;
+	}
+}
+
+void Allocator::setFree(int address, int size) {
+	int i;
+	int pointer = address;
+
+	for (i = 0; i < size; i++) {
+		setBitUnused(pointer);
+		pointer++;
+	}
+}
+
+int Allocator::getHeapSize() {
+	return isSplitHeap ? overallHeapSize / 2: overallHeapSize;
+}
+
+inline bool Allocator::isBitSet(unsigned int address) {
+	if (address > (unsigned int) overallHeapSize) {
+		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
+				gLineInTrace, address);
+	}
+
+	int byteNR = address / 8;
+
+	if ((unsigned char) myHeapBitMap[byteNR] == 255) {
+		return true;
+	}
+
+	int bit = 7 - address % 8;
+	int value = myHeapBitMap[byteNR] & 1 << bit;
+
+	if (value > 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void Allocator::setBitUsed(unsigned int address) {
+	if (address > (unsigned int) overallHeapSize) {
+		fprintf(stderr,
+				"ERROR(Line %d): setBitUsed request to illegal slot %d\n",
+				gLineInTrace, address);
+		exit(1);
+	}
+
+	int byte = address / 8;
+	int bit = 7 - address % 8;
+
+	myHeapBitMap[byte] = myHeapBitMap[byte] | 1 << bit;
+}
+
+void Allocator::setBitUnused(unsigned int address) {
+	if (address > (unsigned int) overallHeapSize) {
+		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
+	}
+
+	int byte = address / 8;
+	int bit = 7 - address % 8;
+
+	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
+}
+
+void Allocator::printMap() {
+	fprintf(heapMap, "%7d", gLineInTrace);
+
+	int i;
+
+	for (i = 0; i < overallHeapSize; i++) {
+		if (isBitSet(i) == 1) {
+			fprintf(heapMap, "X");
+		} else {
+			fprintf(heapMap, "_");
+		}
+	}
+
+	fprintf(heapMap, "\n");
+}
+
+void Allocator::printStats() {
+	if (DEBUG_MODE && WRITE_HEAPMAP) {
+		printMap();
+	}
+
+	int bytesAllocated = 0;
+
+	//traverse all heap and count allocated bits
+	int i;
+
+	for (i = 0; i < overallHeapSize; i++) {
+		if (isBitSet(i) == 1) {
+			bytesAllocated++;
+		}
+	}
+
+	fprintf(allocLog, "%7d: alloc: %7d obj: %7d\n", gLineInTrace,
+			bytesAllocated, statLiveObjects);
+}
+
+void Allocator::setAllocationSeearchStart(int address) {
+	if (address > overallHeapSize) {
+		return;
+	}
+
+	myLastSuccessAddressOldSpace = address;
+}
+
+bool Allocator::isRealAllocator() {
+	return false;
 }
 
 void Allocator::freeAllSectors() {
 }
 
-size_t Allocator::gcAllocate(int size) {
-	return -1;
-}
-
 void Allocator::gcFree(Object* object) {
 }
 
-int Allocator::getFreeSize() {
-	return -1;
-}
-
-int Allocator::getHeapSize() {
-	return -1;
-}
-
-void Allocator::printMap() {
-}
-
-void Allocator::printStats() {
-}
-
-void Allocator::setAllocationSeearchStart(int address) {
+size_t Allocator::allocate(int size, int lower, int upper, int lastAddress) {
 }
 
 Allocator::~Allocator() {

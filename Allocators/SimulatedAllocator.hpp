@@ -19,38 +19,12 @@ public:
 	SimulatedAllocator();
 	virtual ~SimulatedAllocator();
 
-	size_t gcAllocate(int size);
-	void gcFree(Object* object);
-
-	//used mainly by garbage collector
-	int getFreeSize();
-	int getHeapSize();
-	void setAllocationSeearchStart(int address);
-
-	//stats
-	void printMap();
-	void printStats();
-	void freeAllSectors();
-
-	void moveObject(Object *object);
-	void swapHeaps();
-
-	bool isInNewSpace(Object *object);
-
-	void initializeHeap(int heapSize);
-
 	bool isRealAllocator();
-
+	void freeAllSectors();
+	void gcFree(Object* object);
+	
 private:
-	inline bool isBitSet(unsigned int address);
-	void setBitUsed(unsigned int address);
-	void setBitUnused(unsigned int address);
-	void setAllocated(int address, int size);
-	void setFree(int address, int size);
-	size_t allocateInNewSpace(int size);
 	size_t allocate(int size, int lower, int upper, int lastAddress);
-	int getUsedSpace(bool newSpace);
-
 };
 
 } 

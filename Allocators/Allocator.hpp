@@ -18,30 +18,40 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-	virtual size_t gcAllocate(int size);
+	size_t gcAllocate(int size);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector
-	virtual int getFreeSize();
-	virtual int getHeapSize();
-	virtual void setAllocationSeearchStart(int address);
+	int getFreeSize();
+	int getHeapSize();
+	void setAllocationSeearchStart(int address);
 
 	//stats
-	virtual void printMap();
-	virtual void printStats();
+	void printMap();
+	void printStats();
 	virtual void freeAllSectors();
 
 	void setHalfHeapSize(bool value);
-	virtual void moveObject(Object *object);
-	virtual void swapHeaps();
+	void moveObject(Object *object);
+	void swapHeaps();
 
-	virtual bool isInNewSpace(Object *object);
+	bool isInNewSpace(Object *object);
 
-	virtual void initializeHeap(int heapSize);
+	void initializeHeap(int heapSize);
 
 	virtual bool isRealAllocator();
 
 protected:
+	int getUsedSpace(bool newSpace);
+	size_t allocateInNewSpace(int size);
+	void setAllocated(int address, int size);
+	void setFree(int address, int size);
+	bool isBitSet(unsigned int address);
+	void setBitUsed(unsigned int address);
+	void setBitUnused(unsigned int address);
+	virtual size_t allocate(int size, int lower, int upper, int lastAddress);
+
+
 	bool isSplitHeap;
 	char* myHeapBitMap;
 
