@@ -100,7 +100,7 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 }
 
 void RealAllocator::gcFree(Object* object) {
-	size_t address = object->getAddress();
+	size_t address = (size_t)&object;
 	int size = object->getPayloadSize();
 	size_t i;
 
@@ -110,7 +110,7 @@ void RealAllocator::gcFree(Object* object) {
 			break;
 	}
 	if (address == (size_t)&heap[i]) {
-		fprintf(stderr, "could not find the address, that shouldn't have happened\n");
+		fprintf(stderr, "could not find the address %zx, that shouldn't have happened\n", address);
 	}
 
 	setFree(i, size);

@@ -134,6 +134,22 @@ int Allocator::getHeapSize() {
 	return isSplitHeap ? overallHeapSize / 2: overallHeapSize;
 }
 
+void Allocator::printMap() {
+	fprintf(heapMap, "%7d", gLineInTrace);
+
+	int i;
+
+	for (i = 0; i < overallHeapSize; i++) {
+		if (isBitSet(i) == 1) {
+			fprintf(heapMap, "X");
+		} else {
+			fprintf(heapMap, "_");
+		}
+	}
+
+	fprintf(heapMap, "\n");
+}
+
 inline bool Allocator::isBitSet(unsigned int address) {
 	if (address > (unsigned int) overallHeapSize) {
 		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
@@ -172,6 +188,7 @@ void Allocator::setBitUsed(unsigned int address) {
 
 void Allocator::setBitUnused(unsigned int address) {
 	if (address > (unsigned int) overallHeapSize) {
+		fprintf(stderr, "add %d heap %d\n", address, overallHeapSize);
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
 
@@ -179,22 +196,6 @@ void Allocator::setBitUnused(unsigned int address) {
 	int bit = 7 - address % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
-}
-
-void Allocator::printMap() {
-	fprintf(heapMap, "%7d", gLineInTrace);
-
-	int i;
-
-	for (i = 0; i < overallHeapSize; i++) {
-		if (isBitSet(i) == 1) {
-			fprintf(heapMap, "X");
-		} else {
-			fprintf(heapMap, "_");
-		}
-	}
-
-	fprintf(heapMap, "\n");
 }
 
 void Allocator::printStats() {

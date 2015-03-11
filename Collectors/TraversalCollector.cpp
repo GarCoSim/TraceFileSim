@@ -142,7 +142,7 @@ void TraversalCollector::breadthFirstCopying() {
 	Object* currentObj;
 	Object* child;
 
-	//breadth first through the tree
+	//breadth first through the tree using a queue
 	while (!myQueue.empty()) {
 		currentObj = myQueue.front();
 		myQueue.pop();
@@ -167,7 +167,32 @@ void TraversalCollector::breadthFirstCopying() {
 }
 
 void TraversalCollector::depthFirstCopying() {
-	//TODO
+	int i;
+	Object* currentObj;
+	Object* child;
+
+	//depth first through the tree using a stack
+	while (!myStack.empty()) {
+		currentObj = myStack.top();
+		myStack.pop();
+		int kids = currentObj->getPointersMax();
+		if (!myAllocator->isInNewSpace(currentObj))
+			myAllocator->moveObject(currentObj);
+		currentObj->setAge(currentObj->getAge() + 1);
+		for (i = 0; i < kids; i++) {
+			child = currentObj->getReferenceTo(i);
+			//no matter if the child was processed before or not, add it to the rem set.
+			if(child && child->getGeneration() < currentObj->getGeneration()){
+				myMemManager->requestRemSetAdd(child);
+			}
+			if (child && child->getVisited() == 0
+					&& child->getGeneration() <= myGeneration) {
+				child->setVisited(1);
+
+				myStack.push(child);
+			}
+		}
+	}
 }
 
 void TraversalCollector::hotnessCopying() {

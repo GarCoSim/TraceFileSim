@@ -107,14 +107,14 @@ int main(int argc, char *argv[]) {
 	if (traversal == -1)
 		traversal = (int)breadthFirst;
 	if (collector == -1)
-		collector = (int)traversalGC;
+		collector = (int)markSweepGC;
 	if (allocator == -1)
 		allocator = (int)realAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;
 		else
-			heapSize = 400000;
+			heapSize = 600000;
 	}
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
