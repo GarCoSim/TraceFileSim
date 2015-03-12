@@ -37,7 +37,7 @@ void RealAllocator::moveObject(Object *object) {
 	Object *temp;
 	int size = object->getPayloadSize();
 
-	gcFree(object); // first we need to reclaim the old space
+	//gcFree(object); // first we need to reclaim the old space
 
 	size_t address = (size_t)allocateInNewSpace(size);
 

@@ -123,7 +123,7 @@ int Collector::promotionPhase() {
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / statGcNumber));
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
 }
 
 Collector::~Collector() {
