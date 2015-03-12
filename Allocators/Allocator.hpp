@@ -36,10 +36,10 @@ public:
 	virtual void freeAllSectors();
 
 	void setHalfHeapSize(bool value);
-	void moveObject(Object *object);
+	virtual void moveObject(Object *object);
 	void swapHeaps();
 
-	bool isInNewSpace(Object *object);
+	virtual bool isInNewSpace(Object *object);
 
 	virtual void initializeHeap(int heapSize);
 

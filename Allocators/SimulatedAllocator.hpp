@@ -27,6 +27,8 @@ public:
 	void freeAllSectors();
 	void gcFree(Object* object);
 	void initializeHeap(int heapSize);
+	void moveObject(Object *object);
+	bool isInNewSpace(Object *object);
 	
 private:
 	size_t allocate(int size, int lower, int upper, size_t lastAddress);

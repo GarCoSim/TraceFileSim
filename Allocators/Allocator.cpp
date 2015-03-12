@@ -51,11 +51,6 @@ size_t Allocator::allocateInNewSpace(int size) {
 }
 
 bool Allocator::isInNewSpace(Object *object) {
-	int address = object->getAddress();
-	
-	if (address >= newSpaceOffset && address < myHeapSizeNewSpace)
-		return true;
-
 	return false;
 }
 
@@ -92,18 +87,7 @@ int Allocator::getUsedSpace(bool newSpace) {
 }
 
 void Allocator::moveObject(Object *object) {
-	if (isInNewSpace(object))
-		return;
-
-	int size = object->getPayloadSize();
-	gcFree(object); // first we need to reclaim the old space
-	size_t address = (size_t)allocateInNewSpace(size);
-	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
-		exit(1);
-	}
-
-	object->updateAddress(address);
+	return;
 }
 
 
@@ -131,7 +115,7 @@ void Allocator::setFree(int address, int size) {
 }
 
 int Allocator::getHeapSize() {
-	return isSplitHeap ? overallHeapSize / 2: overallHeapSize;
+	return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
 }
 
 void Allocator::printMap() {

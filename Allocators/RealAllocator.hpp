@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <climits>
 #include "../defines.hpp"
+#include <memory.h>
 #include <string>
 
 namespace traceFileSimulator {
@@ -27,9 +28,12 @@ public:
 	void freeAllSectors();
 	void gcFree(Object* object);
 	void initializeHeap(int heapSize);
+	void moveObject(Object *object);
+	bool isInNewSpace(Object *object);
 
 private:
 	size_t allocate(int size, int lower, int upper, size_t lastAddress);
+	size_t getLogicalAddress(Object *object);
 
 	unsigned char *heap;
 };

@@ -26,6 +26,9 @@ TraversalCollector::TraversalCollector() {
  */
 void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
+	stop = clock();
+	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
 
 	preCollect();
 
@@ -34,6 +37,10 @@ void TraversalCollector::collect(int reason) {
 	swap();
 
 	postCollect();
+
+	stop = clock();
+	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
 }
 
 void TraversalCollector::swap() {
@@ -49,8 +56,10 @@ void TraversalCollector::swap() {
 		currentObj = myObjectContainer->getbySlotNr(i);
 		if (currentObj) {
 			if (!myAllocator->isInNewSpace(currentObj)) {
-				statFreedObjects++;
-				statFreedDuringThisGC++;
+				if (!currentObj->isForwarded()) {
+					statFreedObjects++;
+					statFreedDuringThisGC++;
+				}
 				myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
 				//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
 			}
@@ -147,8 +156,7 @@ void TraversalCollector::breadthFirstCopying() {
 		currentObj = myQueue.front();
 		myQueue.pop();
 		int kids = currentObj->getPointersMax();
-		if (!myAllocator->isInNewSpace(currentObj))
-			myAllocator->moveObject(currentObj);
+		myAllocator->moveObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);
@@ -176,8 +184,7 @@ void TraversalCollector::depthFirstCopying() {
 		currentObj = myStack.top();
 		myStack.pop();
 		int kids = currentObj->getPointersMax();
-		if (!myAllocator->isInNewSpace(currentObj))
-			myAllocator->moveObject(currentObj);
+		myAllocator->moveObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);

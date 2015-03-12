@@ -244,7 +244,6 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		case realAlloc:
 			object = (Object*)address;
 			object->setArgs(id, size, refCount, getClassName(classID));
-			object->updateAddress(address);
 			break;
 		default:
 		case simulatedAlloc:

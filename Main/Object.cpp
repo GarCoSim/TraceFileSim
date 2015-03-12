@@ -29,6 +29,7 @@ Object::Object(int id, int payloadSize, int maxPointers, int address, char *clas
 	isAlive = 0;
 	isVisited = 0;
 	freed = 0;
+	forwarded = false;
 }
 
 // this only needs to be run when we create the objects in the real allocator
@@ -51,6 +52,8 @@ void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) 
 	isAlive = 0;
 	isVisited = 0;
 	freed = 0;
+	myAddress = 0;
+	forwarded = false;
 }
 
 void Object::setGeneration(int generation){

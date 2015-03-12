@@ -56,6 +56,14 @@ public:
 		this->freed = freed;
 	}
 
+	bool isForwarded() {
+		return forwarded;
+	}
+
+	void setForwarded(bool value) {
+		forwarded = value;
+	}
+
 private:
 	int 	myId;
 	int freed;
@@ -68,7 +76,7 @@ private:
 	int 	myPointersMax;
 	int 	myPointersCurrent;
 
-	//the starting address of the object on the virtual heap
+	//the starting address of the object on the virtual heap OR the forwarding address if split heaps
 	size_t myAddress;
 
 	/*the list of objects I am pointing at*/
@@ -84,6 +92,7 @@ private:
     int	myGeneration;
 
     char *myName;
+    bool forwarded;
 
 };
 

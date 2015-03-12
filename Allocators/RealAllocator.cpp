@@ -20,6 +20,44 @@ bool RealAllocator::isRealAllocator() {
 	return true;
 }
 
+bool RealAllocator::isInNewSpace(Object *object) {
+	int address = getLogicalAddress(object);
+	
+	if (address >= newSpaceOffset && address < myHeapSizeNewSpace)
+		return true;
+
+	return false;
+}
+
+
+void RealAllocator::moveObject(Object *object) {
+	if (isInNewSpace(object))
+		return;
+
+	Object *temp;
+	int size = object->getPayloadSize();
+
+	gcFree(object); // first we need to reclaim the old space
+
+	size_t address = (size_t)allocateInNewSpace(size);
+
+	if (address == (size_t)-1) {
+		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
+		exit(1);
+	}
+	object->updateAddress(address);
+	temp = (Object*)address;
+
+	// now we move the object
+	//memcpy(&temp, &object, sizeof(*object)); // this doesn't work, need to fix later, can't figure out why right now
+	// we do a hack for now
+	temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
+	temp->setVisited(1);
+	object->setForwarded(true);
+
+	object = temp;
+}
+
 void RealAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[heapSize / 8 + 1];
 
@@ -39,6 +77,7 @@ void RealAllocator::initializeHeap(int heapSize) {
 	newSpaceOffset = heapSize / 2;
 	oldSpaceOffset = 0;
 	overallHeapSize = heapSize;
+	fprintf(stderr, "heap size %d\n", overallHeapSize);
 
 	heap = (unsigned char*)malloc(heapSize * 8);
 	myLastSuccessAddressOldSpace = (size_t)&heap[0];
@@ -99,21 +138,22 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 	return -1;
 }
 
-void RealAllocator::gcFree(Object* object) {
-	size_t address = (size_t)&object;
-	int size = object->getPayloadSize();
+size_t RealAllocator::getLogicalAddress(Object *object) {
+	size_t address = (size_t)object;
 	size_t i;
 
 	// find the address we're looking for
-	for (i = 0; i < (size_t)overallHeapSize; i++) {
+	for (i = 0; i < (size_t)overallHeapSize; i++)
 		if (address == (size_t)&heap[i])
-			break;
-	}
-	if (address == (size_t)&heap[i]) {
-		fprintf(stderr, "could not find the address %zx, that shouldn't have happened\n", address);
-	}
+			return i;
 
-	setFree(i, size);
+	return -1;
+}
+
+void RealAllocator::gcFree(Object* object) {
+	int size = object->getPayloadSize();
+
+	setFree(getLogicalAddress(object), size);
 	//object->setFreed(1);
 
 	statLiveObjects--;

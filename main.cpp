@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 	if (traversal == -1)
 		traversal = (int)breadthFirst;
 	if (collector == -1)
-		collector = (int)markSweepGC;
+		collector = (int)traversalGC;
 	if (allocator == -1)
 		allocator = (int)realAlloc;
 	if (heapSize == -1) {
