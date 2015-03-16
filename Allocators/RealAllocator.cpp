@@ -6,11 +6,6 @@
  */
 
 #include "RealAllocator.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <string>
 
 extern int gLineInTrace;
 
@@ -21,20 +16,55 @@ namespace traceFileSimulator {
 RealAllocator::RealAllocator() {
 }
 
-void RealAllocator::setHalfHeapSize(bool value) {
-	if (value)
-		myHeapSize = overallHeapSize / 2;
-	else
-		myHeapSize = overallHeapSize;
+bool RealAllocator::isRealAllocator() {
+	return true;
+}
+
+bool RealAllocator::isInNewSpace(Object *object) {
+	int address = getLogicalAddress(object);
+	
+	if (address >= newSpaceOffset && address < myHeapSizeNewSpace)
+		return true;
+
+	return false;
+}
+
+
+void RealAllocator::moveObject(Object *object) {
+	if (isInNewSpace(object))
+		return;
+
+	Object *temp;
+	int size = object->getPayloadSize();
+
+	//gcFree(object); // first we need to reclaim the old space
+
+	size_t address = (size_t)allocateInNewSpace(size);
+
+	if (address == (size_t)-1) {
+		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
+		exit(1);
+	}
+	object->updateAddress(address);
+	temp = (Object*)address;
+
+	// now we move the object
+	//memcpy(&temp, &object, sizeof(*object)); // this doesn't work, need to fix later, can't figure out why right now
+	// we do a hack for now
+	temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
+	temp->setVisited(1);
+	object->setForwarded(true);
+
+	object = temp;
 }
 
 void RealAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[heapSize / 8 + 1];
 
-	myHeapSize = heapSize;
-	myLastSuccessAddress = 0;
+	myHeapSizeOldSpace = heapSize;
+	myLastSuccessAddressOldSpace = 0;
 	myLastSuccessAddressNewSpace = heapSize / 2;
-	myHeapSizeNewSpace = overallHeapSize;
+	myHeapSizeNewSpace = heapSize;
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
@@ -44,132 +74,48 @@ void RealAllocator::initializeHeap(int heapSize) {
 	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
-	newSpaceOffset = 0;
+	newSpaceOffset = heapSize / 2;
+	oldSpaceOffset = 0;
 	overallHeapSize = heapSize;
+	fprintf(stderr, "heap size %d\n", overallHeapSize);
 
-	// here we do the actual instantiation of the heap, no simulating like in the other allocator :)
 	heap = (unsigned char*)malloc(heapSize * 8);
-}
-
-
-void RealAllocator::moveObject(Object *object) {
-	// if our object already survived we have nothing to do
-	if (isInNewSpace(object))
-		return;
-
-	int size = object->getPayloadSize();
-	object->updateAddress(allocateInNewSpace(size));
-}
-
-bool RealAllocator::isRealAllocator() {
-	return true;
-}
-
-
-int RealAllocator::allocateInNewSpace(int size) {
-	if (size <= 0) {
-		return -1;
-	}
-
-	//hope for the best, assume the worst
-	int address = 0;
-	int contiguous = 0;
-	//nextFit search
-	int i, bit;
-	int passedBoundOnce = 0;
-	int end = (myLastSuccessAddressNewSpace - 1);
-
-	for (i = myLastSuccessAddressNewSpace; i != end; i++) {
-		bit = isBitSet(i);
-
-		if (i == myHeapSizeNewSpace) {
-			if (passedBoundOnce == 1) {
-				return -1;
-			}
-			i = 0;
-			contiguous = 0;
-			address = i + 1;
-			passedBoundOnce = 1;
-		}
-
-		if (bit == 1) {
-			address = i + 1;
-			contiguous = 0;
-		} else {
-			contiguous++;
-			if (contiguous == size) {
-				setAllocated(address, size);
-				statBytesAllocated += size;
-				statLiveObjects++;
-				myLastSuccessAddressNewSpace = address;
-				return (size_t)&heap[address];
-			}
-		}
-	}
-
-	return -1;
-}
-
-bool RealAllocator::isInNewSpace(Object *object) {
-	int address = object->getAddress();
-	
-	if (newSpaceOffset == 0) {
-		if (address >= 0 && address < overallHeapSize / 2)
-			return true;
-	} else {
-		if (address >= overallHeapSize / 2 && address < overallHeapSize)
-			return true;
-	}
-
-	return false;
-}
-
-void RealAllocator::swapHeaps() {
-	int temp;
-
-	myHeapSizeNewSpace = myHeapSize;
-	myHeapSize = (newSpaceOffset == 0) ? overallHeapSize : overallHeapSize / 2 + 1;
-
-	newSpaceOffset = (newSpaceOffset == 0) ? overallHeapSize / 2 : 0;
-
-	temp = myLastSuccessAddress;
-	myLastSuccessAddress = myLastSuccessAddressNewSpace;
-	myLastSuccessAddressNewSpace = temp;
-
-	
+	myLastSuccessAddressOldSpace = (size_t)&heap[0];
+	myLastSuccessAddressNewSpace = (size_t)&heap[0];
 }
 
 void RealAllocator::freeAllSectors() {
 	int i;
 
-	for (i = 0; i < myHeapSize; i++) {
+	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
 	}
 
 	statBytesAllocated = 0;
 }
 
-size_t RealAllocator::gcAllocate(int size) {
+size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddress) {
 	if (size <= 0) {
 		return -1;
 	}
 
 	//hope for the best, assume the worst
-	int address = 0;
+	int address = lower;
 	int contiguous = 0;
 	//nextFit search
 	int i, bit;
 	int passedBoundOnce = 0;
-	int end = (myLastSuccessAddress - 1);
+	//int end = (lastAddress - (size_t)(&heap) - 1);
 
-	for (i = myLastSuccessAddress; i != end; i++) {
+	for (i = lower; i != upper; i++) {
+	//for (i = lastAddress - (size_t)(&heap); i != end; i++) {
 		bit = isBitSet(i);
 
-		if (i == myHeapSize) {
+		if (i == upper) {
 			if (passedBoundOnce == 1) {
 				return -1;
 			}
-			i = 0;
+			i = lower;
 			contiguous = 0;
 			address = i + 1;
 			passedBoundOnce = 1;
@@ -184,7 +130,6 @@ size_t RealAllocator::gcAllocate(int size) {
 				setAllocated(address, size);
 				statBytesAllocated += size;
 				statLiveObjects++;
-				myLastSuccessAddress = address;
 				return (size_t)&heap[address];
 			}
 		}
@@ -193,137 +138,26 @@ size_t RealAllocator::gcAllocate(int size) {
 	return -1;
 }
 
+size_t RealAllocator::getLogicalAddress(Object *object) {
+	size_t address = (size_t)object;
+	size_t i;
+
+	// find the address we're looking for
+	for (i = 0; i < (size_t)overallHeapSize; i++)
+		if (address == (size_t)&heap[i])
+			return i;
+
+	return -1;
+}
+
 void RealAllocator::gcFree(Object* object) {
-	int address = object->getAddress();
 	int size = object->getPayloadSize();
 
-	setFree(address, size);
+	setFree(getLogicalAddress(object), size);
 	//object->setFreed(1);
 
 	statLiveObjects--;
 	statBytesAllocated -= size;
-}
-
-//used mainly by garbage collector
-int RealAllocator::getFreeSize() {
-	return myHeapSize - statBytesAllocated;
-}
-
-void RealAllocator::setAllocated(int address, int size) {
-	int i;
-	int pointer = address;
-
-	for (i = 0; i < size; i++) {
-		setBitUsed(pointer);
-		pointer++;
-	}
-}
-
-void RealAllocator::setFree(int address, int size) {
-	int i;
-	int pointer = address;
-	//unsigned char *heapPtr = &heap[address];
-
-	for (i = 0; i < size; i++) {
-		//*heapPtr++ = NULL; // overwrite the space
-		setBitUnused(pointer);
-		pointer++;
-	}
-}
-
-int RealAllocator::getHeapSize() {
-	return myHeapSize;
-}
-
-inline bool RealAllocator::isBitSet(unsigned int address) {
-	if (address > (unsigned int) myHeapSize) {
-		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
-				gLineInTrace, address);
-	}
-
-	int byteNR = address / 8;
-
-	if ((unsigned char) myHeapBitMap[byteNR] == 255) {
-		return true;
-	}
-
-	int bit = 7 - address % 8;
-	int value = myHeapBitMap[byteNR] & 1 << bit;
-
-	if (value > 0) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-void RealAllocator::setBitUsed(unsigned int address) {
-	if (address > (unsigned int) myHeapSize) {
-		fprintf(stderr,
-				"ERROR(Line %d): setBitUsed request to illegal slot %d\n",
-				gLineInTrace, address);
-		exit(1);
-	}
-
-	int byte = address / 8;
-	int bit = 7 - address % 8;
-
-	myHeapBitMap[byte] = myHeapBitMap[byte] | 1 << bit;
-}
-
-void RealAllocator::setBitUnused(unsigned int address) {
-	if (address > (unsigned int) myHeapSize) {
-		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
-	}
-
-	int byte = address / 8;
-	int bit = 7 - address % 8;
-
-	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
-}
-
-void RealAllocator::printMap() {
-	fprintf(heapMap, "%7d", gLineInTrace);
-
-	int i;
-
-	for (i = 0; i < myHeapSize; i++) {
-		if (isBitSet(i) == 1) {
-			fprintf(heapMap, "X");
-		} else {
-			fprintf(heapMap, "_");
-		}
-	}
-
-	fprintf(heapMap, "\n");
-}
-
-void RealAllocator::printStats() {
-	if (DEBUG_MODE && WRITE_HEAPMAP) {
-		printMap();
-	}
-
-	int bytesAllocated = 0;
-
-	//traverse all heap and count allocated bits
-	int i;
-
-	for (i = 0; i < myHeapSize; i++) {
-		if (isBitSet(i) == 1) {
-			bytesAllocated++;
-		}
-	}
-
-	fprintf(allocLog, "%7d: alloc: %7d obj: %7d\n", gLineInTrace,
-			bytesAllocated, statLiveObjects);
-}
-
-void RealAllocator::setAllocationSeearchStart(int address) {
-	if (address > myHeapSize) {
-		return;
-	}
-
-	myLastSuccessAddress = address;
 }
 
 RealAllocator::~RealAllocator() {

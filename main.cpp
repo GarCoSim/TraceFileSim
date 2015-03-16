@@ -32,6 +32,8 @@ const char *getLogFilename(string name) {
 	else
 		retString = (string)globalFilename + ".log";
 
+	fprintf(stderr, "Writing logfile to '%s'\n", retString.c_str());
+
 	return retString.c_str();
 }
 
@@ -86,6 +88,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
+
 	if(WRITE_DETAILED_LOG) {
 		gDetLog = fopen("detailed.log","w+");
 	}
@@ -110,22 +114,20 @@ int main(int argc, char *argv[]) {
 		if (collector != (int)traversalGC)
 			heapSize = 200000;
 		else
-			heapSize = 400000;
+			heapSize = 600000;
 	}
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
 
 	//set up global logfile
 	gLogFile = fopen(getLogFilename((string)filename), "w+");
-	fprintf(gLogFile, "Collector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d\nWatermark: %d\n", 
-			COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d%s\nWatermark: %d\n\n", 
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
 			"Heap Used", "Free Heap", "Generation", "GC Time");
 
-
-	fprintf(stderr, "TraceFileSimulator v%s\n\n", VERSION);
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
@@ -144,13 +146,13 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	simulator->printStats();
+	simulator->lastStats();
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
 	printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
 	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
-
 
 	fclose(gLogFile);
 

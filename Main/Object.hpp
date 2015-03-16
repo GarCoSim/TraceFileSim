@@ -9,6 +9,8 @@
 #define OBJECT_HPP_
 
 #include <vector>
+#include <stdio.h>
+#include <stdlib.h>
 
 using std::vector;
 namespace traceFileSimulator {
@@ -18,8 +20,8 @@ public:
 	Object(int id, int payloadSize, int maxPointers, int address, char *className);
 	void setArgs(int id, int payloadSize, int maxPointers, char *className);
 	virtual ~Object();
-	int 	getAddress();
-	void 	updateAddress(int newAddress);
+	size_t 	getAddress();
+	void 	updateAddress(size_t newAddress);
 	int 	getID();
 	int 	getPayloadSize();
 	int	 	getPointerCount();
@@ -54,6 +56,14 @@ public:
 		this->freed = freed;
 	}
 
+	bool isForwarded() {
+		return forwarded;
+	}
+
+	void setForwarded(bool value) {
+		forwarded = value;
+	}
+
 private:
 	int 	myId;
 	int freed;
@@ -66,8 +76,8 @@ private:
 	int 	myPointersMax;
 	int 	myPointersCurrent;
 
-	//the starting address of the object on the virtual heap
-	int myAddress;
+	//the starting address of the object on the virtual heap OR the forwarding address if split heaps
+	size_t myAddress;
 
 	/*the list of objects I am pointing at*/
 	Object** pointers;
@@ -82,6 +92,7 @@ private:
     int	myGeneration;
 
     char *myName;
+    bool forwarded;
 
 };
 

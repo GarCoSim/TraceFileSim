@@ -11,6 +11,10 @@
 #include "Allocator.hpp"
 #include "../Main/Object.hpp"
 #include <stdio.h>
+#include <stdlib.h>
+#include <climits>
+#include "../defines.hpp"
+#include <string>
 
 namespace traceFileSimulator {
 
@@ -19,36 +23,15 @@ public:
 	SimulatedAllocator();
 	virtual ~SimulatedAllocator();
 
-	size_t gcAllocate(int size);
-	void gcFree(Object* object);
-
-	//used mainly by garbage collector
-	int getFreeSize();
-	int getHeapSize();
-	void setAllocationSeearchStart(int address);
-
-	//stats
-	void printMap();
-	void printStats();
-	void freeAllSectors();
-
-	void setHalfHeapSize(bool value);
-	void moveObject(Object *object);
-	void swapHeaps();
-
-	bool isInNewSpace(Object *object);
-
-	void initializeHeap(int heapSize);
-
 	bool isRealAllocator();
-
+	void freeAllSectors();
+	void gcFree(Object* object);
+	void initializeHeap(int heapSize);
+	void moveObject(Object *object);
+	bool isInNewSpace(Object *object);
+	
 private:
-	inline bool isBitSet(unsigned int address);
-	void setBitUsed(unsigned int address);
-	void setBitUnused(unsigned int address);
-	void setAllocated(int address, int size);
-	void setFree(int address, int size);
-	int allocateInNewSpace(int size);
+	size_t allocate(int size, int lower, int upper, size_t lastAddress);
 };
 
 } 

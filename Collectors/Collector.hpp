@@ -15,6 +15,7 @@
 #include <string>
 #include <ctime>
 #include "../defines.hpp"
+#include <stdio.h>
 
 using namespace std;
 
@@ -31,6 +32,7 @@ public:
 	virtual void checkWatermark();
 	void printStats();
 	virtual int promotionPhase();
+	void lastStats();
 
 protected:
 	void postCollect();
@@ -52,6 +54,9 @@ protected:
 	int gcsSinceLastPromotionPhase;
 	int myTraversal;
 	int statHeapSide;
+	double shortestGC;
+	double longestGC;
+	double allGCs;
 	
 	MemoryManager* myMemManager;
 

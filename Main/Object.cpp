@@ -6,8 +6,6 @@
  */
 
 #include "Object.hpp"
-#include <stdio.h>
-#include <stdlib.h>
 
 namespace traceFileSimulator {
 
@@ -31,6 +29,7 @@ Object::Object(int id, int payloadSize, int maxPointers, int address, char *clas
 	isAlive = 0;
 	isVisited = 0;
 	freed = 0;
+	forwarded = false;
 }
 
 // this only needs to be run when we create the objects in the real allocator
@@ -53,6 +52,8 @@ void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) 
 	isAlive = 0;
 	isVisited = 0;
 	freed = 0;
+	myAddress = 0;
+	forwarded = false;
 }
 
 void Object::setGeneration(int generation){
@@ -63,7 +64,7 @@ int Object::getGeneration(){
 	return myGeneration;
 }
 
-int Object::getAddress(){
+size_t Object::getAddress(){
 	return myAddress;
 }
 
@@ -110,7 +111,7 @@ int Object::getVisited(){
 	return isVisited;
 }
 
-void Object::updateAddress(int newAddress) {
+void Object::updateAddress(size_t newAddress) {
 	myAddress = newAddress;
 }
 

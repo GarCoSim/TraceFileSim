@@ -12,6 +12,8 @@
 #include "Collector.hpp"
 #include "../Main/ObjectContainer.hpp"
 #include <queue>
+#include <stdio.h>
+#include "../defines.hpp"
 
 using namespace std;
 

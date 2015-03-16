@@ -10,7 +10,10 @@
 
 #include <vector>
 #include "Object.hpp"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include "../defines.hpp"
+ 
 namespace traceFileSimulator {
 
 class ObjectContainer {
@@ -40,6 +43,7 @@ public:
 //	void visualizeState(char* filename);
 	int countElements();
 	bool isAlreadyRoot(int thread, int id);
+	void forwardObject(int slot);
 private:
 	int getListSlot();
 	bool doesObjectExistInList(Object *queryObject);

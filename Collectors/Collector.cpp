@@ -6,8 +6,6 @@
  */
 
 #include "Collector.hpp"
-#include <stdio.h>
-#include "../defines.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -20,6 +18,9 @@ extern clock_t start, stop;
 namespace traceFileSimulator {
 
 Collector::Collector() {
+	shortestGC = 999999999;
+	longestGC = 0;
+	allGCs = 0;
 
 }
 
@@ -37,7 +38,7 @@ void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container,
 	statFreeSpaceFragmentCount = 0;
 	statFreeSpaceOnHeap = 0;
 	statLiveObjectCount = 0;
-	statCollectionReason = 0;
+	statCollectionReason = (int)reasonStatistics;
 	statFreedDuringThisGC = 0;
 
 	order = (traversalEnum)traversal;
@@ -56,8 +57,8 @@ void Collector::printStats() {
 	char *statCollectionReasonString;
 
 	switch ((gcReason)statCollectionReason) {
-		case reasonUnknown:
-			statCollectionReasonString = (char*)"Unknown";
+		case reasonStatistics:
+			statCollectionReasonString = (char*)"Statistics";
 			break;
 		case reasonFailedAlloc:
 			statCollectionReasonString = (char*)"Failed Alloc";
@@ -84,6 +85,11 @@ void Collector::printStats() {
 
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	if (elapsed_secs < shortestGC)
+		shortestGC = elapsed_secs;
+	if (elapsed_secs > longestGC)
+		longestGC = elapsed_secs;
+	allGCs += longestGC;
 
 	statLiveObjectCount = myObjectContainer->countElements();
 	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
@@ -94,7 +100,7 @@ void Collector::printStats() {
 	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
 		myAllocator->printStats();
 	}
-	if(statCollectionReason == 0){
+	if(statCollectionReason == (int)reasonStatistics){
 		char fl[80];
 		sprintf(fl, "gen%d.log",myGeneration);
 		FILE* genfile = fopen(fl,"a");
@@ -103,7 +109,7 @@ void Collector::printStats() {
 		fflush(genfile);
 		fclose(genfile);
 	}
-	statCollectionReason = 0;
+	statCollectionReason = (int)reasonStatistics;
 }
 
 void Collector::postCollect() {
@@ -114,6 +120,10 @@ void Collector::postCollect() {
 
 int Collector::promotionPhase() {
 	return -1;
+}
+
+void Collector::lastStats() {
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
 }
 
 Collector::~Collector() {

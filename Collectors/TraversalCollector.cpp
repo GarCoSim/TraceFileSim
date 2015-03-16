@@ -6,10 +6,6 @@
  */
 
 #include "TraversalCollector.hpp"
-#include "../Main/MemoryManager.hpp"
-#include <stdio.h>
-#include <ctime>
-#include "../defines.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -30,11 +26,9 @@ TraversalCollector::TraversalCollector() {
  */
 void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
-
-	liveObjects = 0;
-	deadObjects = 0;
-
-	fprintf(stderr, "GC %d started\n", statGcNumber);
+	stop = clock();
+	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
 
 	preCollect();
 
@@ -44,7 +38,9 @@ void TraversalCollector::collect(int reason) {
 
 	postCollect();
 
-	fprintf(stderr, "GC %d done, live %d dead %d\n", statGcNumber - 1, liveObjects, deadObjects);
+	stop = clock();
+	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
 }
 
 void TraversalCollector::swap() {
@@ -60,8 +56,12 @@ void TraversalCollector::swap() {
 		currentObj = myObjectContainer->getbySlotNr(i);
 		if (currentObj) {
 			if (!myAllocator->isInNewSpace(currentObj)) {
-				deadObjects++;
-				myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
+				if (!currentObj->isForwarded()) {
+					statFreedObjects++;
+					statFreedDuringThisGC++;
+				}
+				myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
+				//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
 			}
 		}
 	}
@@ -128,7 +128,6 @@ void TraversalCollector::getAllRoots() {
 					if (currentObj->getGeneration() < myGeneration) {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
-					liveObjects++;
 					myQueue.push(currentObj);
 					myStack.push(currentObj);
 				}
@@ -139,7 +138,6 @@ void TraversalCollector::getAllRoots() {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && currentObj->getVisited() == 0) {
 				currentObj->setVisited(1);
-				liveObjects++;
 				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
 				myStack.push(currentObj);
@@ -153,7 +151,7 @@ void TraversalCollector::breadthFirstCopying() {
 	Object* currentObj;
 	Object* child;
 
-	//breadth first through the tree
+	//breadth first through the tree using a queue
 	while (!myQueue.empty()) {
 		currentObj = myQueue.front();
 		myQueue.pop();
@@ -170,7 +168,6 @@ void TraversalCollector::breadthFirstCopying() {
 					&& child->getGeneration() <= myGeneration) {
 				child->setVisited(1);
 
-				liveObjects++;
 				myQueue.push(child);
 			}
 		}
@@ -178,7 +175,31 @@ void TraversalCollector::breadthFirstCopying() {
 }
 
 void TraversalCollector::depthFirstCopying() {
-	//TODO
+	int i;
+	Object* currentObj;
+	Object* child;
+
+	//depth first through the tree using a stack
+	while (!myStack.empty()) {
+		currentObj = myStack.top();
+		myStack.pop();
+		int kids = currentObj->getPointersMax();
+		myAllocator->moveObject(currentObj);
+		currentObj->setAge(currentObj->getAge() + 1);
+		for (i = 0; i < kids; i++) {
+			child = currentObj->getReferenceTo(i);
+			//no matter if the child was processed before or not, add it to the rem set.
+			if(child && child->getGeneration() < currentObj->getGeneration()){
+				myMemManager->requestRemSetAdd(child);
+			}
+			if (child && child->getVisited() == 0
+					&& child->getGeneration() <= myGeneration) {
+				child->setVisited(1);
+
+				myStack.push(child);
+			}
+		}
+	}
 }
 
 void TraversalCollector::hotnessCopying() {

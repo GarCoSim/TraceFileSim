@@ -6,8 +6,6 @@
  */
 
 #include "Simulator.hpp"
-#include <string>
-#include <stdlib.h>
 
 using namespace std;
 
@@ -56,6 +54,10 @@ string Simulator::getNextLine(){
 	return line;
 }
 
+void Simulator::lastStats() {
+	myMemManager->lastStats();
+}
+
 int Simulator::doNextStep(){
 	string traceLine = getNextLine();
 	if (ONE_SECOND_PASSED) {
@@ -82,6 +84,8 @@ int Simulator::doNextStep(){
 				break;
 			case '-':
 				deleteRoot(traceLine);
+				break;
+			case 'c': // for now we ignore the class option
 				break;
 			default:
 				//gLineInTrace++;
@@ -152,11 +156,17 @@ void Simulator::allocateToRootset(string line){
 
 void Simulator::deleteRoot(string line){
 	int thread, id;
-	int pos, length;
+	size_t pos;
+	int length;
 
 	pos = line.find('T')+1;
 	length = line.find(' ',pos)-pos;
 	thread = atoi(line.substr(pos,length).c_str());
+
+	// for now we skip the removal of classes in the tracefile, needs to be addressed in future releases
+	pos = line.find('C');
+	if (pos != string::npos)
+		return;
 
 	pos = line.find('O')+1;
 	length = line.find(' ',pos)-pos;
@@ -209,6 +219,12 @@ void Simulator::allocateObject(string line){
 	pos = line.find('N')+1;
 	length = line.find('\n',pos)-pos;
 	refCount = atoi(line.substr(pos,length).c_str());
+
+	//check objectID for NULL object.
+	if(id == 0){
+		fprintf(stderr, "ERROR (%d): Object ID 0 is reserved for a NULL pointer.\n", gLineInTrace);
+		exit(1);
+	}
 
 	if (myMemManager->hasClassTable()) {
 		pos = line.find('C')+1;

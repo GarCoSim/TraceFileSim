@@ -10,6 +10,10 @@
 
 #include "../Main/Object.hpp"
 #include <stdio.h>
+#include <stdlib.h>
+#include <climits>
+#include "../defines.hpp"
+#include <string>
 
 namespace traceFileSimulator {
 
@@ -18,22 +22,22 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-	virtual size_t gcAllocate(int size);
+	size_t gcAllocate(int size);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector
-	virtual int getFreeSize();
-	virtual int getHeapSize();
-	virtual void setAllocationSeearchStart(int address);
+	int getFreeSize();
+	int getHeapSize();
+	void setAllocationSeearchStart(int address);
 
 	//stats
-	virtual void printMap();
-	virtual void printStats();
+	void printMap();
+	void printStats();
 	virtual void freeAllSectors();
 
-	virtual void setHalfHeapSize(bool value);
+	void setHalfHeapSize(bool value);
 	virtual void moveObject(Object *object);
-	virtual void swapHeaps();
+	void swapHeaps();
 
 	virtual bool isInNewSpace(Object *object);
 
@@ -42,16 +46,31 @@ public:
 	virtual bool isRealAllocator();
 
 protected:
+	int getUsedSpace(bool newSpace);
+	size_t allocateInNewSpace(int size);
+	void setAllocated(int address, int size);
+	void setFree(int address, int size);
+	bool isBitSet(unsigned int address);
+	void setBitUsed(unsigned int address);
+	void setBitUnused(unsigned int address);
+	virtual size_t allocate(int size, int lower, int upper, size_t lastAddress);
+
+
+	bool isSplitHeap;
 	char* myHeapBitMap;
-	int myHeapSize;
+
+	int myHeapSizeOldSpace;
+	int myHeapSizeNewSpace;
+	size_t myLastSuccessAddressOldSpace;
+	size_t myLastSuccessAddressNewSpace;
+	int newSpaceOffset;
+	int oldSpaceOffset;
+	int overallHeapSize;
+
 	int statBytesAllocated;
 	int statLiveObjects;
 	FILE* allocLog;
 	FILE* heapMap;
-	int myLastSuccessAddress;
-	int newSpaceOffset;
-	int overallHeapSize;
-	int myLastSuccessAddressNewSpace;
 };
 
 } 

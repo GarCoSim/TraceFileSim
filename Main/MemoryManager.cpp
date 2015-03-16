@@ -6,10 +6,6 @@
  */
 
 #include "MemoryManager.hpp"
-#include "../defines.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
 extern FILE* gLogFile;
 extern FILE* gDetLog;
@@ -165,7 +161,7 @@ size_t MemoryManager::allocate(int size, int generation) {
 				gLineInTrace, generation);
 		exit(1);
 	}
-	int reason = 1;
+	int reason = (int)reasonFailedAlloc;
 //	if(isPromotion == 1){
 //		reason = 4;
 //	}
@@ -238,6 +234,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
 				size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
+		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
 
@@ -453,6 +450,7 @@ int MemoryManager::allocateObject(int thread, int parentID, int parentSlot,
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
 				size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
+		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
 	Object* parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
@@ -507,9 +505,14 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 				parentID, parentSlot, childID);
 	}
 	Object* parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
-	Object* child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
+	//id 0 represents the NULL object.
+	Object* child = NULL;
+	int childGeneration = -1;
+	if(childID != 0){
+		child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
+		childGeneration = child->getGeneration();
+	}
 	int parentGeneration = parent->getGeneration();
-	int childGeneration = child->getGeneration();
 
 	//check old child, if it created remSet entries and delete them
 	Object* oldChild = parent->getReferenceTo(parentSlot);
@@ -532,7 +535,7 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 	}
 
 	parent->setPointer(parentSlot, child);
-	if (parentGeneration > childGeneration) {
+	if (parentGeneration > childGeneration && childID != 0) {
 		int i;
 		for (i = childGeneration; i < parentGeneration; i++) {
 			myObjectContainers[i]->addToGenRoot(child);
@@ -567,6 +570,10 @@ void MemoryManager::requestRemSetAdd(Object* currentObj){
 
 void MemoryManager::forceGC() {
 	myGarbageCollectors[GENERATIONS-1]->collect((int)reasonForced);
+}
+
+void MemoryManager::lastStats() {
+	myGarbageCollectors[GENERATIONS-1]->lastStats();
 }
 
 int* MemoryManager::computeHeapsizes(int heapSize) {

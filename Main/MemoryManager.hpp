@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 using namespace std;
 
@@ -53,6 +56,7 @@ public:
 	bool loadClassTable(string traceFilePath);
 	bool hasClassTable();
 	void forceGC();
+	void lastStats();
 
 private:
 	bool isAlreadyRoot(int thread, int id);
