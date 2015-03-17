@@ -20,22 +20,7 @@ int gAllocations;
 FILE* gLogFile;
 FILE* gDetLog;
 int forceAGCAfterEveryStep = 0;
-char *globalFilename;
-
-const char *getLogFilename(string name) {
-	string retString;
-
-	size_t found = name.find(".trace");
-	globalFilename = (char*)name.substr(0, found).c_str();
-	if (forceAGCAfterEveryStep)
-		retString = (string)globalFilename + "Forced.log";
-	else
-		retString = (string)globalFilename + ".log";
-
-	fprintf(stderr, "Writing logfile to '%s'\n", retString.c_str());
-
-	return retString.c_str();
-}
+string globalFilename;
 
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
@@ -119,8 +104,16 @@ int main(int argc, char *argv[]) {
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
 
+	CREATE_GLOBAL_FILENAME((string)filename);
+
+	string logFileName;
+	if (forceAGCAfterEveryStep)
+		logFileName = globalFilename + "Forced.log";
+	else
+		logFileName = globalFilename + ".log";
+
 	//set up global logfile
-	gLogFile = fopen(getLogFilename((string)filename), "w+");
+	gLogFile = fopen(logFileName.c_str(), "w+");
 	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d%s\nWatermark: %d\n\n", 
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "

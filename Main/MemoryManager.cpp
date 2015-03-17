@@ -10,7 +10,7 @@
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern int gLineInTrace;
-extern char *globalFilename;
+extern string globalFilename;
 
 namespace traceFileSimulator {
 
@@ -29,7 +29,7 @@ MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int
 bool MemoryManager::loadClassTable(string traceFilePath) {
 	ifstream classFile;
 	size_t found;
-	string className = (string)globalFilename + ".cls";
+	string className = globalFilename + ".cls";
 	string line;
 
 	// we need to push an empty element into the vector as our classes start with id 1

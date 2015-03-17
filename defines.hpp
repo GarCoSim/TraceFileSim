@@ -59,4 +59,6 @@ enum gcReason {
 #define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : "copying"))
 #define ALLOCATOR_STRING (allocator == (int)simulatedAlloc ? "simulated" : "real")
 
+#define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
+
 #endif
