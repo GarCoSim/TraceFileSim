@@ -112,12 +112,7 @@ bool ObjectContainer::isAlreadyRoot(int thread, int id) {
 
 int ObjectContainer::addToRoot(Object* newObject, int thread, int rootSlot) {
 	if (!doesObjectExistInList(newObject)) {
-		int listSlot = getListSlot();
-		if (listSlot == -1) {
-			fprintf(stderr, "ERROR(line %d): no slot found\n", gLineInTrace);
-			return -1;
-		}
-		objectList[listSlot] = newObject;
+		add(newObject);
 	}
 	rootset[thread][rootSlot] = newObject;
 	rootCount++;
