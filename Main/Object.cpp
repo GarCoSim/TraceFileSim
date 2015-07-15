@@ -10,26 +10,8 @@
 namespace traceFileSimulator {
 
 Object::Object(int id, int payloadSize, int maxPointers, int address, char *className) {
-
-	//prepare data structure
-	myId = id;
-	myPayloadSize = payloadSize;
-	myPointersCurrent = 0;
-	myPointersMax = maxPointers;
-	pointers = (Object**)malloc(maxPointers*sizeof(Object*));
-	for(int i = 0; i < maxPointers;i++){
-		pointers[i] = NULL;
-	}
+	setArgs(id, payloadSize, maxPointers, className);
 	myAddress = address;
-	myGeneration = 0;
-	myAge = 0;
-	myName = className;
-
-	//stat
-	isAlive = 0;
-	isVisited = 0;
-	freed = 0;
-	forwarded = false;
 }
 
 // this only needs to be run when we create the objects in the real allocator
