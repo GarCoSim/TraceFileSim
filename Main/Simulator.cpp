@@ -49,7 +49,7 @@ string Simulator::getNextLine(){
 			myLastStepWorked = 0;
 		}
 		gLineInTrace++;
-	} while (line.size() == 0); 
+	} while (line.size() == 0 && !myTraceFile.eof());
 
 	return line;
 }
