@@ -161,10 +161,6 @@ size_t MemoryManager::allocate(int size, int generation) {
 				gLineInTrace, generation);
 		exit(1);
 	}
-	int reason = (int)reasonFailedAlloc;
-//	if(isPromotion == 1){
-//		reason = 4;
-//	}
 	size_t result = -1;
 	int gen = generation;
 	//try allocating in the generation
@@ -175,7 +171,7 @@ size_t MemoryManager::allocate(int size, int generation) {
 					"(%d) Trigger Gc in generation %d.\n",
 					gLineInTrace, gen);
 		}
-		myGarbageCollectors[gen]->collect(reason);
+		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
 		result = myAllocators[generation]->gcAllocate(size);
 		gen++;
 	}
