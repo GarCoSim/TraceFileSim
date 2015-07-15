@@ -156,7 +156,7 @@ int MemoryManager::evalCollect(){
 
 size_t MemoryManager::allocate(int size, int generation) {
 	//check if legal generation
-	if (generation < 0 && generation > GENERATIONS - 1) {
+	if (generation < 0 || generation > GENERATIONS - 1) {
 		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
 				gLineInTrace, generation);
 		exit(1);
