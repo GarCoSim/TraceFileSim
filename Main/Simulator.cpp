@@ -58,6 +58,13 @@ void Simulator::lastStats() {
 	myMemManager->lastStats();
 }
 
+int Simulator::parseAttributeFromTraceLine(char attributeIdentifier, string line) {
+	int pos, length;
+	pos = line.find(attributeIdentifier)+1;
+	length = min(line.find(' ',pos), line.find('\n',pos)) - pos;
+	return atoi(line.substr(pos,length).c_str());
+}
+
 int Simulator::doNextStep(){
 	string traceLine = getNextLine();
 	if (ONE_SECOND_PASSED) {
@@ -120,34 +127,16 @@ int Simulator::lastStepWorked(){
 
 void Simulator::allocateToRootset(string line){
 	int thread, id, size, refCount;
-	int pos, length;
 	int classID;
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
-
-	// pos = line.find('R')+1;
-	// length = line.find(' ',pos)-pos;
-	// rootsetIndex = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('O')+1;
-	length = line.find(' ',pos)-pos;
-	id = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('S')+1;
-	length = line.find(' ',pos)-pos;
-	size = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	id = parseAttributeFromTraceLine('O', line);
+	refCount = parseAttributeFromTraceLine('N', line);
+	size = parseAttributeFromTraceLine('S', line);
 	size += sizeof(Object);
 
-	pos = line.find('N')+1;
-	length = line.find('\n',pos)-pos;
-	refCount = atoi(line.substr(pos,length).c_str());
-
 	if (myMemManager->hasClassTable()) {
-		pos = line.find('C')+1;
-		length = line.find('\n',pos)-pos;
-		classID = atoi(line.substr(pos,length).c_str());
+		classID = parseAttributeFromTraceLine('C', line);
 	} else
 		classID = 0;
 
@@ -157,68 +146,38 @@ void Simulator::allocateToRootset(string line){
 void Simulator::deleteRoot(string line){
 	int thread, id;
 	size_t pos;
-	int length;
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	id = parseAttributeFromTraceLine('O', line);
 
 	// for now we skip the removal of classes in the tracefile, needs to be addressed in future releases
 	pos = line.find('C');
 	if (pos != string::npos)
 		return;
 
-	pos = line.find('O')+1;
-	length = line.find(' ',pos)-pos;
-	id = atoi(line.substr(pos,length).c_str());
-
 	myMemManager->requestRootDelete(thread, id);
 }
 
 void Simulator::addToRoot(string line){
 	int thread, id;
-	int pos, length;
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('O')+1;
-	length = line.find(' ',pos)-pos;
-	id = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	id = parseAttributeFromTraceLine('O', line);
 
 	myMemManager->requestRootAdd(thread, id);
 }
 
 void Simulator::allocateObject(string line){
 	int thread, parent, parentSlot, id, size, refCount;
-	int pos, length;
 	int classID;
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('P')+1;
-	length = line.find(' ',pos)-pos;
-	parent = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('#')+1;
-	length = line.find(' ',pos)-pos;
-	parentSlot = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('O')+1;
-	length = line.find(' ',pos)-pos;
-	id = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('S')+1;
-	length = line.find(' ',pos)-pos;
-	size = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	parent = parseAttributeFromTraceLine('P', line);
+	parentSlot = parseAttributeFromTraceLine('#', line);
+	id = parseAttributeFromTraceLine('O', line);
+	refCount = parseAttributeFromTraceLine('N', line);
+	size = parseAttributeFromTraceLine('S', line);
 	size += sizeof(Object);
-
-	pos = line.find('N')+1;
-	length = line.find('\n',pos)-pos;
-	refCount = atoi(line.substr(pos,length).c_str());
 
 	//check objectID for NULL object.
 	if(id == 0){
@@ -227,9 +186,7 @@ void Simulator::allocateObject(string line){
 	}
 
 	if (myMemManager->hasClassTable()) {
-		pos = line.find('C')+1;
-		length = line.find('\n',pos)-pos;
-		classID = atoi(line.substr(pos,length).c_str());
+		classID = parseAttributeFromTraceLine('C', line);
 	} else
 		classID = 0;
 
@@ -238,22 +195,11 @@ void Simulator::allocateObject(string line){
 
 void Simulator::referenceOperation(string line){
 	int thread, parentID, parentSlot, childId;
-	int pos, length;
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
 
-	pos = line.find('P')+1;
-	length = line.find(' ',pos)-pos;
-	parentID = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('#')+1;
-	length = line.find(' ',pos)-pos;
-	parentSlot = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('O')+1;
-	length = line.find('\n',pos)-pos;
-	childId = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	parentID = parseAttributeFromTraceLine('P', line);
+	parentSlot = parseAttributeFromTraceLine('#', line);
+	childId = parseAttributeFromTraceLine('O', line);
 
 	myMemManager->setPointer(thread, parentID, parentSlot, childId);
 }

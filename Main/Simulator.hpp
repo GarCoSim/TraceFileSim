@@ -37,6 +37,7 @@ private:
 	void referenceOperation(string line);
 	void deleteRoot(string line);
 	void addToRoot(string line);
+	int parseAttributeFromTraceLine(char attributeIdentifier, string line);
 
 	ifstream myTraceFile;
 	
