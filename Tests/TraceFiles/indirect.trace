@@ -1,0 +1,9 @@
+a T1 O1 S128 N1
++ T1 O1
+a T1 O2 S128 N0
++ T1 O2
+a T1 O3 S128 N0
++ T1 O3
+w T1 P1 #0 O2
+- T1 O2
+w T1 P1 #0 O3

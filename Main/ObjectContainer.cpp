@@ -288,6 +288,19 @@ int ObjectContainer::countElements() {
 	return result;
 }
 
+void ObjectContainer::dumpHeap() {
+	Object *obj;
+	unsigned int i;
+
+	printf("Dumping Heap:\n");
+	for (i=0; i<objectList.size(); i++) {
+		obj = objectList[i];
+		if (obj)
+			printf("[object <id:%d>]\n", obj->getID());
+	}
+	printf("End of Dump\n");
+}
+
 ObjectContainer::~ObjectContainer() {
 }
 

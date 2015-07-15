@@ -1,0 +1,9 @@
+The purpose of this case is to ensure that a GC collection results in chained or
+cascading deletes when the parent (who is now garbage) contained the only
+reference to a child. This traceface creates 2 objects with the following
+pointer relationship:
+
+	rootset -> O1 -> O2
+
+The pointer from the root-set to O1 is then removed, leaving O1 and,
+subsequently, O2 as garbage to be collected.

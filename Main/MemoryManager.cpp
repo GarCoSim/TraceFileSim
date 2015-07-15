@@ -611,6 +611,10 @@ void MemoryManager::printStats() {
 
 }
 
+void MemoryManager::dumpHeap() {
+	myObjectContainers[GENERATIONS-1]->dumpHeap();
+}
+
 MemoryManager::~MemoryManager() {
 }
 

@@ -1,0 +1,10 @@
+The purpose of this case is to ensure that it is not only the removal from the
+root-set which triggers GC. This traceface creates 2 objects with the following
+pointer relationship:
+
+	rootset -> O1 -> O2
+
+Note that the only reference to O2 is from the object O1; O2 is not a part of
+the root-set. The only reference to O2 is then removed, by making O1 point at a
+new object: O3. O2 is now garbage and should be collected.
+

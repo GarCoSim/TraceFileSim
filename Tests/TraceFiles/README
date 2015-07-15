@@ -1,0 +1,13 @@
+The purpose of these trace files is to concisely and explicitly create a
+condition in which garbage exists. They are intended to be used as test-cases or
+'sanity checks' when debugging a new GC policy.
+
+These tracefiles can be used in conjunction with gdb to check the functionaliy
+of a GC policy. The state of the heap can be visualized using the
+MemoryManager::dumpHeap() method which has been added to aid in debugging. Using
+gdb to explicity call forceCollect() and dumpHeap() at various points throughout
+these test cases will allow you to verify the functionality of your GC policy.
+
+Another option is to add a call to dumpHeap() after each line of the tracefile
+is processed.
+	

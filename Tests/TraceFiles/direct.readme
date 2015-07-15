@@ -1,0 +1,3 @@
+The purpose of this test-case is to ensure that when a reference to an object is
+deleted from the root-set, and there are no other references to the object, it
+will be collected.

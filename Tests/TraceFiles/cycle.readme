@@ -1,0 +1,11 @@
+The purpose of this case is to ensure that the GC policy can detect garbage
+which contains cyclical references. Two objects are created which the following
+reference relationship:
+
+	           ->
+	rootset  O1  02
+	           <-
+
+Note that although neither object is refered to by the rootset, a reference
+cycle exists between the objects. A functional GC policy should detect both O1
+and O2 as garbage and collect them.

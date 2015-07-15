@@ -57,6 +57,7 @@ public:
 	bool hasClassTable();
 	void forceGC();
 	void lastStats();
+	void dumpHeap();
 
 private:
 	bool isAlreadyRoot(int thread, int id);
