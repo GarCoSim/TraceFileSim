@@ -39,6 +39,10 @@ private:
 	void addToRoot(string line);
 	int parseAttributeFromTraceLine(char attributeIdentifier, string line);
 
+	void referenceOperationClassField(string line);
+	void readOperation(string line);
+	void storeOperation(string line);
+
 	ifstream myTraceFile;
 	
 	int myLastStepWorked;

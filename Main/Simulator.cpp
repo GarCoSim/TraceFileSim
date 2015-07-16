@@ -77,32 +77,83 @@ int Simulator::doNextStep(){
 		char firstChar = traceLine.at(0);
 		switch(firstChar) {
 			case 'w':
-				referenceOperation(traceLine);
+				// error checking
+				if(  ( (int)traceLine.find('T') == -1 ) || ( (int)traceLine.find('P') == -1 ) || ( (int)traceLine.find('#') == -1 ) || 
+					( (int)traceLine.find('O') == -1 ) || ( ( (int)traceLine.find('F') == -1 ) && ( (int)traceLine.find('I') == -1 ) ) || 
+					( (int)traceLine.find('S') == -1 ) || ( (int)traceLine.find('V') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
+
+				//referenceOperation(traceLine);
 				break;
 			case 'a':
-				allocateToRootset(traceLine);
+				// error checking
+				if(  ( (int)traceLine.find('T') == -1 ) || ( (int)traceLine.find('O') == -1 ) || ( (int)traceLine.find('S') == -1 ) || 
+					( (int)traceLine.find('N') == -1 ) || ( (int)traceLine.find('C') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
+				//allocateToRootset(traceLine);
 				//next line is a '+', which we skip since it adds the newly created object
 				//to the rootset, which already happened in the simulator
 				getNextLine();
 				break;
 			case '+':
+				// error checking
+				if(  ( (int)traceLine.find('T') == -1 ) || ( (int)traceLine.find('O') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
 				//allocateToRootset(traceLine);
-				addToRoot(traceLine);
+				//addToRoot(traceLine);
 				break;
 			case '-':
-				deleteRoot(traceLine);
+				// error checking
+				if(  ( (int)traceLine.find('T') == -1 ) || ( (int)traceLine.find('O') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
+				//deleteRoot(traceLine);
 				break;
 			case 'c': // for now we ignore the class option
+				// error checking
+				if(  ( (int)traceLine.find('T') == -1 ) || ( (int)traceLine.find('C') == -1 ) || ( (int)traceLine.find('F') == -1 ) || 
+					( (int)traceLine.find('O') == -1 ) || ( (int)traceLine.find('S') == -1 ) || ( (int)traceLine.find('V') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
+				//referenceOperationClassField(traceLine);
 				break;
+			case 'r': // for now we ignore the class option
+				// error checking
+				if(  ( (int)traceLine.find('T') == -1 ) || ( ( (int)traceLine.find('C') == -1 ) && ( (int)traceLine.find('O') == -1 ) ) || 
+					(( (int)traceLine.find('F') == -1 ) && ( (int)traceLine.find('I') == -1 )) || ( (int)traceLine.find('S') == -1 ) || 
+					( (int)traceLine.find('V') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
+				//readOperation(traceLine);
+				break;
+			case 's': // for now we ignore the class option
+				if(  ( (int)traceLine.find('T') == -1 ) || ( ( (int)traceLine.find('C') == -1 ) && ( (int)traceLine.find('P') == -1 ) ) || 
+					(( (int)traceLine.find('F') == -1 ) && ( (int)traceLine.find('I') == -1 )) || ( (int)traceLine.find('S') == -1 ) || 
+					( (int)traceLine.find('V') == -1 ) ){
+					printf("Prefix error in line: %d\n", gLineInTrace);
+					exit(1);
+				}
+				//storeOperation(traceLine);
+				break;	
+
 			default:
 				//gLineInTrace++;
 			break;
 		}
 
 	}
-
-	if (forceAGCAfterEveryStep) 
-		myMemManager->forceGC();
+	// commented by mazder
+	//if (forceAGCAfterEveryStep) 
+	//	myMemManager->forceGC();
 
 	/*This line calls a garbage collec after each line. Usually useful
 	 * in order to analyse the actual heap use of the file.*/
@@ -195,6 +246,15 @@ void Simulator::allocateObject(string line){
 
 void Simulator::referenceOperation(string line){
 	int thread, parentID, parentSlot, childId;
+	int pos, length;
+
+	// added by mazder (the following information is added in TraceFile-3.0)
+	int fieldOffset;  // it is offest of the parentSlot when single object 
+	int fieldIndex;	  // same as the parent slot when array object	
+	int fieldSize;   // pointer size
+	int fieldType;   // 1 for volatile or 0 for non-volatile
+	bool offsetFlag = false; 	 // to decide either offest or index is given   
+	//
 
 	thread = parseAttributeFromTraceLine('T', line);
 	parentID = parseAttributeFromTraceLine('P', line);
@@ -202,7 +262,218 @@ void Simulator::referenceOperation(string line){
 	childId = parseAttributeFromTraceLine('O', line);
 
 	myMemManager->setPointer(thread, parentID, parentSlot, childId);
+
+	// added by mazder 
+	// In trace file there is either 'F'/'I' in the 'w' line
+	pos = line.find('F');
+	if(pos != -1){
+		pos = pos+1;
+		length = line.find('\n',pos)-pos;
+		fieldOffset = atoi(line.substr(pos,length).c_str());
+		offsetFlag = true;
+	}
+	if(!offsetFlag){
+		pos = line.find('I')+1;
+		length = line.find('\n',pos)-pos;
+		fieldIndex = atoi(line.substr(pos,length).c_str());
+	}
+
+	pos = line.find('S')+1;
+	length = line.find('\n',pos)-pos;
+	fieldSize = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('V')+1;
+	length = line.find('\n',pos)-pos;
+	fieldType = atoi(line.substr(pos,length).c_str());
+
+
+	if(offsetFlag){
+		/* when fieldOffset is given */
+	}
+	else{
+		/* when fieldIndex is given */
+	}
+
 }
+
+// Added by Mazder
+
+void Simulator::referenceOperationClassField(string line){
+	int thread, classID, objectID;
+	int pos, length;
+	int fieldOffset;  // offest of the reference slot 
+	int fieldSize;   // pointer size
+	int fieldType;   // 1 for volatile or 0 for non-volatile
+
+	pos = line.find('T')+1;
+	length = line.find(' ',pos)-pos;
+	thread = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('C')+1;
+	length = line.find(' ',pos)-pos;
+	classID = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('F')+1;
+	length = line.find(' ',pos)-pos;
+	fieldOffset = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('O')+1;
+	length = line.find('\n',pos)-pos;
+	objectID = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('S')+1;
+	length = line.find('\n',pos)-pos;
+	fieldSize = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('V')+1;
+	length = line.find('\n',pos)-pos;
+	fieldType = atoi(line.substr(pos,length).c_str());
+
+	/* Insert code here to store object reference into a class, when only fieldOffest of the reference slot is given*/
+
+}
+void Simulator::readOperation(string line){
+	int thread, classID, objectID;
+	int pos, length;
+	int fieldOffset;  // offest of the reference slot
+	int fieldIndex;   // index of the field in the case of array 	
+	int fieldSize;   // pointer/primitive field size
+	int fieldType;   // 1 for volatile or 0 for non-volatile
+	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
+	bool offsetFlag = false; 	 // to decide either offest or index is given
+
+	pos = line.find('T')+1;
+	length = line.find(' ',pos)-pos;
+	thread = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('C');
+	if(pos != -1){
+		pos = pos+1;
+		length = line.find(' ',pos)-pos;
+		classID = atoi(line.substr(pos,length).c_str());
+		staticFlag = true;
+	}
+	if(!staticFlag){
+		pos = line.find('O')+1;
+		length = line.find('\n',pos)-pos;
+		objectID = atoi(line.substr(pos,length).c_str());
+	}
+
+	pos = line.find('F');
+	if(pos != -1){
+		pos = pos+1;
+		length = line.find('\n',pos)-pos;
+		fieldOffset = atoi(line.substr(pos,length).c_str());
+		offsetFlag = true;
+	}
+	if(!offsetFlag){
+		pos = line.find('I')+1;
+		length = line.find('\n',pos)-pos;
+		fieldIndex = atoi(line.substr(pos,length).c_str());
+	}
+
+	pos = line.find('S')+1;
+	length = line.find('\n',pos)-pos;
+	fieldSize = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('V')+1;
+	length = line.find('\n',pos)-pos;
+	fieldType = atoi(line.substr(pos,length).c_str());
+
+	if(staticFlag){
+		/* read access to class field */
+		if(offsetFlag){
+			/* when fieldoffset is given */ 
+		}
+		else{
+			/* when fieldIndex is given */ 
+		}
+
+	}
+	else{
+		/* read access to object field */
+		if(offsetFlag){
+			/* when fieldoffset is given */ 
+		}
+		else{
+			/* when fieldoffset is given */ 
+		}
+	}
+
+}
+
+/* This is to store static primitive field in class and primitive field in an object */
+
+void Simulator::storeOperation(string line){
+	int thread, classID, objectID;
+	int pos, length;
+	int fieldOffset;  // offest of the reference slot
+	int fieldIndex;   // index of the field in the case of array 	
+	int fieldSize;   // pointer size
+	int fieldType;   // 1 for volatile or 0 for non-volatile
+	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
+	bool offsetFlag = false; 	 // to decide either offest or index is given
+
+	pos = line.find('T')+1;
+	length = line.find(' ',pos)-pos;
+	thread = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('C');
+	if(pos != -1){
+		pos = pos+1;
+		length = line.find(' ',pos)-pos;
+		classID = atoi(line.substr(pos,length).c_str());
+		staticFlag = true;
+	}
+	if(!staticFlag){
+		pos = line.find('P')+1;
+		length = line.find('\n',pos)-pos;
+		objectID = atoi(line.substr(pos,length).c_str());
+	}
+
+	pos = line.find('F');
+	if(pos != -1){
+		pos = pos+1;
+		length = line.find('\n',pos)-pos;
+		fieldOffset = atoi(line.substr(pos,length).c_str());
+		offsetFlag = true;
+	}
+	if(!offsetFlag){
+		pos = line.find('I')+1;
+		length = line.find('\n',pos)-pos;
+		fieldIndex = atoi(line.substr(pos,length).c_str());
+	}
+
+	pos = line.find('S')+1;
+	length = line.find('\n',pos)-pos;
+	fieldSize = atoi(line.substr(pos,length).c_str());
+
+	pos = line.find('V')+1;
+	length = line.find('\n',pos)-pos;
+	fieldType = atoi(line.substr(pos,length).c_str());
+
+	if(staticFlag){
+		/* read access to class field */
+		if(offsetFlag){
+			/* when fieldoffset is given */ 
+		}
+		else{
+			/* when fieldIndex is given */ 
+		}
+
+	}
+	else{
+		/* read access to object field */
+		if(offsetFlag){
+			/* when fieldoffset is given */ 
+		}
+		else{
+			/* when fieldoffset is given */ 
+		}
+	}
+
+}
+
 
 void Simulator::printStats(){
 	myMemManager->printStats();
