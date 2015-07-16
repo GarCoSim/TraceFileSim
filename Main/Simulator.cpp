@@ -250,14 +250,12 @@ void Simulator::allocateObject(string line){
 
 void Simulator::referenceOperation(string line){
 	int thread, parentID, parentSlot, childId;
-	int pos, length;
 
 	// added by mazder (the following information is added in TraceFile-3.0)
 	int fieldOffset;  // it is offest of the parentSlot when single object 
 	int fieldIndex;	  // same as the parent slot when array object	
 	int fieldSize;   // pointer size
 	int fieldType;   // 1 for volatile or 0 for non-volatile
-	bool offsetFlag = false; 	 // to decide either offest or index is given   
 	//
 
 	thread = parseAttributeFromTraceLine('T', line);
@@ -269,29 +267,13 @@ void Simulator::referenceOperation(string line){
 
 	// added by mazder 
 	// In trace file there is either 'F'/'I' in the 'w' line
-	pos = line.find('F');
-	if(pos != -1){
-		pos = pos+1;
-		length = line.find('\n',pos)-pos;
-		fieldOffset = atoi(line.substr(pos,length).c_str());
-		offsetFlag = true;
-	}
-	if(!offsetFlag){
-		pos = line.find('I')+1;
-		length = line.find('\n',pos)-pos;
-		fieldIndex = atoi(line.substr(pos,length).c_str());
-	}
-
-	pos = line.find('S')+1;
-	length = line.find('\n',pos)-pos;
-	fieldSize = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('V')+1;
-	length = line.find('\n',pos)-pos;
-	fieldType = atoi(line.substr(pos,length).c_str());
+	fieldOffset = parseAttributeFromTraceLine('F', line);
+	fieldIndex = parseAttributeFromTraceLine('I', line);
+	fieldSize  = parseAttributeFromTraceLine('S', line);
+	fieldType = parseAttributeFromTraceLine('V', line);
 
 
-	if(offsetFlag){
+	if(fieldOffset != -1){
 		/* when fieldOffset is given */
 	}
 	else{
@@ -304,41 +286,21 @@ void Simulator::referenceOperation(string line){
 
 void Simulator::referenceOperationClassField(string line){
 	int thread, classID, objectID;
-	int pos, length;
 	int fieldOffset;  // offest of the reference slot 
 	int fieldSize;   // pointer size
 	int fieldType;   // 1 for volatile or 0 for non-volatile
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('C')+1;
-	length = line.find(' ',pos)-pos;
-	classID = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('F')+1;
-	length = line.find(' ',pos)-pos;
-	fieldOffset = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('O')+1;
-	length = line.find('\n',pos)-pos;
-	objectID = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('S')+1;
-	length = line.find('\n',pos)-pos;
-	fieldSize = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('V')+1;
-	length = line.find('\n',pos)-pos;
-	fieldType = atoi(line.substr(pos,length).c_str());
-
+	thread = parseAttributeFromTraceLine('T', line);
+	classID = parseAttributeFromTraceLine('C', line);
+	fieldOffset = parseAttributeFromTraceLine('F', line);
+	objectID = parseAttributeFromTraceLine('O', line);
+	fieldSize = parseAttributeFromTraceLine('S', line);
+	fieldType = parseAttributeFromTraceLine('V', line);
 	/* Insert code here to store object reference into a class, when only fieldOffest of the reference slot is given*/
 
 }
 void Simulator::readOperation(string line){
 	int thread, classID, objectID;
-	int pos, length;
 	int fieldOffset;  // offest of the reference slot
 	int fieldIndex;   // index of the field in the case of array 	
 	int fieldSize;   // pointer/primitive field size
@@ -346,43 +308,18 @@ void Simulator::readOperation(string line){
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
 	bool offsetFlag = false; 	 // to decide either offest or index is given
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	classID = parseAttributeFromTraceLine('C', line);
+	objectID = parseAttributeFromTraceLine('O', line);
+	fieldOffset = parseAttributeFromTraceLine('F', line);
+	fieldIndex = parseAttributeFromTraceLine('I', line);
+	fieldSize = parseAttributeFromTraceLine('S', line);
+	fieldType = parseAttributeFromTraceLine('V', line);
 
-	pos = line.find('C');
-	if(pos != -1){
-		pos = pos+1;
-		length = line.find(' ',pos)-pos;
-		classID = atoi(line.substr(pos,length).c_str());
+	if (classID != -1)
 		staticFlag = true;
-	}
-	if(!staticFlag){
-		pos = line.find('O')+1;
-		length = line.find('\n',pos)-pos;
-		objectID = atoi(line.substr(pos,length).c_str());
-	}
-
-	pos = line.find('F');
-	if(pos != -1){
-		pos = pos+1;
-		length = line.find('\n',pos)-pos;
-		fieldOffset = atoi(line.substr(pos,length).c_str());
+	if (fieldOffset != -1)
 		offsetFlag = true;
-	}
-	if(!offsetFlag){
-		pos = line.find('I')+1;
-		length = line.find('\n',pos)-pos;
-		fieldIndex = atoi(line.substr(pos,length).c_str());
-	}
-
-	pos = line.find('S')+1;
-	length = line.find('\n',pos)-pos;
-	fieldSize = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('V')+1;
-	length = line.find('\n',pos)-pos;
-	fieldType = atoi(line.substr(pos,length).c_str());
 
 	if(staticFlag){
 		/* read access to class field */
@@ -410,7 +347,6 @@ void Simulator::readOperation(string line){
 
 void Simulator::storeOperation(string line){
 	int thread, classID, objectID;
-	int pos, length;
 	int fieldOffset;  // offest of the reference slot
 	int fieldIndex;   // index of the field in the case of array 	
 	int fieldSize;   // pointer size
@@ -418,43 +354,18 @@ void Simulator::storeOperation(string line){
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
 	bool offsetFlag = false; 	 // to decide either offest or index is given
 
-	pos = line.find('T')+1;
-	length = line.find(' ',pos)-pos;
-	thread = atoi(line.substr(pos,length).c_str());
+	thread = parseAttributeFromTraceLine('T', line);
+	classID = parseAttributeFromTraceLine('C', line);
+	objectID = parseAttributeFromTraceLine('P', line);
+	fieldOffset = parseAttributeFromTraceLine('F', line);
+	fieldIndex = parseAttributeFromTraceLine('I', line);
+	fieldSize = parseAttributeFromTraceLine('S', line);
+	fieldType = parseAttributeFromTraceLine('V', line);
 
-	pos = line.find('C');
-	if(pos != -1){
-		pos = pos+1;
-		length = line.find(' ',pos)-pos;
-		classID = atoi(line.substr(pos,length).c_str());
+	if (classID != -1)
 		staticFlag = true;
-	}
-	if(!staticFlag){
-		pos = line.find('P')+1;
-		length = line.find('\n',pos)-pos;
-		objectID = atoi(line.substr(pos,length).c_str());
-	}
-
-	pos = line.find('F');
-	if(pos != -1){
-		pos = pos+1;
-		length = line.find('\n',pos)-pos;
-		fieldOffset = atoi(line.substr(pos,length).c_str());
+	if (fieldOffset != -1)
 		offsetFlag = true;
-	}
-	if(!offsetFlag){
-		pos = line.find('I')+1;
-		length = line.find('\n',pos)-pos;
-		fieldIndex = atoi(line.substr(pos,length).c_str());
-	}
-
-	pos = line.find('S')+1;
-	length = line.find('\n',pos)-pos;
-	fieldSize = atoi(line.substr(pos,length).c_str());
-
-	pos = line.find('V')+1;
-	length = line.find('\n',pos)-pos;
-	fieldType = atoi(line.substr(pos,length).c_str());
 
 	if(staticFlag){
 		/* read access to class field */
