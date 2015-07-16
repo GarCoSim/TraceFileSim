@@ -62,6 +62,9 @@ void Simulator::lastStats() {
 int Simulator::parseAttributeFromTraceLine(char attributeIdentifier, string line) {
 	int pos, length;
 	pos = line.find(attributeIdentifier)+1;
+	if (!pos) // If an optional identifier was not provided
+		return -1;
+
 	length = min(line.find(' ',pos), line.find('\n',pos)) - pos;
 	return atoi(line.substr(pos,length).c_str());
 }
