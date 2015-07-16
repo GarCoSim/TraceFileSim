@@ -25,7 +25,7 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 
 	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator);
 
-	if (!myMemManager->loadClassTable((string)traceFilePath))
+	if (!myMemManager->hasClassTable())
 		fprintf(stdout, "No class table found\n");
 
 	counter = 0;

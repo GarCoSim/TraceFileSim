@@ -10,6 +10,7 @@
 
 #include "Object.hpp"
 #include "ObjectContainer.hpp"
+#include "ClassManager.hpp"
 #include "../Allocators/Allocator.hpp"
 #include "../Allocators/RealAllocator.hpp"
 #include "../Allocators/SimulatedAllocator.hpp"
@@ -53,7 +54,6 @@ public:
 	void clearRemSets();
 	void requestRemSetAdd(Object* currentObj);
 	char *getClassName(int classNumber);
-	bool loadClassTable(string traceFilePath);
 	bool hasClassTable();
 	void forceGC();
 	void lastStats();
@@ -74,8 +74,7 @@ private:
 	collectorEnum _collector;
 	traversalEnum _traversal;
 
-	bool classTableLoaded;
-	vector<string> classTable;
+	ClassManager *classManager;
 
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];
