@@ -106,8 +106,8 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				allocateToRootset(traceLine);
-				//addToRoot(traceLine);
+				//allocateToRootset(traceLine);
+				addToRoot(traceLine);
 				break;
 			case '-':
 				// error checking
