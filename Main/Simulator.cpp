@@ -51,6 +51,7 @@ string Simulator::getNextLine(){
 		gLineInTrace++;
 	} while (line.size() == 0 && !myTraceFile.eof());
 
+
 	return line;
 }
 
@@ -85,7 +86,7 @@ int Simulator::doNextStep(){
 					exit(1);
 				}
 
-				//referenceOperation(traceLine);
+				referenceOperation(traceLine);
 				break;
 			case 'a':
 				// error checking
@@ -94,7 +95,7 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				//allocateToRootset(traceLine);
+				allocateToRootset(traceLine);
 				//next line is a '+', which we skip since it adds the newly created object
 				//to the rootset, which already happened in the simulator
 				getNextLine();
@@ -105,7 +106,7 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				//allocateToRootset(traceLine);
+				allocateToRootset(traceLine);
 				//addToRoot(traceLine);
 				break;
 			case '-':
@@ -114,7 +115,7 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				//deleteRoot(traceLine);
+				deleteRoot(traceLine);
 				break;
 			case 'c': // for now we ignore the class option
 				// error checking
@@ -123,7 +124,7 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				//referenceOperationClassField(traceLine);
+				referenceOperationClassField(traceLine);
 				break;
 			case 'r': // for now we ignore the class option
 				// error checking
@@ -133,7 +134,7 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				//readOperation(traceLine);
+				readOperation(traceLine);
 				break;
 			case 's': // for now we ignore the class option
 				if(  ( (int)traceLine.find('T') == -1 ) || ( ( (int)traceLine.find('C') == -1 ) && ( (int)traceLine.find('P') == -1 ) ) || 
@@ -142,7 +143,7 @@ int Simulator::doNextStep(){
 					printf("Prefix error in line: %d\n", gLineInTrace);
 					exit(1);
 				}
-				//storeOperation(traceLine);
+				storeOperation(traceLine);
 				break;	
 
 			default:
@@ -152,8 +153,8 @@ int Simulator::doNextStep(){
 
 	}
 	// commented by mazder
-	//if (forceAGCAfterEveryStep) 
-	//	myMemManager->forceGC();
+	if (forceAGCAfterEveryStep) 
+		myMemManager->forceGC();
 
 	/*This line calls a garbage collec after each line. Usually useful
 	 * in order to analyse the actual heap use of the file.*/
