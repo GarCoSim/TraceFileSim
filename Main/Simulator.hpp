@@ -21,6 +21,21 @@ using namespace std;
 
 namespace traceFileSimulator {
 
+typedef struct TraceFileLine {
+	char type;
+	int classID;
+	int fieldIndex;
+	int fieldOffset;
+	int fieldSize;
+	int fieldType;
+	int objectID;
+	int parentID;
+	int parentSlot;
+	int maxPointers;
+	int size;
+	int threadID;
+} TraceFileLine;
+
 class Simulator {
 public:
 	Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector, int traversal, int allocator);
@@ -31,17 +46,16 @@ public:
 	void lastStats();
 
 private:
-	string getNextLine();
-	void allocateToRootset(string line);
-	void allocateObject(string line);
-	void referenceOperation(string line);
-	void deleteRoot(string line);
-	void addToRoot(string line);
-	int parseAttributeFromTraceLine(char attributeIdentifier, string line);
-
-	void referenceOperationClassField(string line);
-	void readOperation(string line);
-	void storeOperation(string line);
+	void getNextLine(TraceFileLine *line);
+	void initializeTraceFileLine(TraceFileLine *line);
+	void allocateToRootset(TraceFileLine line);
+	void allocateObject(TraceFileLine line);
+	void referenceOperation(TraceFileLine line);
+	void deleteRoot(TraceFileLine line);
+	void addToRoot(TraceFileLine line);
+	void referenceOperationClassField(TraceFileLine line);
+	void readOperation(TraceFileLine line);
+	void storeOperation(TraceFileLine line);
 
 	ifstream myTraceFile;
 	
