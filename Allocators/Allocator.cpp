@@ -202,7 +202,7 @@ void Allocator::printStats() {
 			bytesAllocated, statLiveObjects);
 }
 
-void Allocator::setAllocationSeearchStart(int address) {
+void Allocator::setAllocationSearchStart(int address) {
 	if (address > overallHeapSize) {
 		return;
 	}

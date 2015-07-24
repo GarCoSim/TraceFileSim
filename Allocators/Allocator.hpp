@@ -28,7 +28,7 @@ public:
 	//used mainly by garbage collector
 	int getFreeSize();
 	int getHeapSize();
-	void setAllocationSeearchStart(int address);
+	void setAllocationSearchStart(int address);
 
 	//stats
 	void printMap();
