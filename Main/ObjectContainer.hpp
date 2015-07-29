@@ -8,6 +8,7 @@
 #ifndef OBJECTCONTAINER_HPP_
 #define OBJECTCONTAINER_HPP_
 
+#include <map>
 #include <vector>
 #include "Object.hpp"
 #include <stdio.h>
@@ -21,14 +22,14 @@ public:
 	ObjectContainer();
 	virtual ~ObjectContainer();
 	int add(Object* newObject);
-	int addToRoot(Object* newObject, int thread, int rootSlot);
-	int removeFromRoot(int thread, int root );
+	int addToRoot(Object* newObject, int thread);
+	int removeFromRoot(int thread, int objectID);
 	void addToGenRoot(Object* object);
 	int removeFromGenRoot(Object* object);
 	int removeReferenceTo(Object* object);
 	Object* getByID(int id);
 	Object* getbySlotNr(int slot);
-	Object* getRoot(int thread, int rootSlot);
+	Object* getRoot(int thread, int objectID);
 	int getSize();
 	int deleteObject(Object* object, bool deleteFlag);
 	int deleteObject(int objectID, bool deleteFlag);
@@ -37,12 +38,11 @@ public:
 	int getRootSize();
 	Object* getGenRoot(int slot);
 	void clearRemSet();
-	int getRootsetSlot(int thread);
-	int getRootsetIndexByID(int thread, int id);
+	vector<Object*> getRoots(int thread);
 	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
 	int countElements();
-	bool isAlreadyRoot(int thread, int id);
+	bool isAlreadyRoot(int thread, int objectID);
 	void forwardObject(int slot);
 	void dumpHeap();
 private:
@@ -50,7 +50,7 @@ private:
 	bool doesObjectExistInList(Object *queryObject);
 	int getRemSetSlot();
 
-	vector<vector<Object*> > rootset;
+	vector<std::map<int, Object*> > rootset;
 	vector<Object*> objectList;
 	vector<Object*> remSet;
 

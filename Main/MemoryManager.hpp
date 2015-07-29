@@ -66,7 +66,7 @@ private:
 	void initContainers();
 	void initGarbageCollectors(int highWatermark);
 	size_t allocate(int size, int generation);
-	void addRootToContainers(Object* object, int thread, int rootsetIndex);
+	void addRootToContainers(Object* object, int thread);
 	void addToContainers(Object* object);
 	size_t shift(int size);
 	

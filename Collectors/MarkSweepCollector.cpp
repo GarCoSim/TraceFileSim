@@ -111,9 +111,11 @@ void MarkSweepCollector::enqueueAllRoots() {
 		//we clear all rem sets and fill them again while performing the marking
 		myMemManager->clearRemSets();
 
+		vector<Object*> roots;
 		for (i = 0; i < NUM_THREADS; i++) {
-			for (j = 0; j < myObjectContainer->getRootsetSize(i) ; j++) {
-				currentObj = myObjectContainer->getRoot(i, j);
+			roots = myObjectContainer->getRoots(i);
+			for (j = 0; j < roots.size(); j++) {
+				currentObj = roots[j];
 				if (currentObj && currentObj->getVisited() == 0) {
 					currentObj->setVisited(1);
 					currentObj->setIsAlive(1);

@@ -15,7 +15,7 @@ ObjectContainer::ObjectContainer() {
 	int i;
 	rootset.resize(NUM_THREADS);
 	for (i = 0; i < NUM_THREADS; i++) {
-		rootset.at(i).resize(ROOTSET_SIZE);
+		rootset.at(i).clear();
 	}
 
 	objectList.resize(1);
@@ -26,7 +26,7 @@ ObjectContainer::ObjectContainer() {
 
 // we forward the object in all of our lists
 void ObjectContainer::forwardObject(int slot) {
-	unsigned int i, j;
+	unsigned int i;
 	int id;
 
 	id = objectList.at(slot)->getID();
@@ -37,10 +37,8 @@ void ObjectContainer::forwardObject(int slot) {
 
 	// update rootset
 	for (i = 0; i < rootset.size(); i++)
-		for (j = 0; j < rootset[i].size(); j++)
-			if (rootset[i][j])
-				if (rootset[i][j]->getID() == id)
-					rootset[i][j] = objectList.at(slot);
+		if (isAlreadyRoot(i, id))
+			rootset[i][id] = objectList.at(slot);
 
 	// update remset
 	for (i = 0; i < remSet.size(); i++)
@@ -80,8 +78,8 @@ int ObjectContainer::add(Object* newObject) {
 	return 0;
 }
 
-int ObjectContainer::removeFromRoot(int thread, int root ){
-	rootset[thread][root] = NULL;
+int ObjectContainer::removeFromRoot(int thread, int objectID){
+	rootset[thread].erase(objectID);
 	rootCount--;
 	return -1;
 }
@@ -91,25 +89,28 @@ bool ObjectContainer::doesObjectExistInList(Object *queryObject) {
 	return id<(int)objectList.size() && objectList[id]!=NULL;
 }
 
-bool ObjectContainer::isAlreadyRoot(int thread, int id) {
-	Object *obj = getByID(id);
-	int i;
-
-	for (i = 0; i < (int)rootset[thread].size(); i++)
-		if (rootset[thread].at(i) == obj)
-			return true;
-
-	return false;
+bool ObjectContainer::isAlreadyRoot(int thread, int objectID) {
+	return rootset[thread].find(objectID) != rootset[thread].end();
 }
 
-int ObjectContainer::addToRoot(Object* newObject, int thread, int rootSlot) {
+int ObjectContainer::addToRoot(Object* newObject, int thread) {
 	if (!doesObjectExistInList(newObject)) {
 		add(newObject);
 	}
-	rootset[thread][rootSlot] = newObject;
+	rootset[thread][newObject->getID()] = newObject;
 	rootCount++;
 
 	return 0;
+}
+
+vector<Object*> ObjectContainer::getRoots(int thread) {
+	vector<Object*> roots;
+
+	std::map<int, Object*>::iterator it;
+	for (it=rootset[thread].begin(); it!=rootset[thread].end(); it++)
+		roots.push_back(it->second);
+
+	return roots;
 }
 
 Object* ObjectContainer::getByID(int id) {
@@ -123,8 +124,8 @@ Object* ObjectContainer::getbySlotNr(int slot) {
 	return objectList.at(slot);
 }
 
-Object* ObjectContainer::getRoot(int thread, int rootSlot) {
-	return rootset[thread][rootSlot];
+Object* ObjectContainer::getRoot(int thread, int objectID) {
+	return rootset[thread][objectID];
 }
 
 int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
@@ -199,23 +200,6 @@ int ObjectContainer::getRemSetSlot() {
 	return -1;
 }
 
-int ObjectContainer::getRootsetSlot(int thread){
-	unsigned int i;
-	for (i = 0 ; i < rootset.at(thread).size() ; i++){
-		if(!rootset.at(thread).at(i)){
-			return i;
-		}
-
-		//resize
-		if(i + 1 == rootset.at(thread).size()){
-			rootset.at(thread).resize(rootset.at(thread).size()*2);
-		}
-	}
-	//error occured
-	fprintf(stderr, "(%d)Could not find rootset index.\n",gLineInTrace);
-	return -1;
-}
-
 int ObjectContainer::getListSlot() {
 	fprintf(stderr, "ERROR: ObjectContainer::getListSlot() should never be called.\n");
 	return -1;
@@ -228,17 +212,6 @@ void ObjectContainer::clearRemSet(){
 	remSet.clear();
 	remSet.resize(1);
 	remCount = 0;
-}
-
-int ObjectContainer::getRootsetIndexByID(int thread, int id){
-	unsigned int i;
-	for(i = 0 ; i < rootset.at(thread).size() ; i++){
-		if(rootset.at(thread).at(i) && rootset.at(thread).at(i)->getID() == id){
-			return i;
-		}
-	}
-	fprintf(stderr, "(%d) No root with id %d found in thread %d.\n",gLineInTrace, id, thread);
-	return -1;
 }
 
 int ObjectContainer::countElements() {

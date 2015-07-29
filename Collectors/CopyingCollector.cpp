@@ -89,9 +89,11 @@ void CopyingCollector::enqueueAllRoots(){
 	Object* currentObj;
 	int i, j;
 
+	vector<Object*> roots;
 	for(i = 0 ; i < NUM_THREADS ; i++){
-		for(j = 0 ; j < ROOTSET_SIZE ; j++){
-			currentObj = myObjectContainer->getRoot(i,j);
+		roots = myObjectContainer->getRoots(i);
+		for(j = 0 ; j < roots.size(); j++){
+			currentObj = roots[j];
 			if(currentObj && currentObj->getVisited() == 0){
 				currentObj->setVisited(1);
 				currentObj->setIsAlive(1);
