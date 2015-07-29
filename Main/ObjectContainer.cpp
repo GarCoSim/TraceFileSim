@@ -73,13 +73,10 @@ int ObjectContainer::removeFromGenRoot(Object* object){
 }
 
 int ObjectContainer::add(Object* newObject) {
-	int listSlot = getListSlot();
-	if (listSlot == -1) {
-		fprintf(stderr, "ERROR(line %d): no slot found\n", gLineInTrace);
-		return -1;
-	}
-
-	objectList.at(listSlot) = newObject;
+	int id = newObject->getID();
+	if ((unsigned int)id >= objectList.size())
+		objectList.resize(objectList.size()*2);
+	objectList[id] = newObject;
 	return 0;
 }
 
@@ -90,13 +87,8 @@ int ObjectContainer::removeFromRoot(int thread, int root ){
 }
 
 bool ObjectContainer::doesObjectExistInList(Object *queryObject) {
-	unsigned int i;
-	for (i = 0; i < objectList.size(); i++) {
-		if (objectList.at(i) == queryObject) {
-			return true;
-		}
-	}
-	return false;
+	int id = queryObject->getID();
+	return id<(int)objectList.size() && objectList[id]!=NULL;
 }
 
 bool ObjectContainer::isAlreadyRoot(int thread, int id) {
@@ -121,18 +113,10 @@ int ObjectContainer::addToRoot(Object* newObject, int thread, int rootSlot) {
 }
 
 Object* ObjectContainer::getByID(int id) {
-	unsigned int i;
-	for (i = 0; i < objectList.size(); i++) {
-		if (objectList.at(i) != NULL) {
-			int currentId = objectList.at(i)->getID();
-			if (id == currentId) {
-				return objectList.at(i);
-			}
-		}
-	}
-	fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n",
-			gLineInTrace, id);
-	return NULL;
+	Object *toReturn = objectList[id];
+	if (!toReturn)
+		fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n", gLineInTrace, id);
+	return toReturn;
 }
 
 Object* ObjectContainer::getbySlotNr(int slot) {
@@ -151,23 +135,19 @@ int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
 }
 
 int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
-	unsigned int i;
-	Object* temp;
-	for (i = 0; i < objectList.size(); i++) {
-		temp = objectList[i];
-		if (temp && temp->getID() == objectID) {
-			// if we forwarded our object do it now, otherwise delete it
-			if (temp->isForwarded())
-				forwardObject(i);
-			else
-				objectList[i] = NULL;
-			if (deleteFlag)
-				delete (temp);
-			return 0;
-		}
+	Object *object = objectList[objectID];
+	if (!object) {
+		fprintf(stderr, "ERROR(Line %d): object to delete not found. id: %d\n", gLineInTrace, objectID);
+		return -1;
 	}
-	fprintf(stderr, "ERROR(Line %d): object to delete not found. id: %d\n", gLineInTrace, objectID);
-	return -1;
+
+	if (object->isForwarded())
+		forwardObject(objectID);
+	else
+		objectList[objectID] = NULL;
+	if (deleteFlag)
+		delete (object);
+	return 0;
 }
 
 int ObjectContainer::getSize() {
@@ -175,14 +155,12 @@ int ObjectContainer::getSize() {
 }
 
 int ObjectContainer::removeReferenceTo(Object* object) {
-	int i;
-	for(i = 0 ; (unsigned int)i < objectList.size() ;i++){
-		if(object == objectList.at(i)){
-			objectList.at(i) = NULL;
-			return 0;
-		}
-	}
-	return -1;
+	int id = object->getID();
+	if (!objectList[id])
+		return -1;
+
+	objectList[id] = NULL;
+	return 0;
 }
 
 int ObjectContainer::getGenRootCount() {
@@ -239,16 +217,7 @@ int ObjectContainer::getRootsetSlot(int thread){
 }
 
 int ObjectContainer::getListSlot() {
-	unsigned int i;
-	for (i = 0; i < objectList.size(); i++) {
-		if (!objectList.at(i)) {
-			return i;
-		}
-		if (i + 1 == objectList.size()) {
-			objectList.resize(objectList.size() * 2);
-		}
-	}
-	fprintf(stderr, "listSlotERror: no list slot found\n");
+	fprintf(stderr, "ERROR: ObjectContainer::getListSlot() should never be called.\n");
 	return -1;
 }
 int ObjectContainer::getRootsetSize(int thread){
