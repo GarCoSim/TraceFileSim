@@ -18,33 +18,30 @@ ObjectContainer::ObjectContainer() {
 		rootset.at(i).clear();
 	}
 
-	objectList.resize(1);
+	objectMap.clear();
 	remSet.resize(1);
 	rootCount = 0;
 	remCount = 0;
 }
 
 // we forward the object in all of our lists
-void ObjectContainer::forwardObject(int slot) {
+void ObjectContainer::forwardObject(int id) {
 	unsigned int i;
-	int id;
-
-	id = objectList.at(slot)->getID();
 
 	// update object list
-	objectList.at(slot) = (Object*)objectList.at(slot)->getAddress();
-	objectList.at(slot)->updateAddress((size_t)0); // remove forwarding pointer
+	objectMap[id] = (Object*)objectMap[id]->getAddress();
+	objectMap[id]->updateAddress((size_t)0); // remove forwarding pointer
 
 	// update rootset
 	for (i = 0; i < rootset.size(); i++)
 		if (isAlreadyRoot(i, id))
-			rootset[i][id] = objectList.at(slot);
+			rootset[i][id] = objectMap[id];
 
 	// update remset
 	for (i = 0; i < remSet.size(); i++)
 		if (remSet[i])
 			if (remSet[i]->getID() == id)
-			remSet[i] = objectList.at(slot);
+				remSet[i] = objectMap[id];
 
 }
 
@@ -72,9 +69,7 @@ int ObjectContainer::removeFromGenRoot(Object* object){
 
 int ObjectContainer::add(Object* newObject) {
 	int id = newObject->getID();
-	if ((unsigned int)id >= objectList.size())
-		objectList.resize(objectList.size()*2);
-	objectList[id] = newObject;
+	objectMap[id] = newObject;
 	return 0;
 }
 
@@ -86,7 +81,7 @@ int ObjectContainer::removeFromRoot(int thread, int objectID){
 
 bool ObjectContainer::doesObjectExistInList(Object *queryObject) {
 	int id = queryObject->getID();
-	return id<(int)objectList.size() && objectList[id]!=NULL;
+	return objectMap.find(id) != objectMap.end();
 }
 
 bool ObjectContainer::isAlreadyRoot(int thread, int objectID) {
@@ -113,15 +108,20 @@ vector<Object*> ObjectContainer::getRoots(int thread) {
 	return roots;
 }
 
-Object* ObjectContainer::getByID(int id) {
-	Object *toReturn = objectList[id];
-	if (!toReturn)
-		fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n", gLineInTrace, id);
-	return toReturn;
+vector<Object*> ObjectContainer::getLiveObjects() {
+	vector<Object*> objects;
+
+	std::map<int, Object*>::iterator it;
+	for (it=objectMap.begin(); it!=objectMap.end(); it++)
+		objects.push_back(it->second);
+
+	return objects;
 }
 
-Object* ObjectContainer::getbySlotNr(int slot) {
-	return objectList.at(slot);
+Object* ObjectContainer::getByID(int id) {
+	if (objectMap.find(id) == objectMap.end())
+		fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n", gLineInTrace, id);
+	return objectMap[id];
 }
 
 Object* ObjectContainer::getRoot(int thread, int objectID) {
@@ -136,7 +136,7 @@ int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
 }
 
 int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
-	Object *object = objectList[objectID];
+	Object *object = objectMap[objectID];
 	if (!object) {
 		fprintf(stderr, "ERROR(Line %d): object to delete not found. id: %d\n", gLineInTrace, objectID);
 		return -1;
@@ -145,22 +145,22 @@ int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
 	if (object->isForwarded())
 		forwardObject(objectID);
 	else
-		objectList[objectID] = NULL;
+		objectMap.erase(objectID);
 	if (deleteFlag)
 		delete (object);
 	return 0;
 }
 
 int ObjectContainer::getSize() {
-	return objectList.size();
+	return objectMap.size();
 }
 
 int ObjectContainer::removeReferenceTo(Object* object) {
 	int id = object->getID();
-	if (!objectList[id])
+	if (objectMap.find(id) == objectMap.end()) // not found
 		return -1;
 
-	objectList[id] = NULL;
+	objectMap.erase(id);
 	return 0;
 }
 
@@ -200,10 +200,6 @@ int ObjectContainer::getRemSetSlot() {
 	return -1;
 }
 
-int ObjectContainer::getListSlot() {
-	fprintf(stderr, "ERROR: ObjectContainer::getListSlot() should never be called.\n");
-	return -1;
-}
 int ObjectContainer::getRootsetSize(int thread){
 	return rootset.at(thread).size();
 }
@@ -215,26 +211,15 @@ void ObjectContainer::clearRemSet(){
 }
 
 int ObjectContainer::countElements() {
-	int result = 0;
-	unsigned int i;
-	for (i = 0; i < objectList.size(); i++) {
-		if (objectList[i]) {
-			result++;
-		}
-	}
-	return result;
+	return objectMap.size();
 }
 
 void ObjectContainer::dumpHeap() {
-	Object *obj;
 	unsigned int i;
-
+	vector<Object*> objects = getLiveObjects();
 	printf("Dumping Heap:\n");
-	for (i=0; i<objectList.size(); i++) {
-		obj = objectList[i];
-		if (obj)
-			printf("[object <id:%d>]\n", obj->getID());
-	}
+	for(i=0; i<objects.size(); i++)
+		printf("<object: id=%d>\n", objects[i]->getID());
 	printf("End of Dump\n");
 }
 

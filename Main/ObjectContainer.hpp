@@ -28,7 +28,6 @@ public:
 	int removeFromGenRoot(Object* object);
 	int removeReferenceTo(Object* object);
 	Object* getByID(int id);
-	Object* getbySlotNr(int slot);
 	Object* getRoot(int thread, int objectID);
 	int getSize();
 	int deleteObject(Object* object, bool deleteFlag);
@@ -39,19 +38,19 @@ public:
 	Object* getGenRoot(int slot);
 	void clearRemSet();
 	vector<Object*> getRoots(int thread);
+	vector<Object*> getLiveObjects();
 	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
 	int countElements();
 	bool isAlreadyRoot(int thread, int objectID);
-	void forwardObject(int slot);
+	void forwardObject(int id);
 	void dumpHeap();
 private:
-	int getListSlot();
 	bool doesObjectExistInList(Object *queryObject);
 	int getRemSetSlot();
 
 	vector<std::map<int, Object*> > rootset;
-	vector<Object*> objectList;
+	std::map<int, Object*> objectMap;
 	vector<Object*> remSet;
 
 	int rootCount;

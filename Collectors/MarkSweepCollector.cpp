@@ -84,8 +84,9 @@ void MarkSweepCollector::mark() {
 void MarkSweepCollector::sweep() {
 	Object* currentObj;
 	int i, gGC;
-	for (i = 0; i < myObjectContainer->getSize(); i++) {
-		currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		currentObj = objects[i];
 		if (currentObj) {
 			//int id = currentObj->getID();
 			if(myGeneration == GENERATIONS -1){
@@ -144,8 +145,9 @@ void MarkSweepCollector::enqueueAllRoots() {
 void MarkSweepCollector::initializeMarkPhase() {
 	Object* currentObj;
 	int i;
-	for (i = 0; i < myObjectContainer->getSize(); i++) {
-		currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		currentObj = objects[i];
 		if (currentObj) {
 			if (WRITE_DETAILED_LOG == 1) {
 				//fprintf(gDetLog, "(%d) MARK: %ld\n", gLineInTrace,
@@ -205,9 +207,9 @@ void MarkSweepCollector::freeAllLiveObjects() {
 //			}
 //		}
 //	}
-	int end = myObjectContainer->getSize();
-	for (i = 0; i < end; i++) {
-		Object* currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		Object* currentObj = objects[i];
 		if (currentObj) {
 			myMemManager->requestFree(currentObj);
 		}
@@ -224,9 +226,9 @@ int MarkSweepCollector::promotionPhase() {
 	//in case the next generation is too full, a flag to wait
 	int noSpaceUpstairs = 0;
 	oldi = -1;
-	int end = myObjectContainer->getSize();
-	for (g = 0; g < end; g++) {
-		Object* currentObj = myObjectContainer->getbySlotNr(g);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (g = 0; g < (int)objects.size(); g++) {
+		Object* currentObj = objects[g];
 		if (g < oldi) {
 			printf("oO\n");
 		}
@@ -281,9 +283,9 @@ void MarkSweepCollector::reallocateAllLiveObjects() {
 //			}
 //		}
 //	}
-	int end = myObjectContainer->getSize();
-	for (i = 0; i < end; i++) {
-		Object* currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		Object* currentObj = objects[i];
 		if (currentObj) {
 			myMemManager->requestReallocate(currentObj);
 		}

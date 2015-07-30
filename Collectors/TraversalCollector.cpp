@@ -52,8 +52,9 @@ void TraversalCollector::swap() {
 	int i;
 	Object *currentObj;
 
-	for (i = 0; i < myObjectContainer->getSize(); i++) {
-		currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		currentObj = objects[i];
 		if (currentObj) {
 			if (!myAllocator->isInNewSpace(currentObj)) {
 				if (!currentObj->isForwarded()) {
@@ -211,8 +212,9 @@ void TraversalCollector::hotnessCopying() {
 void TraversalCollector::initializeMarkPhase() {
 	Object* currentObj;
 	int i;
-	for (i = 0; i < myObjectContainer->getSize(); i++) {
-		currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		currentObj = objects[i];
 		if (currentObj) {
 			if (WRITE_DETAILED_LOG == 1) {
 				//fprintf(gDetLog, "(%d) MARK: %ld\n", gLineInTrace,
@@ -248,9 +250,9 @@ void TraversalCollector::compact() {
 void TraversalCollector::freeAllLiveObjects() {
 	int i;
 	
-	int end = myObjectContainer->getSize();
-	for (i = 0; i < end; i++) {
-		Object* currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		Object* currentObj = objects[i];
 		if (currentObj) {
 			myMemManager->requestFree(currentObj);
 		}
@@ -267,9 +269,9 @@ int TraversalCollector::promotionPhase() {
 	//in case the next generation is too full, a flag to wait
 	int noSpaceUpstairs = 0;
 	oldi = -1;
-	int end = myObjectContainer->getSize();
-	for (g = 0; g < end; g++) {
-		Object* currentObj = myObjectContainer->getbySlotNr(g);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (g = 0; g < (int)objects.size(); g++) {
+		Object* currentObj = objects[g];
 		if (g < oldi) {
 			printf("oO\n");
 		}
@@ -299,9 +301,9 @@ int TraversalCollector::promotionPhase() {
 
 void TraversalCollector::reallocateAllLiveObjects() {
 	int i;
-	int end = myObjectContainer->getSize();
-	for (i = 0; i < end; i++) {
-		Object* currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for (i = 0; i < (int)objects.size(); i++) {
+		Object* currentObj = objects[i];
 		if (currentObj) {
 			myMemManager->requestReallocate(currentObj);
 		}

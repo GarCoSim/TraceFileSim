@@ -74,8 +74,9 @@ void CopyingCollector::mark(){
 void CopyingCollector::sweep(){
 	Object* currentObj;
 	int i;
-	for(i = 0 ; i < myObjectContainer->getSize() ; i++){
-		currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for(i = 0 ; i < (int)objects.size(); i++){
+		currentObj = objects[i];
 		if(currentObj && currentObj->getIsAlive() == 0){
 			myAllocator->gcFree(currentObj);
 			myObjectContainer->deleteObject(currentObj, false);
@@ -106,8 +107,9 @@ void CopyingCollector::enqueueAllRoots(){
 void CopyingCollector::initializeMarkPhase(){
 	Object* currentObj;
 	int i;
-	for(i = 0 ; i < myObjectContainer->getSize() ; i++){
-		currentObj = myObjectContainer->getbySlotNr(i);
+	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	for(i = 0 ; i < (int)objects.size(); i++){
+		currentObj = objects[i];
 		if(currentObj != NULL){
 			currentObj->setVisited(0);
 			currentObj->setIsAlive(0);
