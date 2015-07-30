@@ -121,7 +121,7 @@ void TraversalCollector::getAllRoots() {
 		vector<Object*> roots;
 		for (i = 0; i < NUM_THREADS; i++) {
 			roots = myObjectContainer->getRoots(i);
-			for (j = 0; j < roots.size(); j++) {
+			for (j = 0; j < (int)roots.size(); j++) {
 				currentObj = roots[j];
 				if (currentObj && currentObj->getVisited() == 0) {
 					currentObj->setVisited(1);
