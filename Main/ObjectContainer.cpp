@@ -101,7 +101,7 @@ int ObjectContainer::addToRoot(Object* newObject, int thread) {
 vector<Object*> ObjectContainer::getRoots(int thread) {
 	vector<Object*> roots;
 
-	std::map<int, Object*>::iterator it;
+	std::tr1::unordered_map<int, Object*>::iterator it;
 	for (it=rootset[thread].begin(); it!=rootset[thread].end(); it++)
 		roots.push_back(it->second);
 
@@ -111,7 +111,7 @@ vector<Object*> ObjectContainer::getRoots(int thread) {
 vector<Object*> ObjectContainer::getLiveObjects() {
 	vector<Object*> objects;
 
-	std::map<int, Object*>::iterator it;
+	std::tr1::unordered_map<int, Object*>::iterator it;
 	for (it=objectMap.begin(); it!=objectMap.end(); it++)
 		objects.push_back(it->second);
 
