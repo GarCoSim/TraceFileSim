@@ -124,8 +124,8 @@ void TraversalCollector::getAllRoots() {
 			roots = myObjectContainer->getRoots(i);
 			for (j = 0; j < (int)roots.size(); j++) {
 				currentObj = roots[j];
-				if (currentObj && currentObj->getVisited() == 0) {
-					currentObj->setVisited(1);
+				if (currentObj && !currentObj->getVisited()) {
+					currentObj->setVisited(true);
 					//currentObj->setAge(currentObj->getAge() + 1);
 					//add to rem set if the root is in a younger generation.
 					if (currentObj->getGeneration() < myGeneration) {
@@ -139,8 +139,8 @@ void TraversalCollector::getAllRoots() {
 	} else {
 		for (j = 0; j < myObjectContainer->getGenRootSize(); j++) {
 			currentObj = myObjectContainer->getGenRoot(j);
-			if (currentObj && currentObj->getVisited() == 0) {
-				currentObj->setVisited(1);
+			if (currentObj && !currentObj->getVisited()) {
+				currentObj->setVisited(true);
 				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
 				myStack.push(currentObj);
@@ -167,9 +167,8 @@ void TraversalCollector::breadthFirstCopying() {
 			if(child && child->getGeneration() < currentObj->getGeneration()){
 				myMemManager->requestRemSetAdd(child);
 			}
-			if (child && child->getVisited() == 0
-					&& child->getGeneration() <= myGeneration) {
-				child->setVisited(1);
+			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
+				child->setVisited(true);
 
 				myQueue.push(child);
 			}
@@ -195,9 +194,8 @@ void TraversalCollector::depthFirstCopying() {
 			if(child && child->getGeneration() < currentObj->getGeneration()){
 				myMemManager->requestRemSetAdd(child);
 			}
-			if (child && child->getVisited() == 0
-					&& child->getGeneration() <= myGeneration) {
-				child->setVisited(1);
+			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
+				child->setVisited(true);
 
 				myStack.push(child);
 			}
@@ -220,8 +218,8 @@ void TraversalCollector::initializeMarkPhase() {
 				//fprintf(gDetLog, "(%d) MARK: %ld\n", gLineInTrace,
 						//(long) currentObj);
 			}
-			currentObj->setVisited(0);
-			currentObj->setIsAlive(0);
+			currentObj->setVisited(false);
+			currentObj->setIsAlive(false);
 		}
 	}
 }

@@ -52,7 +52,7 @@ void RealAllocator::moveObject(Object *object) {
 	//memcpy(&temp, &object, sizeof(*object)); // this doesn't work, need to fix later, can't figure out why right now
 	// we do a hack for now
 	temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
-	temp->setVisited(1);
+	temp->setVisited(true);
 	object->setForwarded(true);
 
 	object = temp;

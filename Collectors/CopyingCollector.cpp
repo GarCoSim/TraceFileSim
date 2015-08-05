@@ -58,12 +58,12 @@ void CopyingCollector::mark(){
 		myQueue.pop();
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(1);
+		currentObj->setIsAlive(true);
 		for(i = 0 ; i < kids ; i++){
 			child = currentObj->getReferenceTo(i);
-			if(child && child->getVisited() == 0){
-				child->setVisited(1);
-				currentObj->setIsAlive(1);
+			if(child && !child->getVisited()){
+				child->setVisited(true);
+				currentObj->setIsAlive(true);
 				myQueue.push(child);
 			}
 		}
@@ -77,7 +77,7 @@ void CopyingCollector::sweep(){
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
 	for(i = 0 ; i < (int)objects.size(); i++){
 		currentObj = objects[i];
-		if(currentObj && currentObj->getIsAlive() == 0){
+		if(currentObj && !currentObj->getIsAlive()){
 			myAllocator->gcFree(currentObj);
 			myObjectContainer->deleteObject(currentObj, false);
 			statFreedObjects++;
@@ -95,9 +95,9 @@ void CopyingCollector::enqueueAllRoots(){
 		roots = myObjectContainer->getRoots(i);
 		for(j = 0 ; j < roots.size(); j++){
 			currentObj = roots[j];
-			if(currentObj && currentObj->getVisited() == 0){
-				currentObj->setVisited(1);
-				currentObj->setIsAlive(1);
+			if(currentObj && !currentObj->getVisited()){
+				currentObj->setVisited(true);
+				currentObj->setIsAlive(true);
 				myQueue.push(currentObj);
 			}
 		}
@@ -111,8 +111,8 @@ void CopyingCollector::initializeMarkPhase(){
 	for(i = 0 ; i < (int)objects.size(); i++){
 		currentObj = objects[i];
 		if(currentObj != NULL){
-			currentObj->setVisited(0);
-			currentObj->setIsAlive(0);
+			currentObj->setVisited(false);
+			currentObj->setIsAlive(false);
 		}
 	}
 }
@@ -149,12 +149,12 @@ void CopyingCollector::freeAllLiveObjects() {
 
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(1);
+		currentObj->setIsAlive(true);
 		for(i = 0 ; i < kids ; i++){
 			child = currentObj->getReferenceTo(i);
-			if(child && child->getVisited() == 0){
-				child->setVisited(1);
-				currentObj->setIsAlive(1);
+			if(child && !child->getVisited()){
+				child->setVisited(true);
+				currentObj->setIsAlive(true);
 				myQueue.push(child);
 			}
 		}
@@ -180,12 +180,12 @@ void CopyingCollector::reallocateAllLiveObjects() {
 
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(1);
+		currentObj->setIsAlive(true);
 		for(i = 0 ; i < kids ; i++){
 			child = currentObj->getReferenceTo(i);
-			if(child && child->getVisited() == 0){
-				child->setVisited(1);
-				currentObj->setIsAlive(1);
+			if(child && !child->getVisited()){
+				child->setVisited(true);
+				currentObj->setIsAlive(true);
 				myQueue.push(child);
 			}
 		}
