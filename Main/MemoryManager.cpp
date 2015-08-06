@@ -10,6 +10,7 @@
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern int gLineInTrace;
+extern string globalFilename;
 
 namespace traceFileSimulator {
 
@@ -18,20 +19,51 @@ MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int
 	_collector = (collectorEnum)collector;
 	_traversal = (traversalEnum)traversal;
 
-	classManager = new ClassManager();
-
+	classTableLoaded = false;
 
 	initAllocators(heapSize);
 	initContainers();
 	initGarbageCollectors(highWatermark);
 }
 
+bool MemoryManager::loadClassTable(string traceFilePath) {
+	ifstream classFile;
+	size_t found;
+	string className = globalFilename + ".cls";
+	string line;
+
+	// we need to push an empty element into the vector as our classes start with id 1
+	classTable.push_back("EMPTY");
+
+	classFile.open(className.c_str());
+	if (!classFile.good())
+		return false;
+
+	do {
+		if(getline(classFile, line)) {
+			found = line.find(": ");
+			line = line.substr(found + 2, line.size() - found - 2);
+			classTable.push_back(line);
+		}
+	} while (!classFile.eof());
+
+	classTableLoaded = true;
+
+	return true;;
+}
+
 char *MemoryManager::getClassName(int classNumber) {
-	return classManager->getClassName(classNumber);
+	if (!hasClassTable())
+		return (char*)"CLASS_TABLE_NOT_LOADED";
+
+	if (classNumber > (int)classTable.size())
+		return (char*)"OUT_OF_BOUNDS";
+
+	return (char*)classTable.at(classNumber).c_str();
 }
 
 bool MemoryManager::hasClassTable() {
-	return classManager->isLoaded();
+	return classTableLoaded;
 }
 
 void MemoryManager::initAllocators(int heapsize) {
