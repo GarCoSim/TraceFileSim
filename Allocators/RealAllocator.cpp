@@ -8,6 +8,7 @@
 #include "RealAllocator.hpp"
 
 extern int gLineInTrace;
+extern double totTime;
 
 using namespace std;
 
@@ -31,31 +32,34 @@ bool RealAllocator::isInNewSpace(Object *object) {
 
 
 void RealAllocator::moveObject(Object *object) {
+
 	if (isInNewSpace(object))
 		return;
 
 	Object *temp;
+
 	int size = object->getPayloadSize();
 
-	//gcFree(object); // first we need to reclaim the old space
-
 	size_t address = (size_t)allocateInNewSpace(size);
-
 	if (address == (size_t)-1) {
 		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
 		exit(1);
 	}
-	object->updateAddress(address);
+
 	temp = (Object*)address;
 
-	// now we move the object
-	//memcpy(&temp, &object, sizeof(*object)); // this doesn't work, need to fix later, can't figure out why right now
+    //memcpy(&temp,&object,sizeof(Object*)); // this doesn't work, need to fix later, can't figure out why right now]	
 	// we do a hack for now
-	temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
-	temp->setVisited(true);
+	//temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
+	//temp->resetPtrs(object->getPointersMax());   
+	//temp->setVisited(1);
+    
+	temp->setArgsReal(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
+
+	object->updateAddress(address);
 	object->setForwarded(true);
 
-	object = temp;
+	object = temp; 
 }
 
 void RealAllocator::initializeHeap(int heapSize) {
@@ -95,23 +99,26 @@ void RealAllocator::freeAllSectors() {
 }
 
 size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddress) {
+	//added by Tristan
+    struct timeval tv;
+	unsigned long time_start;
+
 	if (size <= 0) {
 		return -1;
 	}
 
-	//hope for the best, assume the worst
 	int address = lower;
 	int contiguous = 0;
-	//nextFit search
 	int i, bit;
 	int passedBoundOnce = 0;
-	//int end = (lastAddress - (size_t)(&heap) - 1);
 
-	for (i = lower; i != upper; i++) {
-	//for (i = lastAddress - (size_t)(&heap); i != end; i++) {
-		bit = isBitSet(i);
+    //added by Tristan
+    //gettimeofday(&tv, NULL); 
+    //time_start = 1000000*tv.tv_sec+tv.tv_usec;
 
-		if (i == upper) {
+	for (i = lower; i <= upper; i++) {
+/*
+    	if (i == upper) {
 			if (passedBoundOnce == 1) {
 				return -1;
 			}
@@ -120,6 +127,37 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 			address = i + 1;
 			passedBoundOnce = 1;
 		}
+*/		
+// **************** Added by Tristan *****************
+	/*	
+        if (i%32==0) {
+           long v = (long)myHeapBitMap[i/8];
+           if (v == -1) {
+			  i += 32;
+			  continue;
+		   }
+		}
+	
+
+        if (i%16==0) {
+           short v = (short)myHeapBitMap[i/8];
+           if (v == -1) {
+			  i += 16;
+			  continue;
+		   }
+		}
+	*/	
+
+    	if (i%8==0 && myHeapBitMap[i/8] == (char)255) {
+			i += 8;
+			continue;
+		}
+
+		
+// *************** End of Add ************************
+
+
+        bit = isBitSet(i);
 
 		if (bit == 1) {
 			address = i + 1;
@@ -134,6 +172,9 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 			}
 		}
 	}
+	//added by Tristan
+	//gettimeofday(&tv, NULL);
+	//totTime = ((1000000*tv.tv_sec+tv.tv_usec) - time_start)/1.0e6;
 
 	return -1;
 }
@@ -154,7 +195,6 @@ void RealAllocator::gcFree(Object* object) {
 	int size = object->getPayloadSize();
 
 	setFree(getLogicalAddress(object), size);
-	//object->setFreed(1);
 
 	statLiveObjects--;
 	statBytesAllocated -= size;

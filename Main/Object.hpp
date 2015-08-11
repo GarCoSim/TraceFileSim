@@ -19,6 +19,7 @@ class Object {
 public:
 	Object(int id, int payloadSize, int maxPointers, int address, char *className);
 	void setArgs(int id, int payloadSize, int maxPointers, char *className);
+	
 	virtual ~Object();
 	size_t 	getAddress();
 	void 	updateAddress(size_t newAddress);
@@ -29,10 +30,10 @@ public:
 	Object* getReferenceTo(int pointerNumber);
 	int 	setPointer(int pointerNumber, Object* target);
 
-	bool 	getIsAlive();
-	void 	setIsAlive(bool value);
-	bool 	getVisited();
-	void	setVisited(bool value);
+	int 	getIsAlive();
+	void 	setIsAlive(int value);
+	int 	getVisited();
+	void	setVisited(int value);
 
 	int getAge() const {
 		return myAge;
@@ -64,6 +65,11 @@ public:
 		forwarded = value;
 	}
 
+	//added by Tristan
+	void setArgsReal(int id, int payloadSize, int maxPointers, char *className); //added by Tristan
+	void     setPtrsNull(int numPtrs);
+	void     resetPtrs(int numPtrs);
+ 
 private:
 	int 	myId;
 	int freed;
@@ -84,8 +90,8 @@ private:
 
 	//garbage collector stuff
 	//TODO those two are basically the same. one could be removed
-	bool isVisited;
-	bool isAlive;
+	int isVisited;
+	int isAlive;
 
 	//genCon
 	int myAge;
@@ -94,6 +100,8 @@ private:
     char *myName;
     bool forwarded;
 
+    //added by Tristan
+    Object **ptr;
 };
 
 } 
