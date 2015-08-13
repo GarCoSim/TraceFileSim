@@ -34,8 +34,8 @@ void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) 
 	myName = className;
 
 	//stat
-	isAlive = 0;
-	isVisited = 0;
+	isAlive = false;
+	isVisited = false;
 	freed = 0;
 	myAddress = 0;
 	forwarded = false;
@@ -89,15 +89,15 @@ int Object::setPointer(int pointerNumber, Object* target){
 	return 1;
 }
 
-int Object::getIsAlive(){
+bool Object::getIsAlive(){
 	return isAlive;
 }
 
-void Object::setIsAlive(int value){
+void Object::setIsAlive(bool value){
 	isAlive = value;
 }
 
-int Object::getVisited(){
+bool Object::getVisited(){
 	return isVisited;
 }
 
@@ -105,7 +105,7 @@ void Object::updateAddress(size_t newAddress) {
 	myAddress = newAddress;
 }
 
-void Object::setVisited(int value){
+void Object::setVisited(bool value){
 	isVisited = value;
 }
 
@@ -141,8 +141,8 @@ void Object::setArgsReal(int id, int payloadSize, int maxPointers, char *classNa
 	myName = className;
 
 	//stat
-	isAlive = 0;
-	isVisited = 0;
+	isAlive = false;
+	isVisited = false;
 	freed = 0;
 	myAddress = 0;
 	forwarded = false;

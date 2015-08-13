@@ -30,10 +30,10 @@ public:
 	Object* getReferenceTo(int pointerNumber);
 	int 	setPointer(int pointerNumber, Object* target);
 
-	int 	getIsAlive();
-	void 	setIsAlive(int value);
-	int 	getVisited();
-	void	setVisited(int value);
+	bool 	getIsAlive();
+	void 	setIsAlive(bool value);
+	bool 	getVisited();
+	void	setVisited(bool value);
 
 	int getAge() const {
 		return myAge;
@@ -90,8 +90,8 @@ private:
 
 	//garbage collector stuff
 	//TODO those two are basically the same. one could be removed
-	int isVisited;
-	int isAlive;
+	bool isVisited;
+	bool isAlive;
 
 	//genCon
 	int myAge;
