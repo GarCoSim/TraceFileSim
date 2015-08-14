@@ -112,6 +112,24 @@ void Collector::printStats() {
 	statCollectionReason = (int)reasonStatistics;
 }
 
+void Collector::updatePointers() {
+	int i, j;
+	void *pointerAddress;
+	Object *currentObj;
+
+	vector<Object *> objects = myObjectContainer->getLiveObjects();
+	for (i=0; i<(int)objects.size(); i++) {
+		currentObj = objects[i];
+		for (j=0; j<currentObj->getPointersMax(); j++) {
+			pointerAddress = currentObj->getRawPointerAddress(j);
+			if (pointerAddress != NULL && forwardPointers.find(pointerAddress) != forwardPointers.end())
+				currentObj->setRawPointerAddress(j, forwardPointers[pointerAddress]);
+		}
+	}
+
+	forwardPointers.clear();
+}
+
 void Collector::postCollect() {
 	printStats();
 	gcsSinceLastPromotionPhase++;

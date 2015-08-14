@@ -34,6 +34,7 @@ public:
 	void initializeHeap(int heapSize);
 	void moveObject(Object *object);
 	bool isInNewSpace(Object *object);
+	void freeOldSpace();
 
 private:
 	size_t allocate(int size, int lower, int upper, size_t lastAddress);

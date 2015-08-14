@@ -5,34 +5,19 @@
  *      Author: GarCoSim
  */
 
+#include "../defines.hpp"
 #include "Object.hpp"
 
 namespace traceFileSimulator {
 
-Object::Object(int id, int payloadSize, int maxPointers, int address, char *className) {
-	setArgs(id, payloadSize, maxPointers, className);
-	myAddress = address;
-}
-
-// this only needs to be run when we create the objects in the real allocator
-void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) {
-
-	//prepare data structure
+Object::Object(int id, void *address, int size, int maxPointers, char *className) {
 	myId = id;
-	myPayloadSize = payloadSize;
-	myPointersCurrent = 0;
+	rawObject = (RawObject *) address;
+	rawObject->associatedObject = this;
+	mySize = size;
 	myPointersMax = maxPointers;
-	
-	/* commented out by Tristan
-	pointers = (Object**)malloc(maxPointers*sizeof(Object*));
-	for(int i = 0; i < maxPointers;i++){
-		pointers[i] = NULL;
-	}
-	*/
-
-	pointers = (Object**)((unsigned long)this+(unsigned long)sizeof(Object)); //added by Tristan
-	memset(pointers,NULL,maxPointers<<3);                                      //added by Tristan
-
+	for (int i=0; i<myPointersMax; i++)
+		rawObject->pointers[i] = NULL;
 	myGeneration = 0;
 	myAge = 0;
 	myName = className;
@@ -40,7 +25,6 @@ void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) 
 	// stats
 	isVisited = false;
 	freed = 0;
-	myAddress = 0;
 	forwarded = false;
 }
 
@@ -53,7 +37,7 @@ int Object::getGeneration(){
 }
 
 size_t Object::getAddress(){
-	return myAddress;
+	return (size_t) rawObject;
 }
 
 int Object::getID(){
@@ -61,18 +45,21 @@ int Object::getID(){
 }
 
 int Object::getPayloadSize(){
-	return myPayloadSize;
+	return mySize - OBJECT_HEADER_SIZE;
 }
 
-int Object::getPointerCount(){
-	return myPointersCurrent;
+int Object::getHeapSize(){
+	return mySize;
 }
 
 int Object::getPointersMax(){
 	return myPointersMax;
 }
 Object* Object::getReferenceTo(int pointerNumber){
-	return pointers[pointerNumber];
+	RawObject *target = rawObject->pointers[pointerNumber];
+	if (target)
+		return target->associatedObject;
+	return NULL;
 }
 
 int Object::setPointer(int pointerNumber, Object* target){
@@ -83,8 +70,19 @@ int Object::setPointer(int pointerNumber, Object* target){
 		return 0;
 	}
 
-	pointers[pointerNumber] = target;
+	if (target)
+		rawObject->pointers[pointerNumber] = target->rawObject;
+	else
+		rawObject->pointers[pointerNumber] = NULL;
 	return 1;
+}
+
+void *Object::getRawPointerAddress(int pointerNumber) {
+	return (void *) rawObject->pointers[pointerNumber];
+}
+
+void Object::setRawPointerAddress(int pointerNumber, void *address) {
+	rawObject->pointers[pointerNumber] = (RawObject *) address;
 }
 
 bool Object::getVisited(){
@@ -92,7 +90,8 @@ bool Object::getVisited(){
 }
 
 void Object::updateAddress(size_t newAddress) {
-	myAddress = newAddress;
+	rawObject = (RawObject *) newAddress;
+	rawObject->associatedObject = this;
 }
 
 void Object::setVisited(bool value){

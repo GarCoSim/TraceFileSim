@@ -24,27 +24,6 @@ ObjectContainer::ObjectContainer() {
 	remCount = 0;
 }
 
-// we forward the object in all of our lists
-void ObjectContainer::forwardObject(int id) {
-	unsigned int i;
-
-	// update object list
-	objectMap[id] = (Object*)objectMap[id]->getAddress();
-	objectMap[id]->updateAddress((size_t)0); // remove forwarding pointer
-
-	// update rootset
-	for (i = 0; i < rootset.size(); i++)
-		if (isAlreadyRoot(i, id))
-			rootset[i][id] = objectMap[id];
-
-	// update remset
-	for (i = 0; i < remSet.size(); i++)
-		if (remSet[i])
-			if (remSet[i]->getID() == id)
-				remSet[i] = objectMap[id];
-
-}
-
 void ObjectContainer::addToGenRoot(Object* object) {
 	int remSetSlot = getRemSetSlot();
 	if (remSetSlot == -1) {
@@ -142,10 +121,7 @@ int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
 		return -1;
 	}
 
-	if (object->isForwarded())
-		forwardObject(objectID);
-	else
-		objectMap.erase(objectID);
+	objectMap.erase(objectID);
 	if (deleteFlag)
 		delete (object);
 	return 0;

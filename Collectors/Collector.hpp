@@ -12,6 +12,7 @@
 #include "../Main/ObjectContainer.hpp"
 #include <queue>
 #include <stack>
+#include <map>
 #include <string>
 #include <ctime>
 #include "../defines.hpp"
@@ -33,6 +34,7 @@ public:
 	void printStats();
 	virtual int promotionPhase();
 	void lastStats();
+	void updatePointers();
 
 protected:
 	void postCollect();
@@ -41,6 +43,7 @@ protected:
 	ObjectContainer* myObjectContainer;
 	queue<Object *> myQueue;
 	stack<Object *> myStack;
+	map<void *, void *> forwardPointers;
 	
 	int statGcNumber;
 	int statFreedObjects;

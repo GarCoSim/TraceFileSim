@@ -11,6 +11,7 @@
 #define NUM_THREADS		50
 #define ROOTSET_SIZE    50
 #define VISUALIZE_GCS 	1
+#define OBJECT_HEADER_SIZE 16
 
 //DEBUGGING
 #define DEBUG_MODE            0

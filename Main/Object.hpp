@@ -16,19 +16,29 @@
 using std::vector;
 namespace traceFileSimulator {
 
+class Object;
+
+typedef struct RawObject {
+	void *classPool;
+	Object *associatedObject;
+	RawObject *pointers[];
+} RawObject;
+
 class Object {
 public:
-	Object(int id, int payloadSize, int maxPointers, int address, char *className);
+	Object(int id, void *address, int size, int numberOfPointers, char *className);
 	void setArgs(int id, int payloadSize, int maxPointers, char *className);
 	virtual ~Object();
 	size_t 	getAddress();
 	void 	updateAddress(size_t newAddress);
 	int 	getID();
 	int 	getPayloadSize();
-	int	 	getPointerCount();
+	int 	getHeapSize();
 	int 	getPointersMax();
 	Object* getReferenceTo(int pointerNumber);
 	int 	setPointer(int pointerNumber, Object* target);
+	void *getRawPointerAddress(int pointerNumber);
+	void setRawPointerAddress(int pointerNumber, void *address);
 
 	bool 	getVisited();
 	void	setVisited(bool value);
@@ -64,22 +74,14 @@ public:
 	}
 
 private:
+	RawObject *rawObject;
 	int 	myId;
 	int freed;
 
-	/*The actual object I am storing information about
-	 * (not interesting for our purpose, it only has a size) */
-	int  	myPayloadSize;
+	int  	mySize;
 
-	/*How many objects am I pointing at? How many am I allowed to point at?*/
+	// How many pointer slots do I have?
 	int 	myPointersMax;
-	int 	myPointersCurrent;
-
-	//the starting address of the object on the virtual heap OR the forwarding address if split heaps
-	size_t myAddress;
-
-	/*the list of objects I am pointing at*/
-	Object** pointers;
 
 	//garbage collector stuff
 	bool isVisited;

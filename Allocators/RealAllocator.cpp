@@ -37,28 +37,17 @@ void RealAllocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
 
-	Object *temp;
-	int size = object->getPayloadSize();
-
-	//gcFree(object); // first we need to reclaim the old space
-
+	int size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 
 	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %d), old space %d, new space %d\n", size, getUsedSpace(false), getUsedSpace(true));
+		fprintf(stderr, "error moving object (size %d) with id %d, old space %d, new space %d\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
 		exit(1);
 	}
-	object->updateAddress(address);
-	temp = (Object*)address;
+	memcpy((void *) address, (void *) object->getAddress(), size);
 
-	// now we move the object
-	//memcpy(&temp, &object, sizeof(*object)); // this doesn't work, need to fix later, can't figure out why right now
-	// we do a hack for now
-	temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
-	temp->setVisited(1);
+	object->updateAddress((size_t) address);
 	object->setForwarded(true);
-
-	object = temp;
 }
 
 void RealAllocator::initializeHeap(int heapSize) {
@@ -151,23 +140,12 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 	return -1;
 }
 
-size_t RealAllocator::getLogicalAddress(Object *object) {
-	/*
-	size_t address = (size_t)object;
-	size_t i;
-
-	// find the address we're looking for
-	for (i = 0; i < (size_t)overallHeapSize; i++)
-		if (address == (size_t)&heap[i])
-			return i;
-
-	return -1;
-    */
-	return (size_t)object - (size_t)heap; //added by Aaron T.
+inline size_t RealAllocator::getLogicalAddress(Object *object) {
+	return (size_t) object->getAddress() - (size_t) heap;
 }
 
 void RealAllocator::gcFree(Object* object) {
-	int size = object->getPayloadSize();
+	int size = object->getHeapSize();
 	int address = getLogicalAddress(object);
 
 	setFree(address, size);
@@ -180,6 +158,12 @@ void RealAllocator::gcFree(Object* object) {
 }
 
 RealAllocator::~RealAllocator() {
+}
+
+void RealAllocator::freeOldSpace() {
+	setFree(oldSpaceOffset, myHeapSizeOldSpace-oldSpaceOffset);
+	card1->syncCards8(myHeapBitMap);
+	card2->syncCards64(myHeapBitMap);
 }
 
 }

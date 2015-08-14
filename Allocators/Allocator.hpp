@@ -34,6 +34,7 @@ public:
 	void printMap();
 	void printStats();
 	virtual void freeAllSectors();
+	virtual void freeOldSpace();
 
 	void setHalfHeapSize(bool value);
 	virtual void moveObject(Object *object);

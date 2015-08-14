@@ -43,7 +43,6 @@ public:
 //	void visualizeState(char* filename);
 	int countElements();
 	bool isAlreadyRoot(int thread, int objectID);
-	void forwardObject(int id);
 	void dumpHeap();
 private:
 	bool doesObjectExistInList(Object *queryObject);

@@ -36,6 +36,8 @@ void TraversalCollector::collect(int reason) {
 
 	swap();
 
+	updatePointers();
+
 	postCollect();
 
 	stop = clock();
@@ -66,6 +68,9 @@ void TraversalCollector::swap() {
 			}
 		}
 	}
+
+	// free entire old space
+	myAllocator->freeOldSpace();
 
 	myAllocator->swapHeaps();
 }
@@ -153,13 +158,17 @@ void TraversalCollector::breadthFirstCopying() {
 	int i;
 	Object* currentObj;
 	Object* child;
+	void *addressBefore, *addressAfter;
 
 	//breadth first through the tree using a queue
 	while (!myQueue.empty()) {
 		currentObj = myQueue.front();
 		myQueue.pop();
 		int kids = currentObj->getPointersMax();
+		addressBefore = (void *) currentObj->getAddress();
 		myAllocator->moveObject(currentObj);
+		addressAfter = (void *) currentObj->getAddress();
+		forwardPointers[addressBefore] = addressAfter;
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);
@@ -180,13 +189,17 @@ void TraversalCollector::depthFirstCopying() {
 	int i;
 	Object* currentObj;
 	Object* child;
+	void *addressBefore, *addressAfter;
 
 	//depth first through the tree using a stack
 	while (!myStack.empty()) {
 		currentObj = myStack.top();
 		myStack.pop();
 		int kids = currentObj->getPointersMax();
+		addressBefore = (void *) currentObj->getAddress();
 		myAllocator->moveObject(currentObj);
+		addressAfter = (void *) currentObj->getAddress();
+		forwardPointers[addressBefore] = addressAfter;
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);

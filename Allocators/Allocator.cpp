@@ -72,6 +72,10 @@ void Allocator::swapHeaps() {
 	myLastSuccessAddressNewSpace = temp;
 }
 
+void Allocator::freeOldSpace() {
+	setFree(oldSpaceOffset, myHeapSizeOldSpace-oldSpaceOffset);
+}
+
 int Allocator::getUsedSpace(bool newSpace) {
 	int i, usedSpace = 0;
 	if (newSpace) {

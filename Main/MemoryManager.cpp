@@ -227,11 +227,10 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 	}
 
 	//create Object
-	Object* object;
+	Object *object;
 	switch (_allocator) {
 		case realAlloc:
-			object = (Object*)address;
-			object->setArgs(id, size, refCount, getClassName(classID));
+			object = new Object(id, (void *) address, size, refCount, getClassName(classID));
 			break;
 		default:
 			break;
@@ -327,8 +326,9 @@ void MemoryManager::requestReallocate(Object* object) {
 
 	if (object) {
 		int gen = object->getGeneration();
-		int size = object->getPayloadSize();
+		int size = object->getHeapSize();
 		int address = myAllocators[gen]->gcAllocate(size);
+		memcpy((void *) address, (void *) object->getAddress(), size);
 		if (address == -1) {
 			fprintf(stderr,
 					"ERROR(Line %d):Could not reallocate Object %d to gen %d\n",
@@ -336,6 +336,8 @@ void MemoryManager::requestReallocate(Object* object) {
 			exit(1);
 		}
 		object->updateAddress(address);
+		//TODO what about the old RawObject? How does it get freed?
+		
 		//object->setFreed(0);
 
 	}
@@ -364,7 +366,7 @@ int MemoryManager::requestPromotion(Object* object) {
 
 	int oldGen = object->getGeneration();
 	int newGen = oldGen + 1;
-	int size = object->getPayloadSize();
+	int size = object->getHeapSize();
 
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Request to promote %d from %d to %d\n",
@@ -372,6 +374,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	}
 
 	int address = myAllocators[newGen]->gcAllocate(size);
+	memcpy((void *) address, (void *) object->getAddress(), size);
 	if (address == -1) {
 		//there is not enough space upstairs, stay where you are for a little longer
 		if (WRITE_DETAILED_LOG == 1) {
@@ -386,6 +389,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	//promote object
 	myAllocators[oldGen]->gcFree(object);
 	object->updateAddress(address);
+	//TODO what about the old RawObject? How does it get freed?
 	object->setGeneration(newGen);
 	//remove from old generation
 	myObjectContainers[oldGen]->removeReferenceTo(object);
