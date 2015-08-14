@@ -192,10 +192,6 @@ void Simulator::addToRoot(TraceFileLine line){
 	myMemManager->requestRootAdd(line.threadID, line.objectID);
 }
 
-void Simulator::allocateObject(TraceFileLine line){
-	myMemManager->allocateObject(line.threadID, line.parentID, line.parentSlot, line.objectID, line.size, line.maxPointers, line.classID);
-}
-
 void Simulator::referenceOperation(TraceFileLine line){
 	myMemManager->setPointer(line.threadID, line.parentID, line.parentSlot, line.objectID);
 

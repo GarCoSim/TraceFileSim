@@ -49,7 +49,6 @@ private:
 	void getNextLine(TraceFileLine *line);
 	void initializeTraceFileLine(TraceFileLine *line);
 	void allocateToRootset(TraceFileLine line);
-	void allocateObject(TraceFileLine line);
 	void referenceOperation(TraceFileLine line);
 	void deleteRoot(TraceFileLine line);
 	void addToRoot(TraceFileLine line);

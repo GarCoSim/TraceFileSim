@@ -74,9 +74,6 @@ void MemoryManager::initAllocators(int heapsize) {
 			case realAlloc:
 				myAllocators[i] = new RealAllocator();
 				break;
-			case simulatedAlloc:
-				myAllocators[i] = new SimulatedAllocator();
-				break;
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
 		if (_collector == traversalGC)
@@ -237,8 +234,6 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 			object->setArgs(id, size, refCount, getClassName(classID));
 			break;
 		default:
-		case simulatedAlloc:
-			object = new Object(id, size, refCount, address, getClassName(classID));
 			break;
 	}
 	object->setGeneration(0);
@@ -423,68 +418,6 @@ void MemoryManager::addToContainers(Object* object) {
 	for (i = 0; i < GENERATIONS; i++) {
 		myObjectContainers[i]->add(object);
 	}
-}
-
-int MemoryManager::allocateObject(int thread, int parentID, int parentSlot,
-		int id, int size, int refCount, int classID) {
-	if (WRITE_DETAILED_LOG == 1) {
-		fprintf(gDetLog,
-				"(%d) AllocateObject by thread %d. Parent id:%d, slot: %d with id %d\n",
-				gLineInTrace, thread, parentID, parentSlot, id);
-	}
-
-	//get allocation address
-	int address = allocate(size, 0);
-	if (address == -1) {
-		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
-				size, gLineInTrace);
-		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
-		myGarbageCollectors[GENERATIONS-1]->lastStats();
-		exit(1);
-	}
-	Object* parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
-	int parentGeneration = parent->getGeneration();
-	//remove old child from remSets
-	Object* oldChild = parent->getReferenceTo(parentSlot);
-	if (oldChild && parentGeneration > oldChild->getGeneration()) {
-		int i;
-		for (i = oldChild->getGeneration(); i < parentGeneration; i++) {
-			if (WRITE_DETAILED_LOG == 1) {
-				fprintf(gDetLog,
-						"(%d) Removing %d from remset %d (i am oldchild of %d))\n",
-						gLineInTrace, oldChild->getID(), i, parent->getID());
-			}
-			int status = myObjectContainers[i]->removeFromGenRoot(oldChild);
-			if (status == -1) {
-				fprintf(stderr,
-						"ERROR (Line %d): could not remove oldChild %d from remset %d",
-						gLineInTrace, oldChild->getID(), i);
-			}
-		}
-	}
-	//create Object
-	Object* object = new Object(id, size, refCount, address, getClassName(classID));
-	object->setGeneration(0);
-	addToContainers(object);
-	//connect to parent
-	parent->setPointer(parentSlot, object);
-	//add new object to remSets in needed
-	if (parentGeneration > object->getGeneration()) {
-		int i;
-		for (i = object->getGeneration(); i < parentGeneration; i++) {
-			myObjectContainers[i]->addToGenRoot(object);
-			if (WRITE_DETAILED_LOG == 1) {
-				fprintf(gDetLog,
-						"(%d) Adding %d to remset %d (allocation))\n",
-						gLineInTrace, object->getID(),i);
-			}
-		}
-	}
-	if (DEBUG_MODE == 1) {
-		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
-		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
-	}
-	return 0;
 }
 
 int MemoryManager::setPointer(int thread, int parentID, int parentSlot,

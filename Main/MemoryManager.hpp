@@ -12,7 +12,6 @@
 #include "ObjectContainer.hpp"
 #include "../Allocators/Allocator.hpp"
 #include "../Allocators/RealAllocator.hpp"
-#include "../Allocators/SimulatedAllocator.hpp"
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/CopyingCollector.hpp"
@@ -35,7 +34,6 @@ public:
 	virtual ~MemoryManager();
 	//operations possible from trace file
 	int allocateObjectToRootset(int thread, int id, int size, int refCount, int classID);
-	int allocateObject(int thread, int parentID, int parentSlot, int id, int size, int refCount, int classID);
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);

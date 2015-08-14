@@ -5,17 +5,14 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../Allocators/Allocator.cpp \
-../Allocators/SimulatedAllocator.cpp \
 ../Allocators/RealAllocator.cpp
 
 OBJS += \
 ./Allocators/Allocator.o \
-./Allocators/SimulatedAllocator.o \
 ./Allocators/RealAllocator.o
 
 CPP_DEPS += \
 ./Allocators/Allocator.d \
-./Allocators/SimulatedAllocator.d \
 ./Allocators/RealAllocator.d
 
 

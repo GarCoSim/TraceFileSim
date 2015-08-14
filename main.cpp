@@ -49,8 +49,6 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
 				if (!strcmp(argv[i + 1], "real"))
 					return (int)realAlloc;
-				if (!strcmp(argv[i + 1], "simulated"))
-					return (int)simulatedAlloc;
 				return -1;
 			} else
 				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
@@ -68,7 +66,7 @@ int main(int argc, char *argv[]) {
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: 200000)\n" \
 						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, traversal, default: markSweep)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
-						"  --allocator x, -a x       uses x as the allocator (valid: real, simulated, default: real)\n" \
+						"  --allocator x, -a x       uses x as the allocator (valid: real, default: real)\n" \
 						);
 		exit(1);
 	}
