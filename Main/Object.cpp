@@ -22,29 +22,21 @@ void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) 
 	myPayloadSize = payloadSize;
 	myPointersCurrent = 0;
 	myPointersMax = maxPointers;
-
-
 	pointers = (Object**)malloc(maxPointers*sizeof(Object*));
 	for(int i = 0; i < maxPointers;i++){
 		pointers[i] = NULL;
 	}
-
 	myGeneration = 0;
 	myAge = 0;
 	myName = className;
 
 	//stat
-	isAlive = 0;
-	isVisited = 0;
+	isAlive = false;
+	isVisited = false;
 	freed = 0;
 	myAddress = 0;
 	forwarded = false;
 }
-
-// added by Tristan
-
-
-
 
 void Object::setGeneration(int generation){
 	myGeneration = generation;
@@ -84,20 +76,20 @@ int Object::setPointer(int pointerNumber, Object* target){
 		fflush(stdout);
 		return 0;
 	}
- 
+
 	pointers[pointerNumber] = target;
 	return 1;
 }
 
-int Object::getIsAlive(){
+bool Object::getIsAlive(){
 	return isAlive;
 }
 
-void Object::setIsAlive(int value){
+void Object::setIsAlive(bool value){
 	isAlive = value;
 }
 
-int Object::getVisited(){
+bool Object::getVisited(){
 	return isVisited;
 }
 
@@ -105,50 +97,9 @@ void Object::updateAddress(size_t newAddress) {
 	myAddress = newAddress;
 }
 
-void Object::setVisited(int value){
+void Object::setVisited(bool value){
 	isVisited = value;
 }
-
-
-//the following were added by Tristan
-void Object::setPtrsNull(int numPtrs) {
-	int i;
-
-	for (i=0; i<numPtrs; i++)
-		pointers[i] = NULL;
-}
-
-void Object::resetPtrs(int numPtrs) {
-	
-	pointers = (Object**)((unsigned long)this+(unsigned long)sizeof(Object)); //point to end of object header
-	setPtrsNull(numPtrs); //not clear why we have to do this, my hunch is, null value is checked before updating the pointers later
-
-}
-
-void Object::setArgsReal(int id, int payloadSize, int maxPointers, char *className) {
-
-	//prepare data structure
-	myId = id;
-	myPayloadSize = payloadSize;
-	myPointersCurrent = 0;
-	myPointersMax = maxPointers;
-
-	pointers = (Object**)((unsigned long)this+(unsigned long)sizeof(Object)); //point to end of object header
-	setPtrsNull(maxPointers);
-
-	myGeneration = 0;
-	myAge = 0;
-	myName = className;
-
-	//stat
-	isAlive = 0;
-	isVisited = 0;
-	freed = 0;
-	myAddress = 0;
-	forwarded = false;
-}
-
-
 
 Object::~Object() {}
 
