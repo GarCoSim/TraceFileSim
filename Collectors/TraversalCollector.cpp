@@ -219,7 +219,6 @@ void TraversalCollector::initializeMarkPhase() {
 						//(long) currentObj);
 			}
 			currentObj->setVisited(false);
-			currentObj->setIsAlive(false);
 		}
 	}
 }

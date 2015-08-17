@@ -61,7 +61,7 @@ void MarkSweepCollector::mark() {
 		myQueue.pop();
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(true);
+		currentObj->setVisited(true);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);
@@ -71,7 +71,6 @@ void MarkSweepCollector::mark() {
 			}
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 				child->setVisited(true);
-				child->setIsAlive(true);
 
 				myQueue.push(child);
 			}
@@ -93,7 +92,7 @@ void MarkSweepCollector::sweep() {
 			} else {
 				gGC = 0;
 			}
-			if (currentObj && !currentObj->getIsAlive()) {
+			if (currentObj && !currentObj->getVisited()) {
 				myMemManager->requestDelete(currentObj, gGC);
 				statFreedObjects++;
 				statFreedDuringThisGC++;
@@ -118,7 +117,6 @@ void MarkSweepCollector::enqueueAllRoots() {
 				currentObj = roots[j];
 				if (currentObj && !currentObj->getVisited()) {
 					currentObj->setVisited(true);
-					currentObj->setIsAlive(true);
 					//currentObj->setAge(currentObj->getAge() + 1);
 					//add to rem set if the root is in a younger generation.
 					if (currentObj->getGeneration() < myGeneration) {
@@ -133,7 +131,6 @@ void MarkSweepCollector::enqueueAllRoots() {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
-				currentObj->setIsAlive(true);
 				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
 			}
@@ -153,7 +150,6 @@ void MarkSweepCollector::initializeMarkPhase() {
 						//(long) currentObj);
 			}
 			currentObj->setVisited(false);
-			currentObj->setIsAlive(false);
 		}
 	}
 }
@@ -196,12 +192,11 @@ void MarkSweepCollector::freeAllLiveObjects() {
 //
 //		Object* child;
 //		int kids = currentObj->getPointersMax();
-//		currentObj->setIsAlive(true);
+//		currentObj->setVisited(true);
 //		for (i = 0; i < kids; i++) {
 //			child = currentObj->getReferenceTo(i);
 //			if (child && !child->getVisited()) {
 //				child->setVisited(true);
-//				currentObj->setIsAlive(true);
 //				myQueue.push(child);
 //			}
 //		}
@@ -272,12 +267,11 @@ void MarkSweepCollector::reallocateAllLiveObjects() {
 //
 //		Object* child;
 //		int kids = currentObj->getPointersMax();
-//		currentObj->setIsAlive(true);
+//		currentObj->setVisited(true);
 //		for (i = 0; i < kids; i++) {
 //			child = currentObj->getReferenceTo(i);
 //			if (child && !child->getVisited()) {
 //				child->setVisited(true);
-//				currentObj->setIsAlive(true);
 //				myQueue.push(child);
 //			}
 //		}

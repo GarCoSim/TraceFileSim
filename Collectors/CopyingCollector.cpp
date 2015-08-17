@@ -58,12 +58,11 @@ void CopyingCollector::mark(){
 		myQueue.pop();
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(true);
+		currentObj->setVisited(true);
 		for(i = 0 ; i < kids ; i++){
 			child = currentObj->getReferenceTo(i);
 			if(child && !child->getVisited()){
 				child->setVisited(true);
-				currentObj->setIsAlive(true);
 				myQueue.push(child);
 			}
 		}
@@ -77,7 +76,7 @@ void CopyingCollector::sweep(){
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
 	for(i = 0 ; i < (int)objects.size(); i++){
 		currentObj = objects[i];
-		if(currentObj && !currentObj->getIsAlive()){
+		if(currentObj && !currentObj->getVisited()){
 			myAllocator->gcFree(currentObj);
 			myObjectContainer->deleteObject(currentObj, false);
 			statFreedObjects++;
@@ -97,7 +96,6 @@ void CopyingCollector::enqueueAllRoots(){
 			currentObj = roots[j];
 			if(currentObj && !currentObj->getVisited()){
 				currentObj->setVisited(true);
-				currentObj->setIsAlive(true);
 				myQueue.push(currentObj);
 			}
 		}
@@ -112,7 +110,6 @@ void CopyingCollector::initializeMarkPhase(){
 		currentObj = objects[i];
 		if(currentObj != NULL){
 			currentObj->setVisited(false);
-			currentObj->setIsAlive(false);
 		}
 	}
 }
@@ -149,12 +146,11 @@ void CopyingCollector::freeAllLiveObjects() {
 
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(true);
+		currentObj->setVisited(true);
 		for(i = 0 ; i < kids ; i++){
 			child = currentObj->getReferenceTo(i);
 			if(child && !child->getVisited()){
 				child->setVisited(true);
-				currentObj->setIsAlive(true);
 				myQueue.push(child);
 			}
 		}
@@ -180,12 +176,11 @@ void CopyingCollector::reallocateAllLiveObjects() {
 
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setIsAlive(true);
+		currentObj->setVisited(true);
 		for(i = 0 ; i < kids ; i++){
 			child = currentObj->getReferenceTo(i);
 			if(child && !child->getVisited()){
 				child->setVisited(true);
-				currentObj->setIsAlive(true);
 				myQueue.push(child);
 			}
 		}
