@@ -181,7 +181,7 @@ int Simulator::lastStepWorked(){
 
 
 void Simulator::allocateToRootset(TraceFileLine line){
-	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size+sizeof(Object), line.maxPointers, line.classID);
+	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
 }
 
 void Simulator::deleteRoot(TraceFileLine line){
