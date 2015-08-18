@@ -138,16 +138,8 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 	return -1;
 }
 
-size_t RealAllocator::getLogicalAddress(Object *object) {
-	size_t address = (size_t)object;
-	size_t i;
-
-	// find the address we're looking for
-	for (i = 0; i < (size_t)overallHeapSize; i++)
-		if (address == (size_t)&heap[i])
-			return i;
-
-	return -1;
+inline size_t RealAllocator::getLogicalAddress(Object *object) {
+	return (size_t) object - (size_t) heap;
 }
 
 void RealAllocator::gcFree(Object* object) {
