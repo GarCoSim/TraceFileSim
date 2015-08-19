@@ -16,7 +16,11 @@
 #include "../defines.hpp"
 #include <memory.h>
 #include <string>
-
+//added by Tristan 
+#include <math.h>
+#include <sys/time.h> 
+#include "../Main/CardTable.hpp" 
+ 
 namespace traceFileSimulator {
 
 class RealAllocator : public Allocator {

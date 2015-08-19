@@ -2,6 +2,11 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
+#added by Tristan
+CPPFLAGS = -pg
+CXXFLAGS = -pg
+
+
 -include ../makefile.init
 
 RM := rm -rf
@@ -52,7 +57,7 @@ version:
 TraceFileSimulator: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "TraceFileSimulator" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "TraceFileSimulator" $(OBJS) $(USER_OBJS) $(LIBS) -pg
 	@echo 'Finished building target: $@'
 	@echo ' '
 

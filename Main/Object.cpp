@@ -22,17 +22,24 @@ void Object::setArgs(int id, int payloadSize, int maxPointers, char *className) 
 	myPayloadSize = payloadSize;
 	myPointersCurrent = 0;
 	myPointersMax = maxPointers;
+	
+	/* commented out by Tristan
 	pointers = (Object**)malloc(maxPointers*sizeof(Object*));
 	for(int i = 0; i < maxPointers;i++){
 		pointers[i] = NULL;
 	}
+	*/
+
+	pointers = (Object**)((unsigned long)this+(unsigned long)sizeof(Object)); //added by Tristan
+	memset(pointers,NULL,maxPointers<<3);                                      //added by Tristan
+
 	myGeneration = 0;
 	myAge = 0;
 	myName = className;
 
 	//stat
-	isAlive = false;
-	isVisited = false;
+	isAlive = 0;
+	isVisited = 0;
 	freed = 0;
 	myAddress = 0;
 	forwarded = false;
@@ -81,15 +88,15 @@ int Object::setPointer(int pointerNumber, Object* target){
 	return 1;
 }
 
-bool Object::getIsAlive(){
+int Object::getIsAlive(){
 	return isAlive;
 }
 
-void Object::setIsAlive(bool value){
+void Object::setIsAlive(int value){
 	isAlive = value;
 }
 
-bool Object::getVisited(){
+int Object::getVisited(){
 	return isVisited;
 }
 
@@ -97,7 +104,7 @@ void Object::updateAddress(size_t newAddress) {
 	myAddress = newAddress;
 }
 
-void Object::setVisited(bool value){
+void Object::setVisited(int value){
 	isVisited = value;
 }
 

@@ -61,4 +61,10 @@ enum gcReason {
 
 #define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
 
+//added by Tristan
+#define MAX64BIT 0xFFFFFFFFFFFFFFFF //18446744073709551615 
+#define MAX32BIT 0xFFFFFFFF         //4294967295           
+#define MAX16BIT 0xFFFF             //65535   				
+#define MAX8BIT  0xFF               //255   
+
 #endif

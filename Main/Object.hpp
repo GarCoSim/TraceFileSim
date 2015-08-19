@@ -11,6 +11,7 @@
 #include <vector>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> //added by Tristan; for memset in setArgs()
 
 using std::vector;
 namespace traceFileSimulator {
@@ -29,10 +30,10 @@ public:
 	Object* getReferenceTo(int pointerNumber);
 	int 	setPointer(int pointerNumber, Object* target);
 
-	bool 	getIsAlive();
-	void 	setIsAlive(bool value);
-	bool 	getVisited();
-	void	setVisited(bool value);
+	int 	getIsAlive();
+	void 	setIsAlive(int value);
+	int 	getVisited();
+	void	setVisited(int value);
 
 	int getAge() const {
 		return myAge;
@@ -84,8 +85,8 @@ private:
 
 	//garbage collector stuff
 	//TODO those two are basically the same. one could be removed
-	bool isVisited;
-	bool isAlive;
+	int isVisited;
+	int isAlive;
 
 	//genCon
 	int myAge;

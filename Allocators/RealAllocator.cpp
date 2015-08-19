@@ -9,6 +9,9 @@
 
 extern int gLineInTrace;
 
+extern double totTime; //added by Tristan
+
+
 using namespace std;
 
 namespace traceFileSimulator {
@@ -52,14 +55,14 @@ void RealAllocator::moveObject(Object *object) {
 	//memcpy(&temp, &object, sizeof(*object)); // this doesn't work, need to fix later, can't figure out why right now
 	// we do a hack for now
 	temp->setArgs(object->getID(), object->getPayloadSize(), object->getPointersMax(), (char*)object->getClassName());
-	temp->setVisited(true);
+	temp->setVisited(1);
 	object->setForwarded(true);
 
 	object = temp;
 }
 
 void RealAllocator::initializeHeap(int heapSize) {
-	myHeapBitMap = new char[heapSize / 8 + 1];
+	myHeapBitMap = new char[(int)ceil(heapSize/8.0) ]; //modified by Tristan to use ceil() function
 
 	myHeapSizeOldSpace = heapSize;
 	myLastSuccessAddressOldSpace = 0;
@@ -82,6 +85,9 @@ void RealAllocator::initializeHeap(int heapSize) {
 	heap = (unsigned char*)malloc(heapSize * 8);
 	myLastSuccessAddressOldSpace = (size_t)&heap[0];
 	myLastSuccessAddressNewSpace = (size_t)&heap[0];
+
+	card1 = new CardTable(8,(long)heapSize);  //cardTable to represent 8-bits of the bitmap
+	card2 = new CardTable(64,(long)heapSize); //cardTable to represent 64-bits of the bitmap
 }
 
 void RealAllocator::freeAllSectors() {
@@ -105,24 +111,25 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 	//nextFit search
 	int i, bit;
 	int passedBoundOnce = 0;
-	//int end = (lastAddress - (size_t)(&heap) - 1);
-
-	for (i = lower; i != upper; i++) {
-	//for (i = lastAddress - (size_t)(&heap); i != end; i++) {
+	
+    i = lower;
+    while (i < upper) {
+    	
+        if (card2->isCardMarked((long)i)) {
+        	i = address = card2->nextCardAddress(i);
+        	contiguous = 0;
+        	continue;
+        }
+        
+	    if (card1->isCardMarked(i)) {
+	    	i = address = card1->nextCardAddress(i);
+	    	contiguous = 0;
+            continue;
+        }
+       
 		bit = isBitSet(i);
-
-		if (i == upper) {
-			if (passedBoundOnce == 1) {
-				return -1;
-			}
-			i = lower;
-			contiguous = 0;
-			address = i + 1;
-			passedBoundOnce = 1;
-		}
-
 		if (bit == 1) {
-			address = i + 1;
+			address = i+1;
 			contiguous = 0;
 		} else {
 			contiguous++;
@@ -130,23 +137,43 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 				setAllocated(address, size);
 				statBytesAllocated += size;
 				statLiveObjects++;
+
+                //added by Tristan
+                card1->markCards8((long)address,size,myHeapBitMap);
+                card2->markCards64((long)address,size,myHeapBitMap);
+
 				return (size_t)&heap[address];
 			}
 		}
+		i++;
 	}
 
 	return -1;
 }
 
-inline size_t RealAllocator::getLogicalAddress(Object *object) {
-	return (size_t) object - (size_t) heap;
+size_t RealAllocator::getLogicalAddress(Object *object) {
+	/*
+	size_t address = (size_t)object;
+	size_t i;
+
+	// find the address we're looking for
+	for (i = 0; i < (size_t)overallHeapSize; i++)
+		if (address == (size_t)&heap[i])
+			return i;
+
+	return -1;
+    */
+	return (size_t)object - (size_t)heap; //added by Aaron T.
 }
 
 void RealAllocator::gcFree(Object* object) {
 	int size = object->getPayloadSize();
+	int address = getLogicalAddress(object);
 
-	setFree(getLogicalAddress(object), size);
-	//object->setFreed(1);
+	setFree(address, size);
+
+	card1->unmarkCards8((long)address,size,myHeapBitMap); //added by Tristan
+	card2->unmarkCards64((long)address,size,myHeapBitMap); //added by Tristan
 
 	statLiveObjects--;
 	statBytesAllocated -= size;
