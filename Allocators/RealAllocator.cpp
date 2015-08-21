@@ -98,45 +98,78 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 	int address = lower;
 	int contiguous = 0;
 	//nextFit search
-	int i, bit;
+	int i,j,k,bit;
 	int passedBoundOnce = 0;
 	
     i = lower;
     while (i < upper) {
-    	
         if (card2->isCardMarked((long)i)) {
         	i = address = card2->nextCardAddress(i);
         	contiguous = 0;
         	continue;
         }
-        
-	    if (card1->isCardMarked(i)) {
-	    	i = address = card1->nextCardAddress(i);
-	    	contiguous = 0;
-            continue;
+        //new approach: don't check every bit when card is not marked (idea by Aaron, implemented by Tristan)
+        j = i;
+        while (j<upper && j<i+64) {
+	        if (card1->isCardMarked(j)) {
+	    	   j = address = card1->nextCardAddress(j);
+	      	   contiguous = 0;
+               continue;
+            }
+            k = j;
+            while (k<upper && k<j+8) {
+		        bit = isBitSet(k);
+		        if (bit == 1) {
+			        address = k+1;
+			        contiguous = 0;
+		        } else {
+			        contiguous++;
+			        if (contiguous == size) {
+			            setAllocated(address, size);
+				        statBytesAllocated += size;
+				        statLiveObjects++;
+
+                        //added by Tristan
+                        card1->markCards((long)address,size,myHeapBitMap);
+                        card2->markCards((long)address,size,myHeapBitMap);
+
+				        return (size_t)&heap[address];
+				    }
+			    }
+			    k++;
+		    }
+		    j+=8;
+		}
+		i+=64;
+/*
+        //This old approach (by Tristan) calls isCardMarked() for every bit where the card is not marked
+        if (card1->isCardMarked(i)) {
+	    	   i = address = card1->nextCardAddress(i);
+	      	   contiguous = 0;
+               continue;
         }
-       
+        
 		bit = isBitSet(i);
 		if (bit == 1) {
-			address = i+1;
+		    address = i+1;
 			contiguous = 0;
 		} else {
-			contiguous++;
-			if (contiguous == size) {
-				setAllocated(address, size);
-				statBytesAllocated += size;
-				statLiveObjects++;
+		    contiguous++;
+		    if (contiguous == size) {
+		        setAllocated(address, size);
+		        statBytesAllocated += size;
+		        statLiveObjects++;
 
                 //added by Tristan
-                card1->markCards8((long)address,size,myHeapBitMap);
-                card2->markCards64((long)address,size,myHeapBitMap);
+                card1->markCards((long)address,size,myHeapBitMap);
+                card2->markCards((long)address,size,myHeapBitMap);
 
-				return (size_t)&heap[address];
-			}
+		        return (size_t)&heap[address];
+		    }
 		}
 		i++;
+		*/
 	}
-
 	return -1;
 }
 
@@ -150,8 +183,8 @@ void RealAllocator::gcFree(Object* object) {
 
 	setFree(address, size);
 
-	card1->unmarkCards8((long)address,size,myHeapBitMap); //added by Tristan
-	card2->unmarkCards64((long)address,size,myHeapBitMap); //added by Tristan
+	card1->unmarkCards((long)address,size,myHeapBitMap); //added by Tristan
+	card2->unmarkCards((long)address,size,myHeapBitMap); //added by Tristan
 
 	statLiveObjects--;
 	statBytesAllocated -= size;

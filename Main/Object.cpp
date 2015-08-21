@@ -8,6 +8,8 @@
 #include "../defines.hpp"
 #include "Object.hpp"
 
+extern int gLineInTrace; //added by Tristan
+
 namespace traceFileSimulator {
 
 Object::Object(int id, void *address, int size, int maxPointers, char *className) {
@@ -65,7 +67,7 @@ Object* Object::getReferenceTo(int pointerNumber){
 int Object::setPointer(int pointerNumber, Object* target){
 
 	if(pointerNumber >= myPointersMax){
-		fprintf(stderr, "ERROR in Object: set Pointer to impossible slot\n");
+		fprintf(stderr, "ERROR (%d) in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID()); //modified by Tristan; added line number and object ID
 		fflush(stdout);
 		return 0;
 	}

@@ -139,25 +139,16 @@ void Allocator::printMap() {
 }
 
 inline bool Allocator::isBitSet(unsigned int address) {
+	/*
 	if (address > (unsigned int) overallHeapSize) {
 		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
 				gLineInTrace, address);
 	}
+*/
+	int byteNR = address>>3;
+	int bit    = 7 - address % 8;
 
-	int byteNR = address / 8;
-
-	if ((unsigned char) myHeapBitMap[byteNR] == 255) {
-		return true;
-	}
-
-	int bit = 7 - address % 8;
-	int value = myHeapBitMap[byteNR] & 1 << bit;
-
-	if (value > 0) {
-		return true;
-	} else {
-		return false;
-	}
+    return ( myHeapBitMap[byteNR] & 1 << bit>0)?true:false;
 }
 
 void Allocator::setBitUsed(unsigned int address) {

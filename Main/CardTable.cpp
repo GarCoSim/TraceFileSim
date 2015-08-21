@@ -42,32 +42,19 @@ void CardTable::markCard(long address) {
 	card[address>>nShift] = (char)1;
 }
 
-void CardTable::markCards8(long address,int size,char* bmap) { //mark tier2 cards within the range [address, address + size]
+void CardTable::markCards(long address,int size,char* bmap) { //mark tier2 cards within the range [address, address + size]
     long i,end;
 
     i   = address>>nShift;
     end = (address+size)>>nShift;
     while (i <= end) {
-        if (bmap[i] == (char)MAX8BIT)
-            card[i] = (char)1;
-        i++;
-    }
-}
-
-void CardTable::markCards64(long address,int size,char* bmap) { //mark tier2 cards within the range [address, address + size]
-    long i,end;
-
-    i   = address>>nShift;
-    end = (address+size)>>nShift;
-    while (i  <= end) {
-        if ((unsigned long long)bmap[i<<3] == MAX64BIT)
-            card[i] = (char)1;
+        card[i] = (char)1;
         i++;
     }
 }
 
 long CardTable::nextCardAddress(long address) { 
-	return (long)((address>>nShift)+1)*cardSize;
+	return (long)((address>>nShift)+1)<<nShift;
 }
 
 void CardTable::syncCards8(char *bmap) { //synchronize tier1 card table with the bitmap
@@ -94,27 +81,14 @@ void CardTable::syncCards64(char *bmap) { //synchronize tier2 card table with th
     }
 }
 
-void CardTable::unmarkCards8(long address,int size,char* bmap) { //umark cards within the range [address, address + size]
+void CardTable::unmarkCards(long address,int size,char* bmap) { //unmark cards within the range [address, address + size]
     long i,end;
 
      i   = address>>nShift;
     end = (address+size)>>nShift;
     while (i <= end)  {
-        if (bmap[i] != (char)MAX8BIT)
-            card[i] = (char)0;
+        card[i] = (char)0;
         i++; 
-    }
-}
-
-void CardTable::unmarkCards64(long address,int size,char* bmap) { //umark cards within the range [address, address + size]
-    long i,end;
-
-    i   = address>>nShift;
-    end = (address+size)>>nShift;
-    while (i <= end)  {
-        if ((unsigned long long)bmap[i<<3] != MAX64BIT)
-            card[i] = (char)0;
-        i++;
     }
 }
 
