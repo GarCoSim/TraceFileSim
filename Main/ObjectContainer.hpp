@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../defines.hpp"
+#include <algorithm>
  
 namespace traceFileSimulator {
 
@@ -39,6 +40,7 @@ public:
 	void clearRemSet();
 	vector<Object*> getRoots(int thread);
 	vector<Object*> getLiveObjects();
+	vector<Object*> getLiveObjectsInHeapOrder();
 	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
 	int countElements();

@@ -97,6 +97,16 @@ vector<Object*> ObjectContainer::getLiveObjects() {
 	return objects;
 }
 
+bool compareObjectsByAddress(Object *first, Object *second) {
+	return first->getAddress() < second->getAddress();
+}
+
+vector<Object*> ObjectContainer::getLiveObjectsInHeapOrder() {
+	vector<Object*> objects = getLiveObjects();
+	std::sort(objects.begin(), objects.end(), compareObjectsByAddress);
+	return objects;
+}
+
 Object* ObjectContainer::getByID(int id) {
 	if (objectMap.find(id) == objectMap.end())
 		fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n", gLineInTrace, id);
