@@ -94,13 +94,10 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 		return -1;
 	}
 
-	//hope for the best, assume the worst
 	int address = lower;
 	int contiguous = 0;
-	//nextFit search
 	int i,j,k,bit;
-	int passedBoundOnce = 0;
-	
+		
     i = lower;
     while (i < upper) {
         if (card2->isCardMarked((long)i)) {
@@ -108,7 +105,7 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
         	contiguous = 0;
         	continue;
         }
-        //new approach: don't check every bit when card is not marked (idea by Aaron, implemented by Tristan)
+        //new approach: don't call isCardMarked for every bit, only if it's a multiple of 8 or 64 (idea by Aaron, implemented by Tristan)
         j = i;
         while (j<upper && j<i+64) {
 	        if (card1->isCardMarked(j)) {
