@@ -112,6 +112,14 @@ void Collector::printStats() {
 	statCollectionReason = (int)reasonStatistics;
 }
 
+void Collector::addForwardingEntry(void *oldAddress, void *newAddress) {
+	forwardPointers[oldAddress] = newAddress;
+}
+
+void Collector::clearForwardingEntries() {
+	forwardPointers.clear();
+}
+
 void Collector::updatePointers() {
 	int i, j;
 	void *pointerAddress;
@@ -127,7 +135,7 @@ void Collector::updatePointers() {
 		}
 	}
 
-	forwardPointers.clear();
+	clearForwardingEntries();
 }
 
 void Collector::postCollect() {

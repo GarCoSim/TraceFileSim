@@ -45,6 +45,7 @@ private:
 	void getAllRoots();
 	void emptyHelpers();
 	void swap();
+	void copyAndForwardObject(Object *o);
 };
 
 } 

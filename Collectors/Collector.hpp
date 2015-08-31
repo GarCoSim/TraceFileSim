@@ -35,6 +35,8 @@ public:
 	virtual int promotionPhase();
 	void lastStats();
 	void updatePointers();
+	void addForwardingEntry(void *oldAddress, void *newAddress);
+	void clearForwardingEntries();
 
 protected:
 	void postCollect();
