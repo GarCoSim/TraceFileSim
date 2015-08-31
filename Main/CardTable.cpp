@@ -16,7 +16,7 @@ CardTable* card2; //represents per 64 bits of the bitmap
 
 CardTable::CardTable(int size,long heapSize) { //size is either 8 or 64
 	cardSize = size;
-    nShift   = log2(size);                    //get how many shifts to perform based on cardSize
+    nShift   = (int)log2(size);                    //get how many shifts to perform based on cardSize
     numCards = (int)heapSize>>nShift;
     card     = (char*)calloc(numCards,sizeof(char));            //allocate and initialize cards to zero
     
@@ -73,7 +73,7 @@ void CardTable::syncCards64(char *bmap) { //synchronize tier2 card table with th
     long i = 0;
     
     while (i<numCards) {
-        if ((unsigned long long)bmap[i<<3] == MAX64BIT) 
+        if ((unsigned long long)&bmap[i<<3] == MAX64BIT) 
             card[i] = (char)1;
         else
             card[i] = (char)0;
@@ -84,7 +84,7 @@ void CardTable::syncCards64(char *bmap) { //synchronize tier2 card table with th
 void CardTable::unmarkCards(long address,int size,char* bmap) { //unmark cards within the range [address, address + size]
     long i,end;
 
-     i   = address>>nShift;
+    i   = address>>nShift;
     end = (address+size)>>nShift;
     while (i <= end)  {
         card[i] = (char)0;
