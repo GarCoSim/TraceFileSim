@@ -335,7 +335,7 @@ void MemoryManager::requestReallocate(Object* object) {
 					gLineInTrace, object->getID(), gen);
 			exit(1);
 		}
-		object->updateAddress(address);
+		object->updateAddress((void *)address);
 		//TODO what about the old RawObject? How does it get freed?
 		
 		//object->setFreed(0);
@@ -388,7 +388,7 @@ int MemoryManager::requestPromotion(Object* object) {
 
 	//promote object
 	myAllocators[oldGen]->gcFree(object);
-	object->updateAddress(address);
+	object->updateAddress((void *) address);
 	//TODO what about the old RawObject? How does it get freed?
 	object->setGeneration(newGen);
 	//remove from old generation

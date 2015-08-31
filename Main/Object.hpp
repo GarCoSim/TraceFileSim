@@ -29,8 +29,8 @@ public:
 	Object(int id, void *address, int size, int numberOfPointers, char *className);
 	void setArgs(int id, int payloadSize, int maxPointers, char *className);
 	virtual ~Object();
-	size_t 	getAddress();
-	void 	updateAddress(size_t newAddress);
+	void *getAddress();
+	void 	updateAddress(void *newAddress);
 	int 	getID();
 	int 	getPayloadSize();
 	int 	getHeapSize();

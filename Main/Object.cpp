@@ -38,8 +38,8 @@ int Object::getGeneration(){
 	return myGeneration;
 }
 
-size_t Object::getAddress(){
-	return (size_t) rawObject;
+void *Object::getAddress(){
+	return (void *) rawObject;
 }
 
 int Object::getID(){
@@ -91,7 +91,7 @@ bool Object::getVisited(){
 	return isVisited;
 }
 
-void Object::updateAddress(size_t newAddress) {
+void Object::updateAddress(void *newAddress) {
 	rawObject = (RawObject *) newAddress;
 	rawObject->associatedObject = this;
 }

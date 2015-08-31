@@ -46,7 +46,7 @@ void RealAllocator::moveObject(Object *object) {
 	}
 	memcpy((void *) address, (void *) object->getAddress(), size);
 
-	object->updateAddress((size_t) address);
+	object->updateAddress((void *) address);
 	object->setForwarded(true);
 }
 

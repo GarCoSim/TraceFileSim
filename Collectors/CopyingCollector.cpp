@@ -172,7 +172,7 @@ void CopyingCollector::reallocateAllLiveObjects() {
 		//the actual work
 		int size = currentObj->getPayloadSize();
 		int newAddress = myAllocator->gcAllocate(size);
-		currentObj->updateAddress(newAddress);
+		currentObj->updateAddress((void *) newAddress);
 
 		Object* child;
 		int kids = currentObj->getPointersMax();
