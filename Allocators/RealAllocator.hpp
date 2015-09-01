@@ -38,7 +38,7 @@ public:
 
 private:
 	void *allocate(int size, int lower, int upper);
-	size_t getLogicalAddress(Object *object);
+	unsigned int getHeapIndex(Object *object);
 
 	unsigned char *heap;
 };

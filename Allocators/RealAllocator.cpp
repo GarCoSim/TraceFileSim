@@ -24,8 +24,8 @@ bool RealAllocator::isRealAllocator() {
 }
 
 bool RealAllocator::isInNewSpace(Object *object) {
-	unsigned int address = getLogicalAddress(object);
-	return address >= newSpaceStartHeapIndex && address < newSpaceEndHeapIndex; 
+	unsigned int heapIndex = getHeapIndex(object);
+	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
 }
 
 
@@ -136,18 +136,20 @@ void *RealAllocator::allocate(int size, int lower, int upper) {
 	return NULL;
 }
 
-inline size_t RealAllocator::getLogicalAddress(Object *object) {
-	return (size_t) object->getAddress() - (size_t) heap;
+unsigned int RealAllocator::getHeapIndex(Object *object) {
+	// This conversion is only valid because the heap is an array of bytes.
+	return (unsigned int) ((char *) object->getAddress() - (char *) heap);
 }
+
 
 void RealAllocator::gcFree(Object* object) {
 	int size = object->getHeapSize();
-	int address = getLogicalAddress(object);
+	unsigned int heapIndex = getHeapIndex(object);
 
-	setFree(address, size);
+	setFree(heapIndex, size);
 
-    card1->unmarkCards(address,size,myHeapBitMap); //added by Tristan
-    card2->unmarkCards(address,size,myHeapBitMap); //added by Tristan
+    card1->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
+    card2->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
 
 	statLiveObjects--;
 	statBytesAllocated -= size;
