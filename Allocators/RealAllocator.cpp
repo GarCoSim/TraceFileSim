@@ -24,7 +24,7 @@ bool RealAllocator::isRealAllocator() {
 }
 
 bool RealAllocator::isInNewSpace(Object *object) {
-	int address = getLogicalAddress(object);
+	unsigned int address = getLogicalAddress(object);
 	return address >= newSpaceStartHeapIndex && address < newSpaceEndHeapIndex; 
 }
 
@@ -67,7 +67,7 @@ void RealAllocator::initializeHeap(int heapSize) {
 	newSpaceStartHeapIndex = heapSize / 2;
 	oldSpaceStartHeapIndex = 0;
 	overallHeapSize = heapSize;
-	fprintf(stderr, "heap size %d\n", overallHeapSize);
+	fprintf(stderr, "heap size %zd\n", overallHeapSize);
 
 	heap = (unsigned char*)malloc(heapSize * 8);
 
@@ -76,8 +76,7 @@ void RealAllocator::initializeHeap(int heapSize) {
 }
 
 void RealAllocator::freeAllSectors() {
-	int i;
-
+	unsigned int i;
 	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
 	}
@@ -92,8 +91,8 @@ void *RealAllocator::allocate(int size, int lower, int upper) {
 
 	int address = lower;
 	int contiguous = 0;
-	int i,j,k,bit,idx;
-
+	int i,j,k,bit;
+		
     i = lower;
     while (i < upper) {
         if (card2->isCardMarked((long)i)) {

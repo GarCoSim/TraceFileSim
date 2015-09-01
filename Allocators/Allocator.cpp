@@ -69,7 +69,7 @@ void Allocator::freeOldSpace() {
 }
 
 int Allocator::getUsedSpace(bool newSpace) {
-	int i, usedSpace = 0;
+	unsigned int i, usedSpace = 0;
 	if (newSpace) {
 		for (i = newSpaceStartHeapIndex; i < newSpaceEndHeapIndex; i++)
 			if (isBitSet(i))
@@ -79,7 +79,7 @@ int Allocator::getUsedSpace(bool newSpace) {
 			if (isBitSet(i))
 				usedSpace++;
 	}
-	return usedSpace;
+	return (int) usedSpace;
 }
 
 void Allocator::moveObject(Object *object) {
@@ -117,8 +117,7 @@ int Allocator::getHeapSize() {
 void Allocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);
 
-	int i;
-
+	unsigned int i;
 	for (i = 0; i < overallHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			fprintf(heapMap, "X");
@@ -152,7 +151,7 @@ void Allocator::setBitUsed(unsigned int heapIndex) {
 
 void Allocator::setBitUnused(unsigned int heapIndex) {
 	if (heapIndex > (unsigned int) overallHeapSize) {
-		fprintf(stderr, "add %d heap %d\n", heapIndex, overallHeapSize);
+		fprintf(stderr, "add %d heap %zd\n", heapIndex, overallHeapSize);
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
 
@@ -170,7 +169,7 @@ void Allocator::printStats() {
 	int bytesAllocated = 0;
 
 	//traverse all heap and count allocated bits
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < overallHeapSize; i++) {
 		if (isBitSet(i) == 1) {
