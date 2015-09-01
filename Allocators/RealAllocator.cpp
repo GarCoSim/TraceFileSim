@@ -26,7 +26,7 @@ bool RealAllocator::isRealAllocator() {
 bool RealAllocator::isInNewSpace(Object *object) {
 	int address = getLogicalAddress(object);
 	
-	if (address >= newSpaceOffset && address < myHeapSizeNewSpace)
+	if (address >= newSpaceStartHeapIndex && address < newSpaceEndHeapIndex)
 		return true;
 
 	return false;
@@ -53,10 +53,13 @@ void RealAllocator::moveObject(Object *object) {
 void RealAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[(int)ceil(heapSize/8.0) ]; //modified by Tristan to use ceil() function
 
-	myHeapSizeOldSpace = heapSize;
+	oldSpaceEndHeapIndex = heapSize;
 	myLastSuccessAddressOldSpace = 0;
-	myLastSuccessAddressNewSpace = heapSize / 2;
-	myHeapSizeNewSpace = heapSize;
+
+	//TODO this makes no sense one is a pointer, the other is a heap index.
+	// myLastSuccessAddressNewSpace = heapSize / 2;
+
+	newSpaceEndHeapIndex = heapSize;
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
@@ -66,14 +69,14 @@ void RealAllocator::initializeHeap(int heapSize) {
 	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
-	newSpaceOffset = heapSize / 2;
-	oldSpaceOffset = 0;
+	newSpaceStartHeapIndex = heapSize / 2;
+	oldSpaceStartHeapIndex = 0;
 	overallHeapSize = heapSize;
 	fprintf(stderr, "heap size %d\n", overallHeapSize);
 
 	heap = (unsigned char*)malloc(heapSize * 8);
-	myLastSuccessAddressOldSpace = (size_t)&heap[0];
-	myLastSuccessAddressNewSpace = (size_t)&heap[0];
+	myLastSuccessAddressOldSpace = (void *)&heap[0];
+	myLastSuccessAddressNewSpace = (void *)&heap[0];
 
 	card1 = new CardTable(8,(long)heapSize);  //cardTable to represent 8-bits of the bitmap
 	card2 = new CardTable(64,(long)heapSize); //fixing some issues
@@ -129,7 +132,7 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
                         card1->markCards8(address,size,myHeapBitMap);
                         card2->markCards64(address,size,myHeapBitMap); 
                        
-				        return (size_t)&heap[address];
+				        return (size_t) &heap[address];
 				    }
 			    }
 			    k++;
@@ -138,7 +141,7 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 		}
 		i+=64;
 	}
-	return -1;
+	return (size_t) NULL;
 }
 
 inline size_t RealAllocator::getLogicalAddress(Object *object) {
@@ -162,7 +165,7 @@ RealAllocator::~RealAllocator() {
 }
 
 void RealAllocator::freeOldSpace() {
-	setFree(oldSpaceOffset, myHeapSizeOldSpace-oldSpaceOffset);
+	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
 	card1->syncCards8(myHeapBitMap);
 	card2->syncCards64(myHeapBitMap);
 }

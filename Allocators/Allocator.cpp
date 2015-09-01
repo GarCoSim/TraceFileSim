@@ -15,13 +15,15 @@ namespace traceFileSimulator {
 
 void Allocator::setHalfHeapSize(bool value) {
 	if (value) {
-		myHeapSizeOldSpace = overallHeapSize / 2;
-		newSpaceOffset = myHeapSizeOldSpace;
-		oldSpaceOffset = 0;
+		oldSpaceStartHeapIndex = 0;
+		oldSpaceEndHeapIndex = overallHeapSize / 2;
+		newSpaceStartHeapIndex = oldSpaceEndHeapIndex;
+		newSpaceEndHeapIndex = overallHeapSize;
 		isSplitHeap = true;
 	}
 	else {
-		myHeapSizeOldSpace = overallHeapSize;
+		oldSpaceStartHeapIndex = 0;
+		oldSpaceEndHeapIndex = overallHeapSize;
 		isSplitHeap = false;
 	}
 }
@@ -34,18 +36,18 @@ int Allocator::getFreeSize() {
 }
 
 
-size_t Allocator::gcAllocate(int size) {
-	size_t address = allocate(size, oldSpaceOffset, myHeapSizeOldSpace, myLastSuccessAddressOldSpace);
-	if (address == (size_t)-1)
-		return (size_t)-1;
+void *Allocator::gcAllocate(int size) {
+	void *address = allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex, myLastSuccessAddressOldSpace);
+	if (address == NULL)
+		return NULL;
 	myLastSuccessAddressOldSpace = address;
 	return myLastSuccessAddressOldSpace;
 }
 
-size_t Allocator::allocateInNewSpace(int size) {
-	size_t address = (size_t)allocate(size, newSpaceOffset, myHeapSizeNewSpace, myLastSuccessAddressNewSpace);
-	if (address == (size_t)-1)
-		return (size_t)-1;
+void *Allocator::allocateInNewSpace(int size) {
+	void *address = allocate(size, newSpaceStartHeapIndex, newSpaceEndHeapIndex, myLastSuccessAddressNewSpace);
+	if (address == NULL)
+		return NULL;
 	myLastSuccessAddressNewSpace = address;
 	return myLastSuccessAddressNewSpace;
 }
@@ -55,35 +57,34 @@ bool Allocator::isInNewSpace(Object *object) {
 }
 
 void Allocator::swapHeaps() {
-	int temp;
+	unsigned int tempIndex;
+	void *tempPtr;
 
-	myHeapSizeNewSpace = myHeapSizeOldSpace;
-	oldSpaceOffset = newSpaceOffset;
-	if (newSpaceOffset == 0) {
-		myHeapSizeOldSpace = overallHeapSize / 2;
-		newSpaceOffset = overallHeapSize / 2;
-	} else {
-		myHeapSizeOldSpace = overallHeapSize;
-		newSpaceOffset = 0;
-	}
+	tempIndex = newSpaceStartHeapIndex;
+	newSpaceStartHeapIndex = oldSpaceStartHeapIndex;
+	oldSpaceStartHeapIndex = tempIndex;
 
-	temp = myLastSuccessAddressOldSpace;
-	myLastSuccessAddressOldSpace = myLastSuccessAddressNewSpace;
-	myLastSuccessAddressNewSpace = temp;
+	tempIndex = newSpaceEndHeapIndex;
+	newSpaceEndHeapIndex = oldSpaceEndHeapIndex;
+	oldSpaceEndHeapIndex = tempIndex;
+
+	tempPtr = myLastSuccessAddressNewSpace;
+	myLastSuccessAddressNewSpace = myLastSuccessAddressOldSpace;
+	myLastSuccessAddressOldSpace = tempPtr;
 }
 
 void Allocator::freeOldSpace() {
-	setFree(oldSpaceOffset, myHeapSizeOldSpace-oldSpaceOffset);
+	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
 }
 
 int Allocator::getUsedSpace(bool newSpace) {
 	int i, usedSpace = 0;
 	if (newSpace) {
-		for (i = newSpaceOffset; i < myHeapSizeNewSpace; i++)
+		for (i = newSpaceStartHeapIndex; i < newSpaceEndHeapIndex; i++)
 			if (isBitSet(i))
 				usedSpace++;
 	} else {
-		for (i = oldSpaceOffset; i < myHeapSizeOldSpace; i++)
+		for (i = oldSpaceStartHeapIndex; i < oldSpaceEndHeapIndex; i++)
 			if (isBitSet(i))
 				usedSpace++;
 	}
@@ -202,7 +203,10 @@ void Allocator::setAllocationSearchStart(int address) {
 		return;
 	}
 
-	myLastSuccessAddressOldSpace = address;
+	// TODO this is just plain wrong, address is an index into the heap,
+	// myLastSuccessAddressOldSpace is a pointer.
+
+	// myLastSuccessAddressOldSpace = address;
 }
 
 bool Allocator::isRealAllocator() {
@@ -215,8 +219,8 @@ void Allocator::freeAllSectors() {
 void Allocator::gcFree(Object* object) {
 }
 
-size_t Allocator::allocate(int size, int lower, int upper, size_t lastAddress) {
-	return -1;
+void *Allocator::allocate(int size, int lower, int upper, void *lastAddress) {
+	return NULL;
 }
 
 Allocator::~Allocator() {

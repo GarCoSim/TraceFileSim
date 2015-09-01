@@ -22,7 +22,7 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-	size_t gcAllocate(int size);
+	void *gcAllocate(int size);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector
@@ -48,25 +48,25 @@ public:
 
 protected:
 	int getUsedSpace(bool newSpace);
-	size_t allocateInNewSpace(int size);
+	void *allocateInNewSpace(int size);
 	void setAllocated(int address, int size);
 	void setFree(int address, int size);
 	bool isBitSet(unsigned int address);
 	void setBitUsed(unsigned int address);
 	void setBitUnused(unsigned int address);
-	virtual size_t allocate(int size, int lower, int upper, size_t lastAddress);
+	virtual void *allocate(int size, int lower, int upper, void *lastAddress);
 
 
 	bool isSplitHeap;
 	char* myHeapBitMap;
 
-	int myHeapSizeOldSpace;
-	int myHeapSizeNewSpace;
-	size_t myLastSuccessAddressOldSpace;
-	size_t myLastSuccessAddressNewSpace;
-	int newSpaceOffset;
-	int oldSpaceOffset;
-	int overallHeapSize;
+	size_t overallHeapSize;
+	unsigned int newSpaceStartHeapIndex;
+	unsigned int oldSpaceStartHeapIndex;
+	unsigned int oldSpaceEndHeapIndex;
+	unsigned int newSpaceEndHeapIndex;
+	void *myLastSuccessAddressOldSpace;
+	void *myLastSuccessAddressNewSpace;
 
 	int statBytesAllocated;
 	int statLiveObjects;

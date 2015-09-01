@@ -141,7 +141,7 @@ size_t MemoryManager::shift(int size){
 			fprintf(stderr,"(%d) OUT OF MEMORY: (%d)\n",gLineInTrace,size);
 			exit(1);
 		}
-		result = myAllocators[0]->gcAllocate(size);
+		result = (size_t) myAllocators[0]->gcAllocate(size);
 	}
 	return result;
 }
@@ -161,7 +161,7 @@ size_t MemoryManager::allocate(int size, int generation) {
 	size_t result = -1;
 	int gen = generation;
 	//try allocating in the generation
-	result = myAllocators[generation]->gcAllocate(size);
+	result = (size_t) myAllocators[generation]->gcAllocate(size);
 	while (result == (size_t)-1 && gen < GENERATIONS) {
 		if (WRITE_DETAILED_LOG == 1) {
 			fprintf(gDetLog,
@@ -169,7 +169,7 @@ size_t MemoryManager::allocate(int size, int generation) {
 					gLineInTrace, gen);
 		}
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
-		result = myAllocators[generation]->gcAllocate(size);
+		result = (size_t) myAllocators[generation]->gcAllocate(size);
 		gen++;
 	}
 	if (gen > generation) {
@@ -327,15 +327,15 @@ void MemoryManager::requestReallocate(Object* object) {
 	if (object) {
 		int gen = object->getGeneration();
 		int size = object->getHeapSize();
-		int address = myAllocators[gen]->gcAllocate(size);
-		memcpy((void *) address, (void *) object->getAddress(), size);
-		if (address == -1) {
+		void *address = myAllocators[gen]->gcAllocate(size);
+		memcpy(address, object->getAddress(), size);
+		if (address == NULL) {
 			fprintf(stderr,
 					"ERROR(Line %d):Could not reallocate Object %d to gen %d\n",
 					gLineInTrace, object->getID(), gen);
 			exit(1);
 		}
-		object->updateAddress((void *)address);
+		object->updateAddress(address);
 		//TODO what about the old RawObject? How does it get freed?
 		
 		//object->setFreed(0);
@@ -373,9 +373,9 @@ int MemoryManager::requestPromotion(Object* object) {
 				gLineInTrace, object->getID(), oldGen, newGen);
 	}
 
-	int address = myAllocators[newGen]->gcAllocate(size);
-	memcpy((void *) address, (void *) object->getAddress(), size);
-	if (address == -1) {
+	void *address = myAllocators[newGen]->gcAllocate(size);
+	memcpy(address, object->getAddress(), size);
+	if (address == NULL) {
 		//there is not enough space upstairs, stay where you are for a little longer
 		if (WRITE_DETAILED_LOG == 1) {
 			fprintf(gDetLog,
@@ -388,7 +388,7 @@ int MemoryManager::requestPromotion(Object* object) {
 
 	//promote object
 	myAllocators[oldGen]->gcFree(object);
-	object->updateAddress((void *) address);
+	object->updateAddress(address);
 	//TODO what about the old RawObject? How does it get freed?
 	object->setGeneration(newGen);
 	//remove from old generation
