@@ -25,11 +25,7 @@ bool RealAllocator::isRealAllocator() {
 
 bool RealAllocator::isInNewSpace(Object *object) {
 	int address = getLogicalAddress(object);
-	
-	if (address >= newSpaceStartHeapIndex && address < newSpaceEndHeapIndex)
-		return true;
-
-	return false;
+	return address >= newSpaceStartHeapIndex && address < newSpaceEndHeapIndex; 
 }
 
 
