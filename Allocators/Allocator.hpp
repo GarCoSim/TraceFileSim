@@ -28,7 +28,7 @@ public:
 	//used mainly by garbage collector
 	int getFreeSize();
 	int getHeapSize();
-	void setAllocationSearchStart(int address);
+	void resetRememberedAllocationSearchPoint();
 
 	//stats
 	void printMap();
@@ -54,7 +54,7 @@ protected:
 	bool isBitSet(unsigned int address);
 	void setBitUsed(unsigned int address);
 	void setBitUnused(unsigned int address);
-	virtual void *allocate(int size, int lower, int upper, void *lastAddress);
+	virtual void *allocate(int size, int lower, int upper);
 
 
 	bool isSplitHeap;
@@ -65,8 +65,8 @@ protected:
 	unsigned int oldSpaceStartHeapIndex;
 	unsigned int oldSpaceEndHeapIndex;
 	unsigned int newSpaceEndHeapIndex;
-	void *myLastSuccessAddressOldSpace;
-	void *myLastSuccessAddressNewSpace;
+	unsigned int newSpaceRememberedHeapIndex;
+	unsigned int oldSpaceRememberedHeapIndex;
 
 	int statBytesAllocated;
 	int statLiveObjects;

@@ -350,7 +350,7 @@ void MemoryManager::requestResetAllocationPointer(int generation) {
 	}
 	int i;
 	for (i = 0; i <= generation; i++) {
-		myAllocators[i]->setAllocationSearchStart(0);
+		myAllocators[i]->resetRememberedAllocationSearchPoint();
 	}
 }
 

@@ -37,7 +37,7 @@ public:
 	void freeOldSpace();
 
 private:
-	size_t allocate(int size, int lower, int upper, size_t lastAddress);
+	void *allocate(int size, int lower, int upper);
 	size_t getLogicalAddress(Object *object);
 
 	unsigned char *heap;

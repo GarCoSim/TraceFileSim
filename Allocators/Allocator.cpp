@@ -37,19 +37,11 @@ int Allocator::getFreeSize() {
 
 
 void *Allocator::gcAllocate(int size) {
-	void *address = allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex, myLastSuccessAddressOldSpace);
-	if (address == NULL)
-		return NULL;
-	myLastSuccessAddressOldSpace = address;
-	return myLastSuccessAddressOldSpace;
+	return allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex);
 }
 
 void *Allocator::allocateInNewSpace(int size) {
-	void *address = allocate(size, newSpaceStartHeapIndex, newSpaceEndHeapIndex, myLastSuccessAddressNewSpace);
-	if (address == NULL)
-		return NULL;
-	myLastSuccessAddressNewSpace = address;
-	return myLastSuccessAddressNewSpace;
+	return allocate(size, newSpaceStartHeapIndex, newSpaceEndHeapIndex);
 }
 
 bool Allocator::isInNewSpace(Object *object) {
@@ -58,7 +50,6 @@ bool Allocator::isInNewSpace(Object *object) {
 
 void Allocator::swapHeaps() {
 	unsigned int tempIndex;
-	void *tempPtr;
 
 	tempIndex = newSpaceStartHeapIndex;
 	newSpaceStartHeapIndex = oldSpaceStartHeapIndex;
@@ -68,9 +59,9 @@ void Allocator::swapHeaps() {
 	newSpaceEndHeapIndex = oldSpaceEndHeapIndex;
 	oldSpaceEndHeapIndex = tempIndex;
 
-	tempPtr = myLastSuccessAddressNewSpace;
-	myLastSuccessAddressNewSpace = myLastSuccessAddressOldSpace;
-	myLastSuccessAddressOldSpace = tempPtr;
+	tempIndex = newSpaceRememberedHeapIndex;
+	newSpaceRememberedHeapIndex = oldSpaceRememberedHeapIndex;
+	oldSpaceRememberedHeapIndex = tempIndex;
 }
 
 void Allocator::freeOldSpace() {
@@ -198,15 +189,9 @@ void Allocator::printStats() {
 			bytesAllocated, statLiveObjects);
 }
 
-void Allocator::setAllocationSearchStart(int address) {
-	if (address > overallHeapSize) {
-		return;
-	}
-
-	// TODO this is just plain wrong, address is an index into the heap,
-	// myLastSuccessAddressOldSpace is a pointer.
-
-	// myLastSuccessAddressOldSpace = address;
+void Allocator::resetRememberedAllocationSearchPoint() {
+	newSpaceRememberedHeapIndex = newSpaceStartHeapIndex;
+	oldSpaceRememberedHeapIndex = oldSpaceStartHeapIndex;
 }
 
 bool Allocator::isRealAllocator() {
@@ -219,7 +204,7 @@ void Allocator::freeAllSectors() {
 void Allocator::gcFree(Object* object) {
 }
 
-void *Allocator::allocate(int size, int lower, int upper, void *lastAddress) {
+void *Allocator::allocate(int size, int lower, int upper) {
 	return NULL;
 }
 

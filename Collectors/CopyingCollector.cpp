@@ -125,7 +125,7 @@ void CopyingCollector::compact() {
 	//free everything.
 	freeAllLiveObjects();
 	//allocate everything back.
-	myAllocator->setAllocationSearchStart(0);
+	myAllocator->resetRememberedAllocationSearchPoint();
 	reallocateAllLiveObjects();
 }
 
