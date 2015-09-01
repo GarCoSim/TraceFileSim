@@ -49,12 +49,9 @@ void RealAllocator::moveObject(Object *object) {
 void RealAllocator::initializeHeap(int heapSize) {
 	myHeapBitMap = new char[(int)ceil(heapSize/8.0) ]; //modified by Tristan to use ceil() function
 
-	oldSpaceEndHeapIndex = heapSize;
-	oldSpaceRememberedHeapIndex = 0;
-
-	newSpaceRememberedHeapIndex = heapSize / 2;
-
-	newSpaceEndHeapIndex = heapSize;
+	overallHeapSize = heapSize;
+	setHalfHeapSize(heapSize);
+	resetRememberedAllocationSearchPoint();
 
 	statBytesAllocated = 0;
 	statLiveObjects = 0;
@@ -64,9 +61,6 @@ void RealAllocator::initializeHeap(int heapSize) {
 	if (DEBUG_MODE && WRITE_HEAPMAP) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
-	newSpaceStartHeapIndex = heapSize / 2;
-	oldSpaceStartHeapIndex = 0;
-	overallHeapSize = heapSize;
 	fprintf(stderr, "heap size %zd\n", overallHeapSize);
 
 	heap = (unsigned char*)malloc(heapSize * 8);
