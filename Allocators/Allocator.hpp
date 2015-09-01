@@ -49,11 +49,11 @@ public:
 protected:
 	int getUsedSpace(bool newSpace);
 	void *allocateInNewSpace(int size);
-	void setAllocated(int address, int size);
-	void setFree(int address, int size);
-	bool isBitSet(unsigned int address);
-	void setBitUsed(unsigned int address);
-	void setBitUnused(unsigned int address);
+	void setAllocated(unsigned int heapIndex, int size);
+	void setFree(unsigned int heapIndex, int size);
+	bool isBitSet(unsigned int heapIndex);
+	void setBitUsed(unsigned int heapIndex);
+	void setBitUnused(unsigned int heapIndex);
 	virtual void *allocate(int size, int lower, int upper);
 
 

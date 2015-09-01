@@ -90,23 +90,23 @@ void Allocator::moveObject(Object *object) {
 void Allocator::initializeHeap(int heapSize) {
 }
 
-void Allocator::setAllocated(int address, int size) {
+void Allocator::setAllocated(unsigned int heapIndex, int size) {
 	int i;
-	int pointer = address;
+	unsigned int toMark = heapIndex;
 
 	for (i = 0; i < size; i++) {
-		setBitUsed(pointer);
-		pointer++;
+		setBitUsed(toMark);
+		toMark++;
 	}
 }
 
-void Allocator::setFree(int address, int size) {
+void Allocator::setFree(unsigned int heapIndex, int size) {
 	int i;
-	int pointer = address;
+	unsigned int toFree = heapIndex;
 
 	for (i = 0; i < size; i++) {
-		setBitUnused(pointer);
-		pointer++;
+		setBitUnused(toFree);
+		toFree++;
 	}
 }
 
@@ -130,41 +130,34 @@ void Allocator::printMap() {
 	fprintf(heapMap, "\n");
 }
 
-inline bool Allocator::isBitSet(unsigned int address) {
-	/*
-	if (address > (unsigned int) overallHeapSize) {
-		fprintf(stderr, "ERROR(Line %d): isBitSet request to illegal slot %d\n",
-				gLineInTrace, address);
-	}
-*/
-	int byteNR = address>>3;
-	int bit    = 7 - address % 8;
-
-    return ((myHeapBitMap[byteNR] & (1 << bit))>0)?true:false;
+inline bool Allocator::isBitSet(unsigned int heapIndex) {
+	int byteNR = heapIndex>>3;
+	int bit = 7 - heapIndex % 8;
+	return ((myHeapBitMap[byteNR] & (1 << bit))>0)?true:false;
 }
 
-void Allocator::setBitUsed(unsigned int address) {
-	if (address > (unsigned int) overallHeapSize) {
+void Allocator::setBitUsed(unsigned int heapIndex) {
+	if (heapIndex > (unsigned int) overallHeapSize) {
 		fprintf(stderr,
 				"ERROR(Line %d): setBitUsed request to illegal slot %d\n",
-				gLineInTrace, address);
+				gLineInTrace, heapIndex);
 		exit(1);
 	}
 
-	int byte = address / 8;
-	int bit = 7 - address % 8;
+	int byte = heapIndex / 8;
+	int bit = 7 - heapIndex % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] | 1 << bit;
 }
 
-void Allocator::setBitUnused(unsigned int address) {
-	if (address > (unsigned int) overallHeapSize) {
-		fprintf(stderr, "add %d heap %d\n", address, overallHeapSize);
+void Allocator::setBitUnused(unsigned int heapIndex) {
+	if (heapIndex > (unsigned int) overallHeapSize) {
+		fprintf(stderr, "add %d heap %d\n", heapIndex, overallHeapSize);
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
 
-	int byte = address / 8;
-	int bit = 7 - address % 8;
+	int byte = heapIndex / 8;
+	int bit = 7 - heapIndex % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
 }
