@@ -125,13 +125,13 @@ void MemoryManager::statAfterCompact(int myGeneration) {
 
 }
 
-size_t MemoryManager::shift(int size){
+void *MemoryManager::shift(int size){
 	//the idea: if there is still space for this object in the highest generation,
 	//gc until promotes happen rather than crash the application
-	size_t result = -1;
+	void *result = NULL;
 	int outOfMemory = 0;
 	int spaceOnTop = myAllocators[GENERATIONS-1]->getFreeSize();
-	while(result == (size_t)-1 && spaceOnTop >= size){
+	while(result == NULL && spaceOnTop >= size){
 		if(WRITE_DETAILED_LOG==1){
 			fprintf(gDetLog,"(%d) SHIFTING for %d\n",gLineInTrace,size);
 		}
@@ -141,7 +141,7 @@ size_t MemoryManager::shift(int size){
 			fprintf(stderr,"(%d) OUT OF MEMORY: (%d)\n",gLineInTrace,size);
 			exit(1);
 		}
-		result = (size_t) myAllocators[0]->gcAllocate(size);
+		result = myAllocators[0]->gcAllocate(size);
 	}
 	return result;
 }
@@ -151,25 +151,25 @@ int MemoryManager::evalCollect(){
 	return 0;
 }
 
-size_t MemoryManager::allocate(int size, int generation) {
+void *MemoryManager::allocate(int size, int generation) {
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
 		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
 				gLineInTrace, generation);
 		exit(1);
 	}
-	size_t result = -1;
+	void *result = NULL;
 	int gen = generation;
 	//try allocating in the generation
-	result = (size_t) myAllocators[generation]->gcAllocate(size);
-	while (result == (size_t)-1 && gen < GENERATIONS) {
+	result = myAllocators[generation]->gcAllocate(size);
+	while (result == NULL && gen < GENERATIONS) {
 		if (WRITE_DETAILED_LOG == 1) {
 			fprintf(gDetLog,
 					"(%d) Trigger Gc in generation %d.\n",
 					gLineInTrace, gen);
 		}
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
-		result = (size_t) myAllocators[generation]->gcAllocate(size);
+		result = myAllocators[generation]->gcAllocate(size);
 		gen++;
 	}
 	if (gen > generation) {
@@ -177,7 +177,7 @@ size_t MemoryManager::allocate(int size, int generation) {
 		myGarbageCollectors[gen - 1]->promotionPhase();
 	}
 
-	if(result == (size_t)-1 && SHIFTING == 1){
+	if(result == NULL && SHIFTING == 1){
 		//try shifting
 		result = shift(size);
 	}
@@ -217,8 +217,8 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
 	//get allocation address in Generation 0
-	size_t address = allocate(size, 0);
-	if (address == (size_t)-1) {
+	void *address = allocate(size, 0);
+	if (address == NULL) {
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
 				size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
@@ -230,7 +230,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 	Object *object;
 	switch (_allocator) {
 		case realAlloc:
-			object = new Object(id, (void *) address, size, refCount, getClassName(classID));
+			object = new Object(id, address, size, refCount, getClassName(classID));
 			break;
 		default:
 			break;
