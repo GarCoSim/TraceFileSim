@@ -138,6 +138,9 @@ void Collector::updatePointers() {
 	clearForwardingEntries();
 }
 
+void Collector::initializeHeap() {
+}
+
 void Collector::postCollect() {
 	printStats();
 	gcsSinceLastPromotionPhase++;

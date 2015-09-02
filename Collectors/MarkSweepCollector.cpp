@@ -48,6 +48,10 @@ void MarkSweepCollector::checkWatermark() {
 	}
 }
 
+void MarkSweepCollector::initializeHeap() {
+	myAllocator->setHalfHeapSize(false);
+}
+
 void MarkSweepCollector::mark() {
 	int i;
 	//set all objects to dead and not visible firs

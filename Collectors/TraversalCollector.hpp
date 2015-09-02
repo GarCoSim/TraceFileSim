@@ -31,6 +31,7 @@ public:
 	void collect(int reason);
 	void checkWatermark();
 	int promotionPhase();
+	void initializeHeap();
 
 private:
 	void copy();

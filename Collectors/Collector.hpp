@@ -37,6 +37,7 @@ public:
 	void updatePointers();
 	void addForwardingEntry(void *oldAddress, void *newAddress);
 	void clearForwardingEntries();
+	virtual void initializeHeap();
 
 protected:
 	void postCollect();

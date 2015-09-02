@@ -76,8 +76,6 @@ void MemoryManager::initAllocators(int heapsize) {
 				break;
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
-		if (_collector == traversalGC)
-			myAllocators[i]->setHalfHeapSize(true);
 	}
 }
 
@@ -103,6 +101,7 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 				break;
 		}
 		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, _traversal);
+		myGarbageCollectors[i]->initializeHeap();
 	}
 }
 

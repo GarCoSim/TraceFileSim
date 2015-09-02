@@ -84,6 +84,10 @@ void TraversalCollector::checkWatermark() {
 	}
 }
 
+void TraversalCollector::initializeHeap() {
+	myAllocator->setHalfHeapSize(true);
+}
+
 void TraversalCollector::emptyHelpers() {
 	while (!myQueue.empty())
 		myQueue.pop();
