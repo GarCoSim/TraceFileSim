@@ -335,7 +335,9 @@ void MemoryManager::requestReallocate(Object* object) {
 			exit(1);
 		}
 		object->updateAddress(address);
-		//TODO what about the old RawObject? How does it get freed?
+		//TODO what about the old RawObject? How does it get freed? 
+		// In markSweep collection, the entire heap is explicitly freed (but no
+		// objects are deleted) during the compaction phase.
 		
 		//object->setFreed(0);
 

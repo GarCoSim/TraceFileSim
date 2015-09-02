@@ -34,6 +34,7 @@ void MarkSweepCollector::collect(int reason) {
 	if (statFreedDuringThisGC > 0) {
 		//only compact if you actually freed something
 		compact();
+		updatePointers();
 	}
 
 	postCollect();
@@ -280,11 +281,16 @@ void MarkSweepCollector::reallocateAllLiveObjects() {
 //			}
 //		}
 //	}
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
+	void *addressBefore, *addressAfter;
+	// the ordering ensures that we don't overwrite an object we have yet to visit
+	vector<Object*> objects = myObjectContainer->getLiveObjectsInHeapOrder();
 	for (i = 0; i < (int)objects.size(); i++) {
 		Object* currentObj = objects[i];
 		if (currentObj) {
+			addressBefore = currentObj->getAddress();
 			myMemManager->requestReallocate(currentObj);
+			addressAfter = currentObj->getAddress();
+			addForwardingEntry(addressBefore, addressAfter);
 		}
 	}
 
