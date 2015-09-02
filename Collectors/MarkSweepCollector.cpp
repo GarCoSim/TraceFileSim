@@ -26,13 +26,10 @@ MarkSweepCollector::MarkSweepCollector() {
 void MarkSweepCollector::collect(int reason) {
 	statCollectionReason = reason;
 	preCollect();
-	//easy as 1, 2, 3 :)
+
 	mark();
 	sweep();
-
-	//comment in order to have mark/sweep only
 	if (statFreedDuringThisGC > 0) {
-		//only compact if you actually freed something
 		compact();
 		updatePointers();
 	}
@@ -54,29 +51,24 @@ void MarkSweepCollector::initializeHeap() {
 }
 
 void MarkSweepCollector::mark() {
-	int i;
-	//set all objects to dead and not visible firs
 	initializeMarkPhase();
-
 	enqueueAllRoots();
 
 	//breadth first through the tree
+	int i;
 	while (!myQueue.empty()) {
 		Object* currentObj = myQueue.front();
 		myQueue.pop();
 		Object* child;
 		int kids = currentObj->getPointersMax();
-		currentObj->setVisited(true);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);
 			//no matter if the child was processed before or not, add it to the rem set.
-			if(child && child->getGeneration() < currentObj->getGeneration()){
+			if(child && child->getGeneration() < currentObj->getGeneration())
 				myMemManager->requestRemSetAdd(child);
-			}
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 				child->setVisited(true);
-
 				myQueue.push(child);
 			}
 		}
@@ -122,7 +114,6 @@ void MarkSweepCollector::enqueueAllRoots() {
 				currentObj = roots[j];
 				if (currentObj && !currentObj->getVisited()) {
 					currentObj->setVisited(true);
-					//currentObj->setAge(currentObj->getAge() + 1);
 					//add to rem set if the root is in a younger generation.
 					if (currentObj->getGeneration() < myGeneration) {
 						myMemManager->requestRemSetAdd(currentObj);
@@ -136,7 +127,6 @@ void MarkSweepCollector::enqueueAllRoots() {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
-				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
 			}
 		}
@@ -149,13 +139,8 @@ void MarkSweepCollector::initializeMarkPhase() {
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
 	for (i = 0; i < (int)objects.size(); i++) {
 		currentObj = objects[i];
-		if (currentObj) {
-			if (WRITE_DETAILED_LOG == 1) {
-				//fprintf(gDetLog, "(%d) MARK: %ld\n", gLineInTrace,
-						//(long) currentObj);
-			}
+		if (currentObj)
 			currentObj->setVisited(false);
-		}
 	}
 }
 
@@ -163,9 +148,7 @@ void MarkSweepCollector::preCollect() {
 	start = clock();
 	statFreedDuringThisGC = 0;
 	statGcNumber++;
-//	if(myGeneration == GENERATIONS -1 ){
-//		promotionPhase();
-//	}
+	fprintf(stderr, "starting markSweep collection (%d)...\n", statGcNumber);
 }
 
 void MarkSweepCollector::compact() {
@@ -174,6 +157,7 @@ void MarkSweepCollector::compact() {
 	//free everything.
 	myMemManager->statBeforeCompact(myGeneration);
 	freeAllLiveObjects();
+
 	//allocate everything back.
 	myMemManager->requestResetAllocationPointer(myGeneration);
 	reallocateAllLiveObjects();
@@ -182,30 +166,6 @@ void MarkSweepCollector::compact() {
 
 void MarkSweepCollector::freeAllLiveObjects() {
 	int i;
-	//set all objects to dead and not visible firs
-//	initializeMarkPhase();
-//
-//	enqueueAllRoots();
-//
-//	//breadth first through the tree
-//	while (!myQueue.empty()) {
-//		Object* currentObj = myQueue.front();
-//		myQueue.pop();
-//
-//		//the actual work is just one line
-//		myMemManager->requestFree(currentObj);
-//
-//		Object* child;
-//		int kids = currentObj->getPointersMax();
-//		currentObj->setVisited(true);
-//		for (i = 0; i < kids; i++) {
-//			child = currentObj->getReferenceTo(i);
-//			if (child && !child->getVisited()) {
-//				child->setVisited(true);
-//				myQueue.push(child);
-//			}
-//		}
-//	}
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
 	for (i = 0; i < (int)objects.size(); i++) {
 		Object* currentObj = objects[i];
@@ -213,7 +173,6 @@ void MarkSweepCollector::freeAllLiveObjects() {
 			myMemManager->requestFree(currentObj);
 		}
 	}
-	//myAllocator->freeAllSectors();
 }
 
 int MarkSweepCollector::promotionPhase() {
@@ -257,30 +216,6 @@ int MarkSweepCollector::promotionPhase() {
 
 void MarkSweepCollector::reallocateAllLiveObjects() {
 	int i;
-	//set all objects to dead and not visible firs
-//	initializeMarkPhase();
-//
-//	enqueueAllRoots();
-//
-//	//breadth first through the tree
-//	while (!myQueue.empty()) {
-//		Object* currentObj = myQueue.front();
-//		myQueue.pop();
-//
-//		//the actual work
-//		myMemManager->requestReallocate(currentObj);
-//
-//		Object* child;
-//		int kids = currentObj->getPointersMax();
-//		currentObj->setVisited(true);
-//		for (i = 0; i < kids; i++) {
-//			child = currentObj->getReferenceTo(i);
-//			if (child && !child->getVisited()) {
-//				child->setVisited(true);
-//				myQueue.push(child);
-//			}
-//		}
-//	}
 	void *addressBefore, *addressAfter;
 	// the ordering ensures that we don't overwrite an object we have yet to visit
 	vector<Object*> objects = myObjectContainer->getLiveObjectsInHeapOrder();
@@ -293,7 +228,6 @@ void MarkSweepCollector::reallocateAllLiveObjects() {
 			addForwardingEntry(addressBefore, addressAfter);
 		}
 	}
-
 }
 
 MarkSweepCollector::~MarkSweepCollector() {
