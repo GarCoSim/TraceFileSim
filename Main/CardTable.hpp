@@ -32,7 +32,8 @@ public:
     int  getNumCards();
 	bool isCardMarked(long i);
     void markCard(long address);
-    void markCards(long address,int numBits,char* bmap);
+    void markCards8(long address,int numBits,char* bmap);
+    void markCards64(long address,int numBits,char* bmap);
     long nextCardAddress(long address); //return address of the next card
     void syncCards8(char *bmap);
     void syncCards64(char *bmap); 

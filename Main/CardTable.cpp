@@ -42,16 +42,55 @@ void CardTable::markCard(long address) {
 	card[address>>nShift] = (char)1;
 }
 
-void CardTable::markCards(long address,int size,char* bmap) { //mark tier2 cards within the range [address, address + size]
+void CardTable::markCards8(long address,int size,char* bmap) { //mark tier2 cards within the range [address, address + size]
     long i,end;
 
     i   = address>>nShift;
     end = (address+size)>>nShift;
-    while (i <= end) {
+    if (bmap[i] == (char)MAX8BIT)
+        card[i] = (char)1;
+    else
+        card[i] = (char)0;
+
+    i++;
+    while (i < end) {
+        card[i] = (char)1;
+       i++;
+    }
+
+    if (bmap[i] == (char)MAX8BIT)
+        card[i] = (char)1;
+    else
+        card[i] = (char)0;         
+    
+}
+
+void CardTable::markCards64(long address,int size,char* bmap) { //mark tier2 cards within the range [address, address + size]
+    long i,end;
+    unsigned long long *llong;
+
+    i   = address>>nShift;
+    end = (address+size)>>nShift;
+    llong = (unsigned long long*)&bmap[i<<3];
+    if ((unsigned long long)(*llong) == MAX64BIT)
+        card[i] = 1;
+    else
+        card[i] = 0;
+
+    i++;
+    while (i < end) {
         card[i] = (char)1;
         i++;
     }
+
+    llong = (unsigned long long*)&bmap[i<<3];
+    if ((unsigned long long)(*llong) == MAX64BIT)
+       card[i] = 1;
+    else
+       card[i] = 0;
 }
+
+
 
 long CardTable::nextCardAddress(long address) { 
 	return (long)((address>>nShift)+1)<<nShift;
@@ -71,9 +110,11 @@ void CardTable::syncCards8(char *bmap) { //synchronize tier1 card table with the
 
 void CardTable::syncCards64(char *bmap) { //synchronize tier2 card table with the bitmap
     long i = 0;
+    unsigned long long *llong;
     
     while (i<numCards) {
-        if ((unsigned long long)&bmap[i<<3] == MAX64BIT) 
+        llong = (unsigned long long*)&bmap[i<<3];
+        if ((unsigned long long)(*llong) == MAX64BIT) 
             card[i] = (char)1;
         else
             card[i] = (char)0;

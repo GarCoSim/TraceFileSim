@@ -97,7 +97,7 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 	int address = lower;
 	int contiguous = 0;
 	int i,j,k,bit,idx;
-		
+
     i = lower;
     while (i < upper) {
         if (card2->isCardMarked((long)i)) {
@@ -126,9 +126,8 @@ size_t RealAllocator::allocate(int size, int lower, int upper, size_t lastAddres
 				        statLiveObjects++;
 
                         //added by Tristan
-                        card1->syncCards8(myHeapBitMap);
-                        card2->syncCards64(myHeapBitMap); 
-
+                        card1->markCards8(address,size,myHeapBitMap);
+                        card2->markCards64(address,size,myHeapBitMap); 
                        
 				        return (size_t)&heap[address];
 				    }
@@ -152,8 +151,8 @@ void RealAllocator::gcFree(Object* object) {
 
 	setFree(address, size);
 
-    card1->syncCards8(myHeapBitMap); //added by Tristan
-    card2->syncCards8(myHeapBitMap); //added by Tristan
+    card1->unmarkCards(address,size,myHeapBitMap); //added by Tristan
+    card2->unmarkCards(address,size,myHeapBitMap); //added by Tristan
 
 	statLiveObjects--;
 	statBytesAllocated -= size;
