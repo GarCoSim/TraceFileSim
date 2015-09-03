@@ -17,6 +17,7 @@ extern clock_t start, stop;
 
 namespace traceFileSimulator {
 
+// This collector immplements a split-heap copying collection policy
 TraversalCollector::TraversalCollector() {
 	fprintf(stderr, "This collector is WIP, please use a different collector!\n");
 }

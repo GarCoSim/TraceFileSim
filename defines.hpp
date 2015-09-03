@@ -35,8 +35,7 @@ enum traversalEnum {
 				};
 
 enum collectorEnum {
-						copyingGC = 0,
-						markSweepGC,
+						markSweepGC = 0,
 						traversalGC
 				};
 

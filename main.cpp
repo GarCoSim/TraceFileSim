@@ -31,8 +31,6 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 		}
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--collector") || !strcmp(shortOption, "-c")) {
-				if (!strcmp(argv[i + 1], "copying"))
-					return (int)copyingGC;
 				if (!strcmp(argv[i + 1], "markSweep"))
 					return (int)markSweepGC;
 				if (!strcmp(argv[i + 1], "traversal"))
@@ -64,7 +62,7 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: 200000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: copying, markSweep, traversal, default: markSweep)\n" \
+						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, default: real)\n" \
 						);

@@ -5,19 +5,16 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../Collectors/Collector.cpp \
-../Collectors/CopyingCollector.cpp \
 ../Collectors/MarkSweepCollector.cpp \
 ../Collectors/TraversalCollector.cpp
 
 OBJS += \
 ./Collectors/Collector.o \
-./Collectors/CopyingCollector.o \
 ./Collectors/MarkSweepCollector.o \
 ./Collectors/TraversalCollector.o
 
 CPP_DEPS += \
 ./Collectors/Collector.d \
-./Collectors/CopyingCollector.d \
 ./Collectors/MarkSweepCollector.d \
 ./Collectors/TraversalCollector.d
 

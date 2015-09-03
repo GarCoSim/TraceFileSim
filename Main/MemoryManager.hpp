@@ -14,7 +14,6 @@
 #include "../Allocators/RealAllocator.hpp"
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
-#include "../Collectors/CopyingCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
 #include "../defines.hpp"
 #include <string>

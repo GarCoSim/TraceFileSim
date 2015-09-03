@@ -90,9 +90,6 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 	int i;
 	for (i = 0; i < GENERATIONS; i++) {
 		switch (_collector) {
-			case copyingGC:
-				myGarbageCollectors[i] = new CopyingCollector();
-				break;
 			case markSweepGC:
 				myGarbageCollectors[i] = new MarkSweepCollector();
 				break;
