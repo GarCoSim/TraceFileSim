@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: TraceFileSimulator traceFile [OPTIONS]\n" \
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
-						"  --heapsize x,  -h x       uses x bytes for the heap size (default: 200000)\n" \
+						"  --heapsize x,  -h x       uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
 						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, default: real)\n" \
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 		allocator = (int)realAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
-			heapSize = 200000;
+			heapSize = 350000;
 		else
 			heapSize = 600000;
 	}
