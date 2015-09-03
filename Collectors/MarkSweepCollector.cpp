@@ -38,7 +38,7 @@ void MarkSweepCollector::collect(int reason) {
 }
 
 void MarkSweepCollector::checkWatermark() {
-	int size = myAllocator->getHeapSize();
+	int size = myAllocator->getRegionSize();
 	int free = myAllocator->getFreeSize();
 	int ratio = 100 - (100 * free / size);
 	if (ratio > myWatermark) {

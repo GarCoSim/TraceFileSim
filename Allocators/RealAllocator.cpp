@@ -53,7 +53,6 @@ void RealAllocator::initializeHeap(int heapSize) {
 	setHalfHeapSize(heapSize);
 	resetRememberedAllocationSearchPoint();
 
-	statBytesAllocated = 0;
 	statLiveObjects = 0;
 	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
 		allocLog = fopen("alloc.log", "w+");
@@ -75,7 +74,6 @@ void RealAllocator::freeAllSectors() {
 		setBitUnused(i);
 	}
 
-	statBytesAllocated = 0;
 }
 
 void *RealAllocator::allocate(int size, int lower, int upper) {
@@ -111,7 +109,6 @@ void *RealAllocator::allocate(int size, int lower, int upper) {
 			        contiguous++;
 			        if (contiguous == size) {
 			            setAllocated(address, size);
-				        statBytesAllocated += size;
 				        statLiveObjects++;
 
                         //added by Tristan
@@ -146,7 +143,6 @@ void RealAllocator::gcFree(Object* object) {
     card2->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
 
 	statLiveObjects--;
-	statBytesAllocated -= size;
 }
 
 RealAllocator::~RealAllocator() {

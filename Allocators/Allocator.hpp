@@ -28,6 +28,7 @@ public:
 	//used mainly by garbage collector
 	int getFreeSize();
 	int getHeapSize();
+	int getRegionSize();
 	void resetRememberedAllocationSearchPoint();
 
 	//stats
@@ -68,7 +69,6 @@ protected:
 	unsigned int newSpaceRememberedHeapIndex;
 	unsigned int oldSpaceRememberedHeapIndex;
 
-	int statBytesAllocated;
 	int statLiveObjects;
 	FILE* allocLog;
 	FILE* heapMap;

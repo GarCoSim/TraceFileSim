@@ -32,7 +32,13 @@ Allocator::Allocator() {
 }
 
 int Allocator::getFreeSize() {
-	return isSplitHeap ? (overallHeapSize / 2) - statBytesAllocated : overallHeapSize - statBytesAllocated;
+	unsigned int i;
+	int count = 0;
+	for (i=0; i<overallHeapSize; i++)
+		if (!isBitSet(i))
+			count++;
+
+	return count;
 }
 
 
@@ -111,8 +117,14 @@ void Allocator::setFree(unsigned int heapIndex, int size) {
 }
 
 int Allocator::getHeapSize() {
+	return overallHeapSize;
+}
+
+int Allocator::getRegionSize() {
+	// this method can be generalized/overridden to support an arbitrary number of regions.
 	return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
 }
+
 
 void Allocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);
@@ -166,16 +178,7 @@ void Allocator::printStats() {
 		printMap();
 	}
 
-	int bytesAllocated = 0;
-
-	//traverse all heap and count allocated bits
-	unsigned int i;
-
-	for (i = 0; i < overallHeapSize; i++) {
-		if (isBitSet(i) == 1) {
-			bytesAllocated++;
-		}
-	}
+	int bytesAllocated = overallHeapSize - getFreeSize();
 
 	fprintf(allocLog, "%7d: alloc: %7d obj: %7d\n", gLineInTrace,
 			bytesAllocated, statLiveObjects);
