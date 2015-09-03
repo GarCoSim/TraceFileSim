@@ -176,7 +176,7 @@ void *MemoryManager::allocate(int size, int generation) {
 		myGarbageCollectors[gen - 1]->promotionPhase();
 	}
 
-	if(result == NULL && SHIFTING == 1){
+	if(GENERATIONS > 1 && result == NULL && SHIFTING == 1){
 		//try shifting
 		result = shift(size);
 	}
