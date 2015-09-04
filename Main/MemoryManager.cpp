@@ -76,6 +76,10 @@ void MemoryManager::initAllocators(int heapsize) {
 				break;
 			case basicAlloc:
 				myAllocators[i] = new BasicAllocator();
+				break;
+			case nextFitAlloc:
+				myAllocators[i] = new NextFitAllocator();
+				break;
 
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);

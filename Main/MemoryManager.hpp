@@ -13,6 +13,7 @@
 #include "../Allocators/Allocator.hpp"
 #include "../Allocators/RealAllocator.hpp"
 #include "../Allocators/BasicAllocator.hpp"
+#include "../Allocators/NextFitAllocator.hpp"
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"

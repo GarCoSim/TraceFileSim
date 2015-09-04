@@ -41,7 +41,8 @@ enum collectorEnum {
 
 enum allocatorEnum {
 						realAlloc = 0,
-						basicAlloc
+						basicAlloc,
+						nextFitAlloc
 				};
 
 enum gcReason {

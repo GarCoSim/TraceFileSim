@@ -6,16 +6,19 @@
 CPP_SRCS += \
 ../Allocators/Allocator.cpp \
 ../Allocators/BasicAllocator.cpp \
+../Allocators/NextFitAllocator.cpp \
 ../Allocators/RealAllocator.cpp
 
 OBJS += \
 ./Allocators/Allocator.o \
 ./Allocators/BasicAllocator.o \
+./Allocators/NextFitAllocator.o \
 ./Allocators/RealAllocator.o
 
 CPP_DEPS += \
 ./Allocators/Allocator.d \
 ./Allocators/BasicAllocator.d \
+./Allocators/NextFitAllocator.d \
 ./Allocators/RealAllocator.d
 
 
