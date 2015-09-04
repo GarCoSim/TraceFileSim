@@ -76,10 +76,14 @@ void *NextFitAllocator::allocate(int size, int lower, int upper) {
 	if ((int) oldSpaceRememberedHeapIndex < lower || (int) oldSpaceRememberedHeapIndex > upper)
 		oldSpaceRememberedHeapIndex = lower; // essentially fall back to first fit
 
-	int potentialStart, contiguous;
-	for (potentialStart=oldSpaceRememberedHeapIndex+1; potentialStart!=(int)oldSpaceRememberedHeapIndex; potentialStart++) {
-		if (potentialStart > upper)
+	int potentialStart, contiguous = 1;
+	bool hasWrappedAround = false;
+	for (potentialStart=oldSpaceRememberedHeapIndex+1; !hasWrappedAround || potentialStart<=(int)oldSpaceRememberedHeapIndex; potentialStart+=contiguous) {
+		if (potentialStart > upper) {
+			hasWrappedAround = true;
 			potentialStart = lower;
+			contiguous = 1;
+		}
 
 		if (isBitSet(potentialStart))
 			continue;
