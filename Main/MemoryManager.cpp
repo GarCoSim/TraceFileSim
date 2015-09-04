@@ -74,6 +74,9 @@ void MemoryManager::initAllocators(int heapsize) {
 			case realAlloc:
 				myAllocators[i] = new RealAllocator();
 				break;
+			case basicAlloc:
+				myAllocators[i] = new BasicAllocator();
+
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
 	}
@@ -224,13 +227,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 
 	//create Object
 	Object *object;
-	switch (_allocator) {
-		case realAlloc:
-			object = new Object(id, address, size, refCount, getClassName(classID));
-			break;
-		default:
-			break;
-	}
+	object = new Object(id, address, size, refCount, getClassName(classID));
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread);
