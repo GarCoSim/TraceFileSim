@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
 						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
-						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: real)\n" \
+						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
 						);
 		exit(1);
 	}
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 	if (collector == -1)
 		collector = (int)traversalGC;
 	if (allocator == -1)
-		allocator = (int)realAlloc;
+		allocator = (int)nextFitAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 350000;
