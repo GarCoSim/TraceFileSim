@@ -29,10 +29,12 @@ void MarkSweepCollector::collect(int reason) {
 
 	mark();
 	sweep();
+	/* Uncomment this to enable compaction
 	if (statFreedDuringThisGC > 0) {
 		compact();
 		updatePointers();
 	}
+	*/
 
 	postCollect();
 }
