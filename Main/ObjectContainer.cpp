@@ -22,6 +22,7 @@ ObjectContainer::ObjectContainer() {
 	remSet.resize(1);
 	rootCount = 0;
 	remCount = 0;
+	classReferences.resize(1);
 }
 
 void ObjectContainer::addToGenRoot(Object* object) {
@@ -83,6 +84,10 @@ vector<Object*> ObjectContainer::getRoots(int thread) {
 	std::tr1::unordered_map<int, Object*>::iterator it;
 	for (it=rootset[thread].begin(); it!=rootset[thread].end(); it++)
 		roots.push_back(it->second);
+
+	// all static pointers are roots for every thread
+	vector<Object*> staticPointers = getAllStaticReferences();
+	roots.insert(roots.end(), staticPointers.begin(), staticPointers.end());
 
 	return roots;
 }
@@ -148,6 +153,34 @@ int ObjectContainer::removeReferenceTo(Object* object) {
 
 	objectMap.erase(id);
 	return 0;
+}
+
+void ObjectContainer::setStaticReference(int classID, int fieldOffset, int objectID) {
+	if (classReferences.size() <= (unsigned int) classID)
+		classReferences.resize(classID + 1);
+
+	if (objectID)
+		classReferences[classID][fieldOffset] = getByID(objectID);
+	else
+		classReferences[classID][fieldOffset] = NULL;
+}
+
+Object *ObjectContainer::getStaticReference(int classID, int fieldOffset) {
+	return classReferences[classID][fieldOffset];
+}
+
+vector<Object*> ObjectContainer::getAllStaticReferences() {
+	vector<Object*> staticReferences;
+
+	int i;
+	for (i=0; i<(int)classReferences.size(); i++) {
+		std::tr1::unordered_map<int, Object*>::iterator it;
+		for (it=classReferences[i].begin(); it!=classReferences[i].end(); it++)
+			if (it->second)
+				staticReferences.push_back(it->second);
+	}
+
+	return staticReferences;
 }
 
 int ObjectContainer::getGenRootCount() {

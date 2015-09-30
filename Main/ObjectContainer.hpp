@@ -28,6 +28,9 @@ public:
 	void addToGenRoot(Object* object);
 	int removeFromGenRoot(Object* object);
 	int removeReferenceTo(Object* object);
+	void setStaticReference(int classID, int fieldOffset, int objectID);
+	Object *getStaticReference(int classID, int fieldOffset);
+	vector<Object*> getAllStaticReferences();
 	Object* getByID(int id);
 	Object* getRoot(int thread, int objectID);
 	int getSize();
@@ -53,6 +56,7 @@ private:
 	vector<std::tr1::unordered_map<int, Object*> > rootset;
 	std::tr1::unordered_map<int, Object*> objectMap;
 	vector<Object*> remSet;
+	vector<std::tr1::unordered_map<int, Object*> > classReferences;
 
 	int rootCount;
 	int remCount;

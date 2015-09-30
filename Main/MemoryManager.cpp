@@ -478,6 +478,10 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 	return 0;
 }
 
+void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
+	myObjectContainers[GENERATIONS - 1]->setStaticReference(classID, fieldOffset, objectID);
+}
+
 void MemoryManager::clearRemSets(){
 	int i;
 	for(i = 0;i<GENERATIONS;i++){

@@ -38,6 +38,7 @@ public:
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);
+	void setStaticPointer(int classID, int fieldOffset, int objectID);
 	void requestDelete(Object* object, int gGC);
 	void requestFree(Object* object);
 	void requestReallocate(Object* object);

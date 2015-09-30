@@ -207,7 +207,7 @@ void Simulator::referenceOperation(TraceFileLine line){
 // Added by Mazder
 
 void Simulator::referenceOperationClassField(TraceFileLine line){
-	/* Insert code here to store object reference into a class, when only fieldOffest of the reference slot is given*/
+	myMemManager->setStaticPointer(line.classID, line.fieldOffset, line.objectID);
 
 }
 void Simulator::readOperation(TraceFileLine line){
