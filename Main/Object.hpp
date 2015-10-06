@@ -11,6 +11,8 @@
 #include <vector>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctime>
+#include<sys/time.h>
 #include <string.h> //added by Tristan; for memset in setArgs()
 
 using std::vector;
@@ -26,7 +28,10 @@ typedef struct RawObject {
 
 class Object {
 public:
+	
 	Object(int id, void *address, int size, int numberOfPointers, char *className);
+	// modified by mazder, constructor overloading with thread id	
+	Object(int tid, int id, void *address, int size, int numberOfPointers, char *className);
 	void setArgs(int id, int payloadSize, int maxPointers, char *className);
 	virtual ~Object();
 	void *getAddress();
@@ -73,6 +78,15 @@ public:
 		forwarded = value;
 	}
 
+	// The following three fields are added
+	// to do escape analysis
+	// to find object longevity
+	// to see the thread realtionships 
+    // to calculate life time 
+    int myTid;
+    bool escaped; 
+	unsigned long born;
+
 private:
 	RawObject *rawObject;
 	int 	myId;
@@ -92,7 +106,6 @@ private:
 
     char *myName;
     bool forwarded;
-
 };
 
 } 

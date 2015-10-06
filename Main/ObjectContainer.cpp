@@ -4,8 +4,14 @@
  *  Created on: 2013-09-03
  *      Author: GarCoSim
  */
-
+#include<sys/time.h>
 #include "ObjectContainer.hpp"
+
+
+extern double minObjectLifeTime;
+extern double maxObjectLifeTime; 
+extern double sumObjectLifeTime;
+
 
 extern int gLineInTrace;
 
@@ -136,9 +142,26 @@ int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
 		return -1;
 	}
 
+	// added by mazder
+	/*************************/
+	float lifeTime;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	lifeTime =((1000000*tv.tv_sec+tv.tv_usec) - object->born)/1.0e6;
+
+	if( minObjectLifeTime>lifeTime){
+		minObjectLifeTime = lifeTime;
+	}
+	if( maxObjectLifeTime<lifeTime){
+		maxObjectLifeTime = lifeTime;
+	}
+	sumObjectLifeTime = sumObjectLifeTime + lifeTime;
+	/*************************/
+
 	objectMap.erase(objectID);
 	if (deleteFlag)
 		delete (object);
+
 	return 0;
 }
 

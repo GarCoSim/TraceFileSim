@@ -14,6 +14,16 @@
 
 using namespace traceFileSimulator;
 using namespace std;
+
+//added my mazder for analysis
+int escapeAnalysis;
+long numEscapedObejct = 0;
+
+double minObjectLifeTime = 0.0;
+double maxObjectLifeTime = 0.0; 
+double sumObjectLifeTime = 0.0;
+long totalObject = 0;
+
 //logging vars
 int gLineInTrace;
 int gAllocations;
@@ -69,6 +79,7 @@ int main(int argc, char *argv[]) {
 						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
+						"  --escape x, -e x          uses x as the as to escaped analysis)\n" \
 						);
 		exit(1);
 	}
@@ -87,6 +98,8 @@ int main(int argc, char *argv[]) {
 	int allocator     = setArgs(argc, argv, "--allocator", "-a");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
+	escapeAnalysis = setArgs(argc, argv, "--escape" , "-e");
+
 	if (highWatermark == -1)
 		highWatermark = 90;
 	if (traversal == -1)
@@ -103,7 +116,6 @@ int main(int argc, char *argv[]) {
 	}
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
-
 	CREATE_GLOBAL_FILENAME((string)filename);
 
 	string logFileName;
@@ -111,6 +123,10 @@ int main(int argc, char *argv[]) {
 		logFileName = globalFilename + "Forced.log";
 	else
 		logFileName = globalFilename + ".log";
+
+	if(escapeAnalysis == -1){
+		escapeAnalysis = 0;
+	}
 
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
@@ -146,6 +162,12 @@ int main(int argc, char *argv[]) {
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
 	printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
 	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
+
+	// added by mazder
+	if(escapeAnalysis){
+		fprintf(gLogFile,"\n\nAnalysis::>\n");
+		fprintf(gLogFile,"Total Objects: %ld\tTotal escaped: %ld\tLife Time(min): %fs\tLife Time(max): %fs\tLife Time(avg.): %fs", totalObject, numEscapedObejct, minObjectLifeTime, maxObjectLifeTime, (double)sumObjectLifeTime/totalObject);
+	}
 
 	fclose(gLogFile);
 

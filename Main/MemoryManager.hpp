@@ -59,6 +59,10 @@ public:
 	void lastStats();
 	void dumpHeap();
 
+	// added by mazder for escape analysis
+	void markObject(Object* Obj);
+
+
 private:
 	bool isAlreadyRoot(int thread, int id);
 	int* computeHeapsizes(int heapSize);

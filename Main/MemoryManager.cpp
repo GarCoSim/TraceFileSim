@@ -7,6 +7,11 @@
 
 #include "MemoryManager.hpp"
 
+//added by mazder
+extern int escapeAnalysis;
+extern long numEscapedObejct;
+extern long totalObject;
+
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern int gLineInTrace;
@@ -231,7 +236,15 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 
 	//create Object
 	Object *object;
-	object = new Object(id, address, size, refCount, getClassName(classID));
+	// modified by mazder, added thread id
+	if(escapeAnalysis){
+		object = new Object(thread, id, address, size, refCount, getClassName(classID));
+		totalObject++;
+	}
+	else{
+		object = new Object(id, address, size, refCount, getClassName(classID));
+		totalObject++;
+	}
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread);
@@ -475,11 +488,49 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
+
+	// added by mazder for escape analysis
+	/****************************************/
+	if(escapeAnalysis){
+		// parent ----> child
+		if (childID !=0 ){
+			if( (parent->myTid) !=  (child->myTid) ){
+				// child and  its all successors are to be escaped
+				if(!child->escaped) {
+					// mark child and its all successors are escaped
+					markObject(child);
+				}
+			}
+			else{
+				if( (parent->escaped) && (!child->escaped) ){
+					// mark child and its all successors are escaped
+					markObject(child);
+				}
+			}
+		} 
+	}
+	/****************************************/
 	return 0;
 }
 
 void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
 	myObjectContainers[GENERATIONS - 1]->setStaticReference(classID, fieldOffset, objectID);
+
+	// added by mazder for escape analysis
+	/****************************************/
+	
+	if(escapeAnalysis){
+		// class ----> object
+		if ( objectID != 0 ){
+			Object* Obj = myObjectContainers[GENERATIONS - 1]->getByID(objectID);
+			if ( !Obj->escaped) {
+					// mark child and its all successors are escaped
+					markObject(Obj);
+			}
+		}
+	} 
+	
+	/****************************************/
 }
 
 void MemoryManager::clearRemSets(){
@@ -542,6 +593,19 @@ void MemoryManager::printStats() {
 
 void MemoryManager::dumpHeap() {
 	myObjectContainers[GENERATIONS-1]->dumpHeap();
+}
+
+void MemoryManager::markObject(Object* Obj){
+	// recursively mark all objects escaped
+	// added by mazder 
+	Obj->escaped = true;
+	numEscapedObejct++;
+	for(int i=0; i<Obj->getPointersMax(); i++){
+		Object* child = Obj->getReferenceTo(i);
+		if( (child != NULL) && (!child->escaped) ){
+			markObject(child);
+		} 
+	}
 }
 
 MemoryManager::~MemoryManager() {
