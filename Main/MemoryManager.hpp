@@ -61,6 +61,7 @@ public:
 
 	// added by mazder for escape analysis
 	void markObject(Object* Obj);
+	int inline getClassTableSize(){ return (int)classTable.size();}
 
 
 private:

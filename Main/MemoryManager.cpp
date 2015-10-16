@@ -12,6 +12,9 @@ extern int escapeAnalysis;
 extern long numEscapedObejct;
 extern long totalObject;
 
+extern vector<int>classStat;
+extern int clsInfo;
+
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern int gLineInTrace;
@@ -245,6 +248,12 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,
 		object = new Object(id, address, size, refCount, getClassName(classID));
 		totalObject++;
 	}
+
+	// increase class usage
+	if(clsInfo && ( (int)classStat.size() !=0 ) ){
+		classStat[classID] = classStat[classID]+1;
+	}
+
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread);

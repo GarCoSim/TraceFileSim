@@ -9,6 +9,9 @@
 
 using namespace std;
 
+extern vector<int>classStat;
+extern int clsInfo;
+
 extern int gLineInTrace;
 extern int gAllocations;
 extern int forceAGCAfterEveryStep;
@@ -25,8 +28,21 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 
 	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator);
 
-	if (!myMemManager->loadClassTable((string)traceFilePath))
+	if (!myMemManager->loadClassTable((string)traceFilePath)){
 		fprintf(stdout, "No class table found\n");
+		// even thougth -cls 1 paramenters passed in main function 
+		clsInfo=0;
+	}
+	else{
+		if(clsInfo){
+			// create an array to hold how many objects are created for a class
+			int totalClasses = myMemManager->getClassTableSize();
+			classStat.resize(totalClasses);
+			for(int i=0; i<totalClasses; i++ ){
+				classStat[i]=0;
+			} 
+		}
+	}
 
 	counter = 0;
 	start = clock();

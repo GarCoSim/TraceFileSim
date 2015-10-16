@@ -17,6 +17,10 @@ using namespace std;
 
 //added my mazder for analysis
 int escapeAnalysis;
+
+vector<int>classStat;
+int clsInfo;
+
 long numEscapedObejct = 0;
 
 double minObjectLifeTime = 0.0;
@@ -79,7 +83,8 @@ int main(int argc, char *argv[]) {
 						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
-						"  --escape x, -e x          uses x as the as to escaped analysis)\n" \
+						"  --escape x, -e x          uses x as the as to escaped analysis (default 0)\n" \
+						"  --clsInfo x, -cls x         uses x as to show the uses of class in object creation (default 0)\n" \
 						);
 		exit(1);
 	}
@@ -99,6 +104,7 @@ int main(int argc, char *argv[]) {
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
 	escapeAnalysis = setArgs(argc, argv, "--escape" , "-e");
+	clsInfo = setArgs(argc, argv, "--clsInfo" , "-e");
 
 	if (highWatermark == -1)
 		highWatermark = 90;
@@ -126,6 +132,10 @@ int main(int argc, char *argv[]) {
 
 	if(escapeAnalysis == -1){
 		escapeAnalysis = 0;
+	}
+
+	if(clsInfo == -1){
+		clsInfo = 0;
 	}
 
 	//set up global logfile
@@ -167,6 +177,15 @@ int main(int argc, char *argv[]) {
 	if(escapeAnalysis){
 		fprintf(gLogFile,"\n\nAnalysis::>\n");
 		fprintf(gLogFile,"Total Objects: %ld\tTotal escaped: %ld\tLife Time(min): %fs\tLife Time(max): %fs\tLife Time(avg.): %fs", totalObject, numEscapedObejct, minObjectLifeTime, maxObjectLifeTime, (double)sumObjectLifeTime/totalObject);
+	}
+
+	if(clsInfo && ( (int)classStat.size() != 0) ){
+		fprintf(gLogFile,"\n\nClass usage::>\n");
+		fprintf(gLogFile,"\nclassId\t#Object\n");
+		// class id start from 1
+		for (int k=1; k<(int)classStat.size(); k++){
+			fprintf(gLogFile,"%d\t%d\n", k, classStat[k]);
+		}
 	}
 
 	fclose(gLogFile);
