@@ -11,21 +11,24 @@ CPP_SRCS += \
 ../Main/Object.cpp \
 ../Main/ObjectContainer.cpp \
 ../Main/Simulator.cpp \
-../Main/CardTable.cpp
+../Main/CardTable.cpp \
+../Main/Region.cpp
 
 OBJS += \
 ./Main/MemoryManager.o \
 ./Main/Object.o \
 ./Main/ObjectContainer.o \
 ./Main/Simulator.o \
-./Main/CardTable.o
+./Main/CardTable.o \
+./Main/Region.o
 
 CPP_DEPS += \
 ./Main/MemoryManager.d \
 ./Main/Object.d \
 ./Main/ObjectContainer.d \
 ./Main/Simulator.d \
-./Main/CardTable.d
+./Main/CardTable.d \
+./Main/Region.d
 
 
 # Each subdirectory must supply rules for building sources it contributes

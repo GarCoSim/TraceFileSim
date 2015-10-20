@@ -7,20 +7,22 @@ CPP_SRCS += \
 ../Allocators/Allocator.cpp \
 ../Allocators/BasicAllocator.cpp \
 ../Allocators/NextFitAllocator.cpp \
-../Allocators/RealAllocator.cpp
+../Allocators/RealAllocator.cpp \
+../Allocators/RegionBased.cpp
 
 OBJS += \
 ./Allocators/Allocator.o \
 ./Allocators/BasicAllocator.o \
 ./Allocators/NextFitAllocator.o \
-./Allocators/RealAllocator.o
+./Allocators/RealAllocator.o \
+./Allocators/RegionBased.o
 
 CPP_DEPS += \
 ./Allocators/Allocator.d \
 ./Allocators/BasicAllocator.d \
 ./Allocators/NextFitAllocator.d \
-./Allocators/RealAllocator.d
-
+./Allocators/RealAllocator.d \
+./Allocators/RegionBased.d
 
 # Each subdirectory must supply rules for building sources it contributes
 Allocators/%.o: ../Allocators/%.cpp

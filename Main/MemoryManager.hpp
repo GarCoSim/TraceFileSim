@@ -14,6 +14,7 @@
 #include "../Allocators/RealAllocator.hpp"
 #include "../Allocators/BasicAllocator.hpp"
 #include "../Allocators/NextFitAllocator.hpp"
+#include "../Allocators/RegionBased.hpp"
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
@@ -71,6 +72,7 @@ private:
 	void initContainers();
 	void initGarbageCollectors(int highWatermark);
 	void *allocate(int size, int generation);
+	void *allocate(int size, int generation, int thread);
 	void addRootToContainers(Object* object, int thread);
 	void addToContainers(Object* object);
 	void *shift(int size);

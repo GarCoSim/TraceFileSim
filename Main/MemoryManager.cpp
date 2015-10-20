@@ -88,6 +88,9 @@ void MemoryManager::initAllocators(int heapsize) {
 			case nextFitAlloc:
 				myAllocators[i] = new NextFitAllocator();
 				break;
+			case regionBased:
+				myAllocators[i] = new RegionBased();
+				break;
 
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
@@ -162,6 +165,7 @@ int MemoryManager::evalCollect(){
 	return 0;
 }
 
+
 void *MemoryManager::allocate(int size, int generation) {
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
@@ -179,6 +183,46 @@ void *MemoryManager::allocate(int size, int generation) {
 					"(%d) Trigger Gc in generation %d.\n",
 					gLineInTrace, gen);
 		}
+
+		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
+		result = myAllocators[generation]->gcAllocate(size);
+		gen++;
+	}
+	if (gen > generation) {
+		//gcs were made. promote if possible
+		myGarbageCollectors[gen - 1]->promotionPhase();
+	}
+
+	if(GENERATIONS > 1 && result == NULL && SHIFTING == 1){
+		//try shifting
+		result = shift(size);
+	}
+
+	return result;
+}
+
+
+void *MemoryManager::allocate(int size, int generation, int thread) {
+	//check if legal generation
+	if (generation < 0 || generation > GENERATIONS - 1) {
+		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
+				gLineInTrace, generation);
+		exit(1);
+	}
+	void *result = NULL;
+	int gen = generation;
+	//try allocating in the generation
+	result = myAllocators[generation]->gcAllocate(size,thread);
+	while ((long)result < 0 && gen < GENERATIONS) {
+		if (WRITE_DETAILED_LOG == 1) {
+			fprintf(gDetLog,
+					"(%d) Trigger Gc in generation %d.\n",
+					gLineInTrace, gen);
+		}
+
+        myAllocators[generation]->printStats((long)result);
+		exit(1);
+
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
 		result = myAllocators[generation]->gcAllocate(size);
 		gen++;
@@ -221,17 +265,19 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 	}
 }
 
-int MemoryManager::allocateObjectToRootset(int thread, int id,
-		int size, int refCount, int classID) {
+int MemoryManager::allocateObjectToRootset(int thread, int id,int size, int refCount, int classID) {
 
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
 	//get allocation address in Generation 0
-	void *address = allocate(size, 0);
+	void* address;
+
+    //address = allocate(size, 0);      //if non-region based
+    address = allocate(size, 0,thread); //if region-based
+
 	if (address == NULL) {
-		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",
-				size, gLineInTrace);
+		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
 		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
@@ -349,9 +395,7 @@ void MemoryManager::requestReallocate(Object* object) {
 		void *address = myAllocators[gen]->gcAllocate(size);
 		memcpy(address, object->getAddress(), size);
 		if (address == NULL) {
-			fprintf(stderr,
-					"ERROR(Line %d):Could not reallocate Object %d to gen %d\n",
-					gLineInTrace, object->getID(), gen);
+			fprintf(stderr,"ERROR(Line %d):Could not reallocate Object %d to gen %d\n",gLineInTrace, object->getID(), gen);
 			exit(1);
 		}
 		object->updateAddress(address);

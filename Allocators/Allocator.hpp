@@ -22,7 +22,8 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-	void *gcAllocate(int size);
+    void *gcAllocate(int size);
+	void *gcAllocate(int size,int thread);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector
@@ -46,6 +47,7 @@ public:
 	virtual void initializeHeap(int heapSize);
 
 	virtual bool isRealAllocator();
+	virtual void printStats(long trigReason);
 
 protected:
 	int getUsedSpace(bool newSpace);
@@ -55,8 +57,10 @@ protected:
 	bool isBitSet(unsigned int heapIndex);
 	void setBitUsed(unsigned int heapIndex);
 	void setBitUnused(unsigned int heapIndex);
-	virtual void *allocate(int size, int lower, int upper);
 
+    virtual void *allocate(int size, int lower, int upper);
+	virtual void *allocate(int size, int lower, int upper,int thread);
+   
 
 	bool isSplitHeap;
 	char* myHeapBitMap;

@@ -65,6 +65,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)basicAlloc;
 				if (!strcmp(argv[i + 1], "nextFit"))
 					return (int)nextFitAlloc;
+				if (!strcmp(argv[i + 1], "regionBased"))
+					return (int)regionBased;
 				return -1;
 			} else
 				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
@@ -100,12 +102,13 @@ int main(int argc, char *argv[]) {
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
 	int traversal     = setArgs(argc, argv, "--traversal", "-t");
 	int collector     = setArgs(argc, argv, "--collector", "-c");
-	int allocator     = setArgs(argc, argv, "--allocator", "-a");
+	int allocator         = setArgs(argc, argv, "--allocator", "-a");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
 	escapeAnalysis = setArgs(argc, argv, "--escape" , "-e");
 	clsInfo = setArgs(argc, argv, "--clsInfo" , "-e");
 
+    //set default parameters
 	if (highWatermark == -1)
 		highWatermark = 90;
 	if (traversal == -1)

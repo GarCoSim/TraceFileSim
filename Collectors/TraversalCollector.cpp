@@ -86,7 +86,7 @@ void TraversalCollector::checkWatermark() {
 }
 
 void TraversalCollector::initializeHeap() {
-	myAllocator->setHalfHeapSize(true);
+	myAllocator->setHalfHeapSize(true); //false for region-based; Tristan
 }
 
 void TraversalCollector::emptyHelpers() {

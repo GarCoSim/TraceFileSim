@@ -41,9 +41,12 @@ int Allocator::getFreeSize() {
 	return count;
 }
 
-
 void *Allocator::gcAllocate(int size) {
 	return allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex);
+}
+
+void *Allocator::gcAllocate(int size,int thread) {
+	return allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex,thread);
 }
 
 void *Allocator::allocateInNewSpace(int size) {
@@ -201,6 +204,13 @@ void Allocator::gcFree(Object* object) {
 
 void *Allocator::allocate(int size, int lower, int upper) {
 	return NULL;
+}
+
+void *Allocator::allocate(int size, int lower, int upper, int thread) {
+	return NULL;
+}
+
+void Allocator::printStats(long trigReason) {
 }
 
 Allocator::~Allocator() {
