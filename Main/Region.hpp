@@ -14,7 +14,7 @@
 #include <string.h> 
 #include <math.h>
 
-#define REGIONSIZE 524288
+#define REGIONSIZE 4194304//524288
 
 using std::vector;
 namespace traceFileSimulator {
@@ -47,7 +47,8 @@ public:
 
     int   getRegion(long address);
 
-    void   setAge(int age);
+    void  setAge(int age);
+    void  incAge();
     int   getAge();
 
 private:
@@ -64,6 +65,10 @@ private:
 extern Region**      regions;
 extern int           numRegions;
 extern unsigned long heapAddr;
+
+extern std::vector<int> freeList;
+extern std::vector<int> edenList;
+
 extern long          sumObj;
 extern long          sumFree;
 extern int           trigReason;

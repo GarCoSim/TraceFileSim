@@ -44,6 +44,7 @@ public:
 	int doNextStep();
 	void printStats();
 	void lastStats();
+	void lastStats(long trigReason);
 
 private:
 	void getNextLine(TraceFileLine *line);

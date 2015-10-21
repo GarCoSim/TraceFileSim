@@ -220,7 +220,7 @@ void *MemoryManager::allocate(int size, int generation, int thread) {
 					gLineInTrace, gen);
 		}
 
-        myAllocators[generation]->printStats((long)result);
+        myGarbageCollectors[generation]->lastStats((long)result);
 		exit(1);
 
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
@@ -607,6 +607,10 @@ void MemoryManager::forceGC() {
 
 void MemoryManager::lastStats() {
 	myGarbageCollectors[GENERATIONS-1]->lastStats();
+}
+
+void MemoryManager::lastStats(long trigReason) {
+	myGarbageCollectors[GENERATIONS-1]->lastStats(trigReason);
 }
 
 int* MemoryManager::computeHeapsizes(int heapSize) {

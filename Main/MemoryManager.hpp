@@ -58,6 +58,7 @@ public:
 	bool hasClassTable();
 	void forceGC();
 	void lastStats();
+	void lastStats(long trigReason);
 	void dumpHeap();
 
 	// added by mazder for escape analysis

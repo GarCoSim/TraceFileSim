@@ -17,6 +17,7 @@
 #include <ctime>
 #include "../defines.hpp"
 #include <stdio.h>
+#include "../Main/Region.hpp"
 
 using namespace std;
 
@@ -34,6 +35,7 @@ public:
 	void printStats();
 	virtual int promotionPhase();
 	void lastStats();
+	void lastStats(long trigReason);
 	void updatePointers();
 	void addForwardingEntry(void *oldAddress, void *newAddress);
 	void clearForwardingEntries();

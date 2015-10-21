@@ -128,13 +128,17 @@ void Simulator::lastStats() {
 	myMemManager->lastStats();
 }
 
+void Simulator::lastStats(long trigReason) {
+	myMemManager->lastStats(trigReason);
+}
+
 int Simulator::doNextStep(){
 	TraceFileLine line;
 	getNextLine(&line);
 	if (ONE_SECOND_PASSED) {
 		start = clock();
 		seconds++;
-		printf("[%3ds] Line in tracefile: %7d\n", seconds, gLineInTrace);
+		//printf("[%3ds] Line in tracefile: %7d\n", seconds, gLineInTrace);
 	}
 	if(myLastStepWorked){
 		//if content exists, advice the MM(memory manager) to execute

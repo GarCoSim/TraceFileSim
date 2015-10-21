@@ -15,6 +15,10 @@ namespace traceFileSimulator {
 Region**      regions;
 int           numRegions = 0;
 unsigned long heapAddr;
+
+std::vector<int> freeList;
+std::vector<int> edenList;
+
 int           trigReason = 0;
 long          sumObj;
 long          sumFree;
@@ -78,6 +82,10 @@ void* Region::getCurrFreeAddr() {
 
 void Region::setAge(int age) {
     myAge = age;
+} 
+
+void Region::incAge() {
+    myAge++;
 } 
 
 int Region::getAge() {

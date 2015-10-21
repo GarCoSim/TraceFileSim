@@ -22,8 +22,6 @@
 #include <sys/time.h> 
 #include "../Main/Region.hpp"
 
-#define  THREADBASED 1
- 
 namespace traceFileSimulator {
 
 class RegionBased : public Allocator {
@@ -39,7 +37,6 @@ public:
 	bool isInNewSpace(Object *object);
 	void freeOldSpace();
 	void initRegions(int heapSize);
-	void printStats(long trigReason);
 
 private:
 	void *allocate(int size, int lower, int upper);
@@ -47,8 +44,6 @@ private:
 	unsigned int getHeapIndex(Object *object);
 
 	unsigned char *heap;
-
-	std::vector<int>  freeList;
 };
 
 } 

@@ -15,6 +15,8 @@ using namespace std;
 
 namespace traceFileSimulator {
 
+int edenLimit; //25% of heap size
+
 RegionBased::RegionBased() {
 }
 
@@ -51,6 +53,7 @@ void RegionBased::initRegions(int heapSize) {
     numRegions = (int)heapSize/REGIONSIZE;
     heapAddr   = (unsigned long)&heap[0];
     regions    = (Region**)malloc(sizeof(Region*)*numRegions);
+    edenLimit  = (int)floor(numRegions*0.25);
     for (i=0; i<numRegions; i++) {
     	regions[i] = new Region((void*)(i*REGIONSIZE),REGIONSIZE,-1);
     	freeList.push_back(i);
@@ -161,6 +164,38 @@ void *RegionBased::allocate(int size, int lower, int upper,int thread) {
         return &heap[(long)currFreeAddr];
     }     
     #else
+       i = 0;
+       int numEden = (int)edenList.size();
+       for (i=0; i<numEden; i++) {
+       	    rID = edenList.at(i);
+        	currFree = regions[rID]->getCurrFree();
+            if (size <= currFree) {
+               currFreeAddr = regions[rID]->getCurrFreeAddr();	
+               regions[rID]->setCurrFreeAddr((void*)((long)currFreeAddr+(long)size));
+               regions[rID]->setCurrFree(currFree-size);
+               regions[rID]->incNumObj();
+               setAllocated((long)currFreeAddr, size);
+               return &heap[(long)currFreeAddr];
+            }
+        }
+        if (numEden < edenLimit) {
+    	    if ((int)freeList.size() > 0 ) {
+    	        rID   = freeList.front();
+                currFree = regions[rID]->getCurrFree();
+                currFreeAddr = regions[rID]->getAddress();	
+                regions[rID]->setCurrFreeAddr((void*)((long)currFreeAddr+(long)size));
+                regions[rID]->setCurrFree(currFree-size);
+                regions[rID]->incNumObj();
+
+                freeList.erase(freeList.begin());
+                edenList.push_back(rID);
+
+                setAllocated((long)currFreeAddr, size);
+                return &heap[(long)currFreeAddr];
+            }
+        }    
+        else
+            return (void*)-4; 
     #endif
 
 	return (void*)-3; 
@@ -186,30 +221,5 @@ RegionBased::~RegionBased() {
 void RegionBased::freeOldSpace() {
 	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
 }
-
-
-void RegionBased::printStats(long trigReason) {
-	int i,currFree,numObj;
-	
-    sumObj = sumFree = 0;
-    for (i=0; i<numRegions; i++) {
-        //owner = regions[i]->getOwner();
-        currFree = regions[i]->getCurrFree();
-        numObj   = regions[i]->getNumObj();
-       
-        /*
-        printf("\nRegion %i:\n",i); 
-        printf("    Owner       : %i\n",owner);
-        printf("    Num Obj     : %i\n",numObj);
-        printf("    Curr Free   : %i\n",currFree);        
-        printf("    Avg Obj Size: %.2lf\n",avgSize);
-        */
-        sumObj  += numObj;
-        sumFree += currFree;
-    }
-
-    printf("\n%.2lf & %.2lf & %i\n",(double)sumObj/numRegions,(double)sumFree/numRegions,trigReason*-1);
-}
-
 
 }

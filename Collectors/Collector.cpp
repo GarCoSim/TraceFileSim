@@ -152,7 +152,32 @@ int Collector::promotionPhase() {
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));   
+}
+
+void Collector::lastStats(long trigReason) {
+    int i,currFree,numObj,sumObj,sumFree;
+	
+    sumObj = sumFree = 0;
+    for (i=0; i<numRegions; i++) {
+        //owner = regions[i]->getOwner();
+        currFree = regions[i]->getCurrFree();
+        numObj   = regions[i]->getNumObj();
+       
+        /*
+        printf("\nRegion %i:\n",i); 
+        printf("    Owner       : %i\n",owner);
+        printf("    Num Obj     : %i\n",numObj);
+        printf("    Curr Free   : %i\n",currFree);        
+        printf("    Avg Obj Size: %.2lf\n",avgSize);
+        */
+        sumObj  += numObj;
+        sumFree += currFree;
+    }
+
+    printf(" & %.2lf & %.2lf & %li\\\\\n\\hline\n",(double)sumObj/numRegions,(double)sumFree/numRegions,trigReason*-1);
+
+
 }
 
 Collector::~Collector() {
