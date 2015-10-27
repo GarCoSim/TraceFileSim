@@ -116,8 +116,12 @@ int main(int argc, char *argv[]) {
 		traversal = (int)breadthFirst;
 	if (collector == -1)
 		collector = (int)traversalGC;
-	if (allocator == -1)
-		allocator = (int)nextFitAlloc;
+	if (allocator == (int)regionBased) {
+        #define REGIONBASED 1
+	}
+	else 
+	   if (allocator == -1)
+		  allocator = (int)nextFitAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 350000;
@@ -169,20 +173,18 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-    simulator->lastStats(0);
-    /*
-	#ifdef THREADBASED
-	simulator->lastStats(0);
-	#else 
-	simulator->printStats();
-	simulator->lastStats();
-	#endif
-	*/
+   
+ 	if (allocator == (int)regionBased)
+	   simulator->lastStats(0);
+	else {
+	   simulator->printStats();
+	   simulator->lastStats();
+	}
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
-	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
-	//printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
+	double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
+	printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
 	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
 
 	// added by mazder

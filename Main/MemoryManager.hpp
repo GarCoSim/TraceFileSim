@@ -36,9 +36,13 @@ public:
 	virtual ~MemoryManager();
 	//operations possible from trace file
 	int allocateObjectToRootset(int thread, int id, int size, int refCount, int classID);
+	int regionAllocateObjectToRootset(int thread, int id, int size, int refCount, int classID); //region-based; by Tristan
+	inline int postAllocateObjectToRootset(int thread, int id, int size, int refCount, int classID,void *address);  //added by Tristan
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
+	inline int preSetPointer(int thread, int parentID, int parentSlot, int childID); //added by Tristan
 	int setPointer(int thread, int parentID, int parentSlot, int childID);
+	int regionSetPointer(int thread, int parentID, int parentSlot, int childID); //added by Tristan
 	void setStaticPointer(int classID, int fieldOffset, int objectID);
 	void requestDelete(Object* object, int gGC);
 	void requestFree(Object* object);
@@ -89,7 +93,7 @@ private:
 	ObjectContainer* myObjectContainers[GENERATIONS];
 	Collector* myGarbageCollectors[GENERATIONS];
 	int stats[GENERATIONS];
-
+	Object *parent,*child,*oldChild;
 };
 
 } 

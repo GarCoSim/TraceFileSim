@@ -164,9 +164,10 @@ void Collector::lastStats(long trigReason) {
         currFree = regions[i]->getCurrFree();
         numObj   = regions[i]->getNumObj();
        
-        /*
-        printf("\nRegion %i:\n",i); 
+        
+        /*printf("\nRegion %i:\n",i); 
         printf("    Owner       : %i\n",owner);
+
         printf("    Num Obj     : %i\n",numObj);
         printf("    Curr Free   : %i\n",currFree);        
         printf("    Avg Obj Size: %.2lf\n",avgSize);

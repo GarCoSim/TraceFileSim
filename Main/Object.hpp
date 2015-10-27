@@ -34,7 +34,7 @@ public:
 	Object(int tid, int id, void *address, int size, int numberOfPointers, char *className);
 	void setArgs(int id, int payloadSize, int maxPointers, char *className);
 	virtual ~Object();
-	void *getAddress();
+	void*   getAddress();
 	void 	updateAddress(void *newAddress);
 	int 	getID();
 	int 	getPayloadSize();
@@ -78,6 +78,8 @@ public:
 		forwarded = value;
 	}
 
+	unsigned long getRegion(unsigned long heap,int numRegions); //get the region where the object belongs to
+
 	// The following three fields are added
 	// to do escape analysis
 	// to find object longevity
@@ -89,23 +91,23 @@ public:
 
 private:
 	RawObject *rawObject;
-	int 	myId;
-	int freed;
+	int 	   myId;
+	int        freed;
 
-	int  	mySize;
+	int  	   mySize;
 
 	// How many pointer slots do I have?
-	int 	myPointersMax;
+	int 	   myPointersMax;
 
 	//garbage collector stuff
-	bool isVisited;
+	bool       isVisited;
 
 	//genCon
-	int myAge;
-    int	myGeneration;
+	int        myAge;
+    int	       myGeneration;
 
-    char *myName;
-    bool forwarded;
+    char      *myName;
+    bool       forwarded;
 };
 
 } 

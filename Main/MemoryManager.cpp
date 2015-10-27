@@ -202,7 +202,7 @@ void *MemoryManager::allocate(int size, int generation) {
 }
 
 
-void *MemoryManager::allocate(int size, int generation, int thread) {
+void *MemoryManager::allocate(int size, int generation, int thread) { //if region-based; by Tristan
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
 		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
@@ -266,16 +266,25 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 }
 
 int MemoryManager::allocateObjectToRootset(int thread, int id,int size, int refCount, int classID) {
+	if (WRITE_DETAILED_LOG == 1)
+		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
+
+    void* address = allocate(size, 0);   
+
+    return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+}
+
+int MemoryManager::regionAllocateObjectToRootset(int thread, int id,int size, int refCount, int classID) {//if region-based; by Tristan
 
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
-	//get allocation address in Generation 0
-	void* address;
+    void* address = allocate(size, 0,thread); 
 
-    //address = allocate(size, 0);      //if non-region based
-    address = allocate(size, 0,thread); //if region-based
+    return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+}
 
+inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,int size, int refCount, int classID,void *address) {//post allocation; by Tristan
 	if (address == NULL) {
 		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",size, gLineInTrace);
 		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
@@ -287,10 +296,10 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,int size, int refC
 	Object *object;
 	// modified by mazder, added thread id
 	if(escapeAnalysis){
-		object = new Object(thread, id, address, size, refCount, getClassName(classID));
+ 	    object = new Object(thread, id, address, size, refCount, getClassName(classID));
 		totalObject++;
 	}
-	else{
+	else {
 		object = new Object(id, address, size, refCount, getClassName(classID));
 		totalObject++;
 	}
@@ -311,6 +320,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,int size, int refC
 	return 0;
 }
 
+
 int MemoryManager::requestRootDelete(int thread, int id){
 	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread, id);
 	myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, id);
@@ -320,7 +330,6 @@ int MemoryManager::requestRootDelete(int thread, int id){
 		myObjectContainers[i]->removeFromGenRoot(oldRoot);
 	}
 	return 0;
-
 }
 
 bool MemoryManager::isAlreadyRoot(int thread, int id) {
@@ -334,7 +343,6 @@ int MemoryManager::requestRootAdd(int thread, int id){
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
 	myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread);
 	return 0;
-
 }
 
 void MemoryManager::requestDelete(Object* object, int gGC) {
@@ -422,9 +430,7 @@ void MemoryManager::requestResetAllocationPointer(int generation) {
 int MemoryManager::requestPromotion(Object* object) {
 	if (object->getGeneration() == GENERATIONS - 1) {
 		if (WRITE_DETAILED_LOG == 1) {
-			fprintf(gDetLog,
-					"(%d) Request to promote %d, but as it is in maxGen, not granted.\n",
-					gLineInTrace, object->getID());
+			fprintf(gDetLog,"(%d) Request to promote %d, but as it is in maxGen, not granted.\n",gLineInTrace, object->getID());
 		}
 		return 0;
 	}
@@ -434,8 +440,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	int size = object->getHeapSize();
 
 	if (WRITE_DETAILED_LOG == 1) {
-		fprintf(gDetLog, "(%d) Request to promote %d from %d to %d\n",
-				gLineInTrace, object->getID(), oldGen, newGen);
+		fprintf(gDetLog, "(%d) Request to promote %d from %d to %d\n",gLineInTrace, object->getID(), oldGen, newGen);
 	}
 
 	void *address = myAllocators[newGen]->gcAllocate(size);
@@ -443,9 +448,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	if (address == NULL) {
 		//there is not enough space upstairs, stay where you are for a little longer
 		if (WRITE_DETAILED_LOG == 1) {
-			fprintf(gDetLog,
-					"(%d) Request to promote %d from %d to %d not possible (no space)\n",
-					gLineInTrace, object->getID(), oldGen, newGen);
+			fprintf(gDetLog,"(%d) Request to promote %d from %d to %d not possible (no space)\n",gLineInTrace, object->getID(), oldGen, newGen);
 		}
 		//this line signalizes that there was an out of space error
 		return 1;
@@ -461,9 +464,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	//remove all remSet entries
 	while (myObjectContainers[oldGen]->removeFromGenRoot(object) != -1) {
 		if (WRITE_DETAILED_LOG == 1) {
-			fprintf(gDetLog,
-					"(%d) Removing myself %d from remset %d (promotion))\n",
-					gLineInTrace, object->getID(), oldGen);
+			fprintf(gDetLog,"(%d) Removing myself %d from remset %d (promotion))\n",gLineInTrace, object->getID(), oldGen);
 		}
 	}
 	//handle children
@@ -473,9 +474,7 @@ int MemoryManager::requestPromotion(Object* object) {
 		if (child && child->getGeneration() == oldGen) {
 			myObjectContainers[oldGen]->addToGenRoot(child);
 			if (WRITE_DETAILED_LOG == 1) {
-				fprintf(gDetLog,
-						"(%d) Adding %d to remset %d (parent (%d) was promoted))\n",
-						gLineInTrace, child->getID(), oldGen, object->getID());
+				fprintf(gDetLog,"(%d) Adding %d to remset %d (parent (%d) was promoted))\n",gLineInTrace, child->getID(), oldGen, object->getID());
 			}
 		}
 	}
@@ -489,37 +488,31 @@ void MemoryManager::addToContainers(Object* object) {
 	}
 }
 
-int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
-		int childID) {
+inline int MemoryManager::preSetPointer(int thread, int parentID, int parentSlot,int childID) {//inlined for faster execution; by Tristan
 	if (WRITE_DETAILED_LOG == 1) {
-		fprintf(gDetLog, "(%d) Set pointer from %d(%d) to %d\n", gLineInTrace,
-				parentID, parentSlot, childID);
+		fprintf(gDetLog, "(%d) Set pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
 	}
-	Object* parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
+	parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
 	//id 0 represents the NULL object.
-	Object* child = NULL;
+	child = NULL;
 	int childGeneration = -1;
-	if(childID != 0){
+	if(childID != 0) {
 		child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
 		childGeneration = child->getGeneration();
 	}
 	int parentGeneration = parent->getGeneration();
 
 	//check old child, if it created remSet entries and delete them
-	Object* oldChild = parent->getReferenceTo(parentSlot);
+	oldChild = parent->getReferenceTo(parentSlot);
 	if (oldChild && parentGeneration > oldChild->getGeneration()) {
 		int i;
 		for (i = oldChild->getGeneration(); i < parentGeneration; i++) {
 			if (WRITE_DETAILED_LOG == 1) {
-				fprintf(gDetLog,
-						"(%d) removing %d from remset %d (i am oldchild of (%d) in setpointer)\n",
-						gLineInTrace, child->getID(), i, parent->getID());
+				fprintf(gDetLog,"(%d) removing %d from remset %d (i am oldchild of (%d) in setpointer)\n",gLineInTrace, child->getID(), i, parent->getID());
 			}
 			int status = myObjectContainers[i]->removeFromGenRoot(oldChild);
 			if (status == -1) {
-				fprintf(stderr,
-						"ERROR (Line %d): could not remove oldChild %d from remset %d\n",
-						gLineInTrace, oldChild->getID(), i);
+				fprintf(stderr,"ERROR (Line %d): could not remove oldChild %d from remset %d\n",gLineInTrace, oldChild->getID(), i);
 				//exit(1);
 			}
 		}
@@ -531,9 +524,7 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 		for (i = childGeneration; i < parentGeneration; i++) {
 			myObjectContainers[i]->addToGenRoot(child);
 			if (WRITE_DETAILED_LOG == 1) {
-				fprintf(gDetLog,
-						"(%d) Adding %d to remset %d (parent (%d) got a new pointer to me))\n",
-						gLineInTrace, child->getID(),i, parent->getID());
+				fprintf(gDetLog,"(%d) Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
 			}
 		}
 	}
@@ -560,11 +551,42 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
 					markObject(child);
 				}
 			}
-		} 
 	}
+		} 
 	/****************************************/
 	return 0;
 }
+
+int MemoryManager::setPointer(int thread, int parentID, int parentSlot,int childID) {
+
+	return preSetPointer(thread,parentID,parentSlot,childID);
+
+}
+
+int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int childID) {
+    unsigned long parentRegion,childRegion,oldChildRegion;
+
+	preSetPointer(thread,parentID,parentSlot,childID);   
+
+	parentRegion = parent->getRegion(heapAddr,REGIONSIZE);	
+    if (child) {
+       childRegion =  child->getRegion(heapAddr,REGIONSIZE);
+       if (parentRegion != childRegion) 
+            regions[childRegion]->insertRemset((void*)parent);
+       
+    }
+    if (oldChild) {
+       oldChildRegion = oldChild->getRegion(heapAddr,REGIONSIZE);
+       if (parentRegion != oldChildRegion) {
+       	 
+          regions[oldChildRegion]->eraseRemset((void*)parent);
+         
+       }
+    }
+    
+	return 0;
+}
+
 
 void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
 	myObjectContainers[GENERATIONS - 1]->setStaticReference(classID, fieldOffset, objectID);
@@ -609,7 +631,7 @@ void MemoryManager::lastStats() {
 	myGarbageCollectors[GENERATIONS-1]->lastStats();
 }
 
-void MemoryManager::lastStats(long trigReason) {
+void MemoryManager::lastStats(long trigReason) { //display last stats for region-based; by Tristan
 	myGarbageCollectors[GENERATIONS-1]->lastStats(trigReason);
 }
 

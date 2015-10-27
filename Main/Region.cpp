@@ -16,8 +16,8 @@ Region**      regions;
 int           numRegions = 0;
 unsigned long heapAddr;
 
-std::vector<int> freeList;
-std::vector<int> edenList;
+std::vector<int>   freeList;
+std::vector<int>   edenList;
 
 int           trigReason = 0;
 long          sumObj;
@@ -90,6 +90,18 @@ void Region::incAge() {
 
 int Region::getAge() {
     return myAge;
+}
+
+void Region::insertRemset(void* obj) {
+    myRemset.insert(obj);
+}
+
+void Region::eraseRemset(void* obj) {
+    std::set<void*>::iterator it;
+
+    it = myRemset.find(obj);
+    if (it != myRemset.end() )
+	   myRemset.erase(myRemset.find(obj));
 }
 
 Region::~Region() {

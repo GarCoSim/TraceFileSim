@@ -18,6 +18,9 @@ extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
+void (Simulator::*operAllocate)(TraceFileLine)  = NULL;  //allocation function pointer; by Tristan
+void (Simulator::*operRefChange)(TraceFileLine) = NULL; //reference change function pointer; by Tristan
+
 Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector, int traversal, int allocator) {
 	myLastStepWorked = 1;
 	myTraceFile.open(traceFilePath);
@@ -43,6 +46,16 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 			} 
 		}
 	}
+
+    //select which type of allocation function to call; by Tristan
+    if (allocator == (int)regionBased) {
+       operAllocate  = &Simulator::regionAllocateToRootset;
+       operRefChange = &Simulator::regionReferenceOperation;
+    }
+    else {
+	   operAllocate  = &Simulator::allocateToRootset;
+	   operRefChange = &Simulator::referenceOperation;
+    }
 
 	counter = 0;
 	start = clock();
@@ -144,10 +157,10 @@ int Simulator::doNextStep(){
 		//if content exists, advice the MM(memory manager) to execute
 		switch(line.type) {
 			case 'w':
-				referenceOperation(line);
+			    (*this.*operRefChange)(line); //non/region-based reference change function; by Tristan
 				break;
 			case 'a':
-				allocateToRootset(line);
+			    (*this.*operAllocate)(line); //non/region-based allocation function; by Tristan
 				//next line is a '+', which we skip since it adds the newly created object
 				//to the rootset, which already happened in the simulator
 				getNextLine(NULL);
@@ -204,6 +217,10 @@ void Simulator::allocateToRootset(TraceFileLine line){
 	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
 }
 
+void Simulator::regionAllocateToRootset(TraceFileLine line){ //region-based allocation function; by Tristan
+	myMemManager->regionAllocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
+}
+
 void Simulator::deleteRoot(TraceFileLine line){
 	myMemManager->requestRootDelete(line.threadID, line.objectID);
 }
@@ -214,16 +231,11 @@ void Simulator::addToRoot(TraceFileLine line){
 
 void Simulator::referenceOperation(TraceFileLine line){
 	myMemManager->setPointer(line.threadID, line.parentID, line.parentSlot, line.objectID);
-
-	if(line.fieldOffset != -1){
-		/* when fieldOffset is given */
-	}
-	else{
-		/* when fieldIndex is given */
-	}
-
 }
 
+void Simulator::regionReferenceOperation(TraceFileLine line){
+	myMemManager->regionSetPointer(line.threadID, line.parentID, line.parentSlot, line.objectID);
+}
 // Added by Mazder
 
 void Simulator::referenceOperationClassField(TraceFileLine line){

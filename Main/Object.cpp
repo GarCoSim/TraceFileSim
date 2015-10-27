@@ -127,6 +127,10 @@ void Object::setVisited(bool value){
 	isVisited = value;
 }
 
+unsigned long Object::getRegion(unsigned long heapStart,int regionSize) {
+	return (unsigned long)(((unsigned long)rawObject-heapStart)/(double)regionSize);
+}
+
 Object::~Object() {}
 
 }

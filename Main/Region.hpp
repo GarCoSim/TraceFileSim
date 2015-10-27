@@ -9,10 +9,12 @@
 #define REGION_HPP_
 
 #include <vector>
+#include <set>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
 #include <math.h>
+#include "Object.hpp"
 
 #define REGIONSIZE 4194304//524288
 
@@ -51,11 +53,15 @@ public:
     void  incAge();
     int   getAge();
 
+    void  insertRemset(void *obj);
+    void  eraseRemset(void *obj);
+
 private:
 	int   mySize;
 	void* myAddress;
-	int   myOwner;       //thread owner
+	int   myOwner;       //assigned thread
     int   myAge;
+    std::set<void*> myRemset; //remembered set 
 
     int   numObj;        //how many objects in the region
 	int   currFree;      //how much free space in a region
@@ -69,9 +75,9 @@ extern unsigned long heapAddr;
 extern std::vector<int> freeList;
 extern std::vector<int> edenList;
 
-extern long          sumObj;
-extern long          sumFree;
-extern int           trigReason;
+extern long sumObj;
+extern long sumFree;
+extern int  trigReason;
 
 } 
 #endif /* REGION_HPP_ */

@@ -50,7 +50,9 @@ private:
 	void getNextLine(TraceFileLine *line);
 	void initializeTraceFileLine(TraceFileLine *line);
 	void allocateToRootset(TraceFileLine line);
+	void regionAllocateToRootset(TraceFileLine line); //alloc function if region-based; by Tristan
 	void referenceOperation(TraceFileLine line);
+	void regionReferenceOperation(TraceFileLine line);
 	void deleteRoot(TraceFileLine line);
 	void addToRoot(TraceFileLine line);
 	void referenceOperationClassField(TraceFileLine line);
