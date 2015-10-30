@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <climits>
 #include "../defines.hpp"
+#include "../Main/Region.hpp"
 #include <string>
 
 namespace traceFileSimulator {
@@ -31,6 +32,8 @@ public:
 	int getHeapSize();
 	int getRegionSize();
 	void resetRememberedAllocationSearchPoint();
+	void setNumberOfRegionsHeap(int value);
+	std::vector<Region*> getRegions();
 
 	//stats
 	void printMap();
@@ -65,6 +68,10 @@ protected:
 	bool isSplitHeap;
 	char* myHeapBitMap;
 
+	std::vector<Region*> balancedGCRegions;
+	unsigned int numberOfRegions;
+	unsigned int regionSize;
+	
 	size_t overallHeapSize;
 	unsigned int newSpaceStartHeapIndex;
 	unsigned int oldSpaceStartHeapIndex;

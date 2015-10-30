@@ -28,6 +28,12 @@
 #define SHIFTING           1
 #define SHIFTINGFACTOR     2
 
+//BALANCED GC
+#define MINREGIONSIZE	512000 //in case of change, also change REGIONEXPONENT appropriately
+#define REGIONEXPONENT  9 //9 results in MINREGINOSIZE of 512KB; 2^9 = 5120KB
+#define MINREGIONS		1024
+#define MAXREGIONS		2047
+
 enum traversalEnum {
 					breadthFirst = 0,
 					depthFirst,

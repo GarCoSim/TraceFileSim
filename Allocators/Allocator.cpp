@@ -13,6 +13,7 @@ using namespace std;
 
 namespace traceFileSimulator {
 
+//keep setHalfHeapSize() for now, replace it eventually with setNumberOfRegionsHeap
 void Allocator::setHalfHeapSize(bool value) {
 	if (value) {
 		oldSpaceStartHeapIndex = 0;
@@ -25,6 +26,60 @@ void Allocator::setHalfHeapSize(bool value) {
 		oldSpaceStartHeapIndex = 0;
 		oldSpaceEndHeapIndex = overallHeapSize;
 		isSplitHeap = false;
+	}
+}
+
+//added by Johannes
+void Allocator::setNumberOfRegionsHeap(int value) {
+	
+	if (value == 2) {
+		numberOfRegions = value;
+		regionSize = overallHeapSize/value;
+		oldSpaceStartHeapIndex = 0;
+		oldSpaceEndHeapIndex = overallHeapSize / 2;
+		newSpaceStartHeapIndex = oldSpaceEndHeapIndex;
+		newSpaceEndHeapIndex = overallHeapSize;
+		isSplitHeap = true;
+	}
+	else if (value == 1) {
+		numberOfRegions = value;
+		regionSize = overallHeapSize;
+		oldSpaceStartHeapIndex = 0;
+		oldSpaceEndHeapIndex = overallHeapSize;
+		isSplitHeap = false;
+	}
+	else if (value == 0) {
+		//determine numberOfRegions and regionSize based on overallHeapSize
+		unsigned int i, currentRegionSize, currentNumberOfRegions;
+		currentRegionSize = 0;
+		currentNumberOfRegions = 0;
+		bool stop;
+		stop = false;
+		
+		for (i = REGIONEXPONENT; !stop; i++) {
+			currentRegionSize = (int)pow((float)2,(float)i) * 1000; //KB to Byte
+			currentNumberOfRegions = overallHeapSize/currentRegionSize;
+			
+			if (currentNumberOfRegions <= MAXREGIONS) 
+				stop = true;
+			if (i >= 24) //2^24 = 16.8GB, should be more than enough space per region
+				stop = true;
+		}
+		
+		numberOfRegions = currentNumberOfRegions;
+		regionSize = currentRegionSize;
+		
+		//initialize regions
+		Region* balancedRegion;
+		int currentAddress = 0; 
+
+		for (i = 0; i < numberOfRegions; i++) {
+			balancedRegion = new Region ((void*)currentAddress, regionSize);
+
+			balancedGCRegions.push_back(balancedRegion);
+			
+			currentAddress = currentAddress + regionSize;
+		}
 	}
 }
 
