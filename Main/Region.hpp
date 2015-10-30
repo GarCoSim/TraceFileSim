@@ -24,17 +24,14 @@ namespace traceFileSimulator {
 class Region {
 public:
 	virtual ~Region();	
-	Region(void *address, int size,int owner);
+	Region(void *address, int size);
 	
     void setSize(int size);
     int  getSize();
 
     void  setAddress(void* address);
     void* getAddress();
-    
-    void setOwner(int owner); 
-    int  getOwner();       
-
+         
     void setCurrFree(int free); 
     int  getCurrFree(); 
 
@@ -56,10 +53,9 @@ public:
     void  insertRemset(void *obj);
     void  eraseRemset(void *obj);
 
-private:
+protected:
 	int   mySize;
 	void* myAddress;
-	int   myOwner;       //assigned thread
     int   myAge;
     std::set<void*> myRemset; //remembered set 
 
@@ -68,7 +64,6 @@ private:
 	void  *currFreeAddr; //address of the free area in the region
 };
 
-extern Region**      regions;
 extern int           numRegions;
 extern unsigned long heapAddr;
 

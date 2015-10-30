@@ -17,7 +17,7 @@
 #include <ctime>
 #include "../defines.hpp"
 #include <stdio.h>
-#include "../Main/Region.hpp"
+#include "../Main/ThreadOwnedRegion.hpp"
 
 using namespace std;
 

@@ -69,6 +69,6 @@ enum gcReason {
 #define MAX16BIT 0xFFFF             //65535   				
 #define MAX8BIT  0xFF               //255   
 
-#define  THREADBASED 1 //if thread-based region-based allocation; by Tristan
+#define  THREADOWNED 1 //if thread-based region-based allocation; by Tristan
 
 #endif

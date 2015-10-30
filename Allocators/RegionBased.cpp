@@ -52,10 +52,10 @@ void RegionBased::initRegions(int heapSize) {
 
     numRegions = (int)heapSize/REGIONSIZE;
     heapAddr   = (unsigned long)&heap[0];
-    regions    = (Region**)malloc(sizeof(Region*)*numRegions);
+    regions    = (ThreadOwnedRegion**)malloc(sizeof(ThreadOwnedRegion*)*numRegions);
     edenLimit  = (int)floor(numRegions*0.25);
     for (i=0; i<numRegions; i++) {
-    	 regions[i] = new Region((void*)(i*REGIONSIZE),REGIONSIZE,-1);
+    	 regions[i] = new ThreadOwnedRegion((void*)(i*REGIONSIZE),REGIONSIZE,-1);
     	 freeList.push_back(i);
     }
 }
@@ -132,7 +132,7 @@ void *RegionBased::allocate(int size, int lower, int upper,int thread) {
   void *currFreeAddr;
     
   i = 0;
-  #ifdef THREADBASED
+  #ifdef THREADOWNED
   while (i < numRegions) {
       rOwner = regions[i]->getOwner();
       if (rOwner == thread) {	

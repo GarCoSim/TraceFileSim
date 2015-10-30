@@ -20,7 +20,7 @@
 #include <math.h>
 #include <string>
 #include <sys/time.h> 
-#include "../Main/Region.hpp"
+#include "../Main/ThreadOwnedRegion.hpp"
 
 namespace traceFileSimulator {
 

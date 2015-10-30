@@ -23,10 +23,9 @@ int           trigReason = 0;
 long          sumObj;
 long          sumFree;
 
-Region::Region(void *address,int size,int owner) {
+Region::Region(void *address,int size) {
 	myAddress = address;
 	mySize    = size;
-	myOwner   = owner;
 	numObj       = 0;
 	currFreeAddr = address;
 	currFree     = size;
@@ -46,14 +45,6 @@ void Region::setSize(int size) {
 
 int Region::getSize() {
 	return mySize;
-}
-
-void Region::setOwner(int owner) {
-	myOwner = owner;
-}
-
-int Region::getOwner() {
-	return myOwner;
 }
 
 void Region::setCurrFree(int free) {
