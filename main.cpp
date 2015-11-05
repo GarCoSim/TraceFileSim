@@ -6,7 +6,6 @@
  */
 
 #include "Main/Simulator.hpp"
-#include "Allocators/RegionBased.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctime>
@@ -50,6 +49,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)markSweepGC;
 				if (!strcmp(argv[i + 1], "traversal"))
 					return (int)traversalGC;
+				if (!strcmp(argv[i + 1], "balanced"))
+					return (int)balanced;
 				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
@@ -68,6 +69,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)nextFitAlloc;
 				if (!strcmp(argv[i + 1], "regionBased"))
 					return (int)regionBased;
+				if (!strcmp(argv[i + 1], "threadBased"))
+					return (int)threadBased;
 				return -1;
 			} else
 				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
@@ -83,9 +86,9 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
+						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, balanced, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
-						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
+						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit, regionBased, threadBased, default: nextFit)\n" \
 						"  --escape x, -e x          uses x as the as to escaped analysis (default 0)\n" \
 						"  --clsInfo x, -cls x         uses x as to show the uses of class in object creation (default 0)\n" \
 						);
@@ -116,12 +119,8 @@ int main(int argc, char *argv[]) {
 		traversal = (int)breadthFirst;
 	if (collector == -1)
 		collector = (int)traversalGC;
-	if (allocator == (int)regionBased) {
-        #define REGIONBASED 1
-	}
-	else 
-	   if (allocator == -1)
-		  allocator = (int)nextFitAlloc;
+   if (allocator == -1)
+		allocator = (int)nextFitAlloc;
 	if (heapSize == -1) {
 		if (collector != (int)traversalGC)
 			heapSize = 350000;
@@ -145,7 +144,7 @@ int main(int argc, char *argv[]) {
 	if(clsInfo == -1){
 		clsInfo = 0;
 	}
-
+	
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
 	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d%s\nWatermark: %d\n\n", 
@@ -174,7 +173,7 @@ int main(int argc, char *argv[]) {
 	}
 
    
- 	if (allocator == (int)regionBased)
+ 	if (allocator == (int)threadBased)
 	   simulator->lastStats(0);
 	else {
 	   simulator->printStats();

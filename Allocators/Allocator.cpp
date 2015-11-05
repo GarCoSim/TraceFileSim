@@ -68,6 +68,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		
 		numberOfRegions = currentNumberOfRegions;
 		regionSize = currentRegionSize;
+		maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
 		
 		//initialize regions
 		Region* balancedRegion;
@@ -77,6 +78,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 			balancedRegion = new Region ((void*)currentAddress, regionSize);
 
 			balancedGCRegions.push_back(balancedRegion);
+			freeRegions.push_back(i);
 			
 			currentAddress = currentAddress + regionSize;
 		}
@@ -181,6 +183,10 @@ int Allocator::getHeapSize() {
 int Allocator::getRegionSize() {
 	// this method can be generalized/overridden to support an arbitrary number of regions.
 	return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
+}
+
+std::vector<Region*> Allocator::getRegions() {
+	return balancedGCRegions;
 }
 
 

@@ -89,7 +89,10 @@ void MemoryManager::initAllocators(int heapsize) {
 				myAllocators[i] = new NextFitAllocator();
 				break;
 			case regionBased:
-				myAllocators[i] = new RegionBased();
+				myAllocators[i] = new RegionBasedAllocator();
+				break;	
+			case threadBased:
+				myAllocators[i] = new ThreadBasedAllocator();
 				break;
 
 		}
@@ -114,6 +117,9 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 			case traversalGC:
 				myGarbageCollectors[i] = new TraversalCollector();
 				break;
+			case balanced:
+				myGarbageCollectors[i] = new BalancedCollector();
+				break;	
 		}
 		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, _traversal);
 		myGarbageCollectors[i]->initializeHeap();

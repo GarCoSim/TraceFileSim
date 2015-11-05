@@ -48,7 +48,7 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 	}
 
     //select which type of allocation function to call; by Tristan
-    if (allocator == (int)regionBased) {
+    if (allocator == (int)threadBased) {
        operAllocate  = &Simulator::regionAllocateToRootset;
        operRefChange = &Simulator::regionReferenceOperation;
     }

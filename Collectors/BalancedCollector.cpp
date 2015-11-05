@@ -39,7 +39,7 @@ void BalancedCollector::collect(int reason) {
 }
 
 void BalancedCollector::initializeHeap() {
-	//myAllocator->setNumberOfRegions(0); 
+	myAllocator->setNumberOfRegionsHeap(0); 
 }
 
 vector<Region*> BalancedCollector::collectionSet() {

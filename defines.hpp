@@ -33,6 +33,7 @@
 #define REGIONEXPONENT  9 //9 results in MINREGINOSIZE of 512KB; 2^9 = 5120KB
 #define MINREGIONS		1024
 #define MAXREGIONS		2047
+#define EDENREGIONS     25 //% of the whole heap
 
 enum traversalEnum {
 					breadthFirst = 0,
@@ -42,14 +43,16 @@ enum traversalEnum {
 
 enum collectorEnum {
 						markSweepGC = 0,
-						traversalGC
+						traversalGC,
+						balanced
 				};
 
 enum allocatorEnum {
 						realAlloc = 0,
 						basicAlloc,
 						nextFitAlloc,
-						regionBased
+						regionBased,
+						threadBased
 				};
 
 enum gcReason {
@@ -64,8 +67,8 @@ enum gcReason {
 
 // create some fancy strings for debug output
 #define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : (traversal == (int)depthFirst ? "depthFirst" : "hotness"))
-#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : "copying"))
-#define ALLOCATOR_STRING (allocator == (int)basicAlloc ? "basic":(allocator == (int)regionBased ? "regionBased" : "nextFit"))
+#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : collector == (int)markSweepGC ? "markSweep" : collector == (int)balanced ? "balanced" : "copying")
+#define ALLOCATOR_STRING (allocator == (int)basicAlloc ? "basic" : allocator == (int)regionBased ? "regionBased" : allocator == (int)threadBased ? "threadBased" : "nextFit")
 
 #define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
 
@@ -74,7 +77,5 @@ enum gcReason {
 #define MAX32BIT 0xFFFFFFFF         //4294967295           
 #define MAX16BIT 0xFFFF             //65535   				
 #define MAX8BIT  0xFF               //255   
-
-#define  THREADOWNED 1 //if thread-based region-based allocation; by Tristan
 
 #endif

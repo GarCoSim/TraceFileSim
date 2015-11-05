@@ -1,14 +1,13 @@
 /*
- * RegionBased.hpp
+ * RegionBasedAllocator.hpp
  *
- *  Created on: 2015-09-04
+ *  Created on: 2015-11-03
  *      Author: GarCoSim
  *
- * This collector implements a next-fit allocation policy.
  */
 
-#ifndef _REGIONBASED_HPP_
-#define _REGIONBASED_HPP_
+#ifndef _REGIONBASEDALLOCATOR_HPP_
+#define _REGIONBASEDALLOCATOR_HPP_
 
 #include "Allocator.hpp"
 #include "../Main/Object.hpp"
@@ -20,14 +19,13 @@
 #include <math.h>
 #include <string>
 #include <sys/time.h> 
-#include "../Main/ThreadOwnedRegion.hpp"
-
+ 
 namespace traceFileSimulator {
 
-class RegionBased : public Allocator {
+class RegionBasedAllocator : public Allocator {
 public:
-	RegionBased();
-	virtual ~RegionBased();
+	RegionBasedAllocator();
+	virtual ~RegionBasedAllocator();
 
 	bool isRealAllocator();
 	void freeAllSectors();
@@ -36,15 +34,13 @@ public:
 	void moveObject(Object *object);
 	bool isInNewSpace(Object *object);
 	void freeOldSpace();
-	void initRegions(int heapSize);
 
 private:
 	void *allocate(int size, int lower, int upper);
-	void *allocate(int size, int lower, int upper, int thread);
 	unsigned int getHeapIndex(Object *object);
 
 	unsigned char *heap;
 };
 
 } 
-#endif /* _REGIONBASED_HPP_ */
+#endif /* _REGIONBASEDALLOCATOR_HPP_ */

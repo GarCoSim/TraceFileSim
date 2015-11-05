@@ -71,6 +71,9 @@ protected:
 	std::vector<Region*> balancedGCRegions;
 	unsigned int numberOfRegions;
 	unsigned int regionSize;
+	unsigned int maxNumberOfEdenRegions;
+	std::vector<int> edenRegions;
+	std::vector<int> freeRegions;
 	
 	size_t overallHeapSize;
 	unsigned int newSpaceStartHeapIndex;

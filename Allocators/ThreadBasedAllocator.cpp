@@ -1,13 +1,12 @@
 /*
- * RegionBased.hpp
+ * ThreadBasedAllocator.hpp
  *
  *  Created on: 2015-09-04
  *      Author: GarCoSim
  *
- * This collector implements a simple first-fit allocation policy.
  */
 
-#include "RegionBased.hpp"
+#include "ThreadBasedAllocator.hpp"
 
 extern int gLineInTrace;
 using namespace std;
@@ -17,20 +16,20 @@ namespace traceFileSimulator {
 
 int edenLimit; //25% of heap size
 
-RegionBased::RegionBased() {
+ThreadBasedAllocator::ThreadBasedAllocator() {
 }
 
-bool RegionBased::isRealAllocator() {
+bool ThreadBasedAllocator::isRealAllocator() {
 	return true;
 }
 
-bool RegionBased::isInNewSpace(Object *object) {
+bool ThreadBasedAllocator::isInNewSpace(Object *object) {
 	unsigned int heapIndex = getHeapIndex(object);
 	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
 }
 
 
-void RegionBased::moveObject(Object *object) {
+void ThreadBasedAllocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
 
@@ -47,7 +46,7 @@ void RegionBased::moveObject(Object *object) {
 	object->setForwarded(true);
 }
 
-void RegionBased::initRegions(int heapSize) {
+void ThreadBasedAllocator::initRegions(int heapSize) {
 	  int i;
 
     numRegions = (int)heapSize/REGIONSIZE;
@@ -61,7 +60,7 @@ void RegionBased::initRegions(int heapSize) {
 }
 
 
-void RegionBased::initializeHeap(int heapSize) {
+void ThreadBasedAllocator::initializeHeap(int heapSize) {
   	overallHeapSize = heapSize;
 	  myHeapBitMap = new char[(int)ceil(heapSize/8.0) ];
 	  heap = (unsigned char*)malloc(heapSize * 8);
@@ -78,7 +77,7 @@ void RegionBased::initializeHeap(int heapSize) {
     fprintf(stderr, "heap size %zd\n", overallHeapSize);
 }
 
-void RegionBased::freeAllSectors() {
+void ThreadBasedAllocator::freeAllSectors() {
 	unsigned int i;
 	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
@@ -87,7 +86,7 @@ void RegionBased::freeAllSectors() {
 }
 
 
-void *RegionBased::allocate(int size, int lower, int upper) { //we keep this method for compatibility with other allocator.hpp
+void *ThreadBasedAllocator::allocate(int size, int lower, int upper) { //we keep this method for compatibility with other allocator.hpp
     if (size <= 0)
 		return NULL;
 
@@ -120,7 +119,7 @@ void *RegionBased::allocate(int size, int lower, int upper) { //we keep this met
 	return NULL;
 }
 
-void *RegionBased::allocate(int size, int lower, int upper,int thread) {
+void *ThreadBasedAllocator::allocate(int size, int lower, int upper,int thread) {
 	if (size <= 0) {
 		return (void*)-1;
 	}
@@ -132,7 +131,7 @@ void *RegionBased::allocate(int size, int lower, int upper,int thread) {
   void *currFreeAddr;
     
   i = 0;
-  #ifdef THREADOWNED
+
   while (i < numRegions) {
       rOwner = regions[i]->getOwner();
       if (rOwner == thread) {	
@@ -160,51 +159,17 @@ void *RegionBased::allocate(int size, int lower, int upper,int thread) {
       setAllocated((long)currFreeAddr, size);
       return &heap[(long)currFreeAddr];
   }     
-  #else //non-thread-based
-  i = 0;
-  int numEden = (int)edenList.size();
-  for (i=0; i<numEden; i++) {
-      rID = edenList.at(i);
-    	currFree = regions[rID]->getCurrFree();
-      if (size <= currFree) {
-          currFreeAddr = regions[rID]->getCurrFreeAddr();	
-          regions[rID]->setCurrFreeAddr((void*)((long)currFreeAddr+(long)size));
-          regions[rID]->setCurrFree(currFree-size);
-          regions[rID]->incNumObj();
-          setAllocated((long)currFreeAddr, size);
-          return &heap[(long)currFreeAddr];
-      }
-  }
-  if (numEden < edenLimit) {
-      if ((int)freeList.size() > 0 ) {
-          rID   = freeList.front();
-          currFree = regions[rID]->getCurrFree();
-          currFreeAddr = regions[rID]->getAddress();	
-          regions[rID]->setCurrFreeAddr((void*)((long)currFreeAddr+(long)size));
-          regions[rID]->setCurrFree(currFree-size);
-          regions[rID]->incNumObj();
-
-          freeList.erase(freeList.begin());
-          edenList.push_back(rID);
-
-          setAllocated((long)currFreeAddr, size);
-          return &heap[(long)currFreeAddr];
-      }
-  }    
-  else
-      return (void*)-4; 
-  #endif
 
 	return (void*)-3; 
 }
 
-unsigned int RegionBased::getHeapIndex(Object *object) {
+unsigned int ThreadBasedAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
 	return (unsigned int) ((char *) object->getAddress() - (char *) heap);
 }
 
 
-void RegionBased::gcFree(Object* object) {
+void ThreadBasedAllocator::gcFree(Object* object) {
 	int size = object->getHeapSize();
 	unsigned int heapIndex = getHeapIndex(object);
 
@@ -212,10 +177,10 @@ void RegionBased::gcFree(Object* object) {
 	statLiveObjects--;
 }
 
-RegionBased::~RegionBased() {
+ThreadBasedAllocator::~ThreadBasedAllocator() {
 }
 
-void RegionBased::freeOldSpace() {
+void ThreadBasedAllocator::freeOldSpace() {
 	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
 }
 
