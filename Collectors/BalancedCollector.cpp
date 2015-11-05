@@ -43,14 +43,15 @@ void BalancedCollector::initializeHeap() {
 }
 
 vector<Region*> BalancedCollector::collectionSet() {
-	vector<Region*> allRegions = MyAllocator->getRegions();
+	vector<Region*> allRegions = myAllocator->getRegions();
 	vector<Region*> collection;
+	int i;
 	for (i = 0; i < (int)allRegions.size(); i++) {
 		Region* currentRegion = allRegions[i];
-		float mortalityRate;
+		//float mortalityRate;
 		int regionAge = currentRegion->getAge();
 		float probability = regionAge*(MAXAGEP+1)/MAXAGE+1; //linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) (there is maximum age which can also be picked with some non-0 probability)
-		if rand() < probability {
+		if ( rand() < probability ) {
 			collection.push_back (allRegions[i]);
 		}
 	}
@@ -58,4 +59,6 @@ vector<Region*> BalancedCollector::collectionSet() {
 }
 
 BalancedCollector::~BalancedCollector() {
+}
+
 }
