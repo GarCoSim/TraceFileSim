@@ -31,26 +31,35 @@
 
 ## Build Instructions
 
-	After cloning the project from this repository, it can be built by issuing the
-	following commands:
+	After cloning the project from this repository, it can be built by navigating
+	to the root directory of the project and issuing the following command:
 
-	* cd Debug
-	* make
+		* make
 
-	The executable `TraceFileSimulator` will be created upon successful compilation.
+	The executable `traceFileSim` will be created upon successful compilation.
+
+	Additional compiler flags can be specified by setting the value of the
+	CXXFLAGS variable. For example:
+
+		To build with debugging support:
+
+		* make CXXFLAGS="-Wall -g"
+
+		To build with support for the gprof profiling tool:
+
+		* make CXXFLAGS="-Wall -pg"
 
 	For subsequent compilations (after making modifications to the code, for
 	example) use the following command:
 
-	* make clean && make
+		* make clean && make
 
 
 ## Usage
 
-	Invoking a simulation run can be done with the following command (assuming you
-	are currently in the Debug directory):
+	Invoking a simulation run can be done with the following command:
 
-	* ./traceFileSim <path/to/tracefile>
+		* ./traceFileSim <path/to/tracefile>
 
 	Upon completion, a summary of the allocation and collection activity will be
 	written to a log file. This file will be located in the same directory as the
@@ -61,21 +70,21 @@
 
 	To specify a particular allocation policy:
 
-	* ./TraceFileSimulator <path/to/tracefile> --allocator <policyname>
+		* ./traceFileSim <path/to/tracefile> --allocator <policyname>
 
 	Similarly, to specify a particular collection policy:
 
-	* ./TraceFileSimulator <path/to/tracefile> --collector <policyname>
+		* ./traceFileSim <path/to/tracefile> --collector <policyname>
 	
 	To specify the size (in bytes) of the heap used during simulation:
 	
-	* ./TraceFileSimulator <path/to/tracefile> --tracefile <size>
+		* ./traceFileSim <path/to/tracefile> --tracefile <size>
 
 
 	To see a full listing of the accepted command line parameters, and their
 	corresponding options, invoke the simulator with no arguments:
 
-	* ./TraceFileSimulator
+		* ./traceFileSim
 
 
 ## Trace files
@@ -87,13 +96,9 @@
 	examples of memory management operations are:
 	
 	* allocating a new object to heap
-
 	* adding an object to a thread's root set
-
 	* updating an object reference field within an existing object
-
 	* removing an object from a thread's root set
-
 	* removing an object from heap
 
 	Trace files can be created in several ways:
