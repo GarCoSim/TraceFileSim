@@ -1,0 +1,6 @@
+traceFileSim
+**.o
+**.log
+**.trace
+**.cls
+**.td
