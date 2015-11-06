@@ -8,7 +8,7 @@
 #ifndef OBJECTCONTAINER_HPP_
 #define OBJECTCONTAINER_HPP_
 
-#include <tr1/unordered_map>
+#include <map>
 #include <vector>
 #include "Object.hpp"
 #include <stdio.h>
@@ -53,10 +53,10 @@ private:
 	bool doesObjectExistInList(Object *queryObject);
 	int getRemSetSlot();
 
-	vector<std::tr1::unordered_map<int, Object*> > rootset;
-	std::tr1::unordered_map<int, Object*> objectMap;
+	vector<std::map<int, Object*> > rootset;
+  std::map<int, Object*> objectMap;
 	vector<Object*> remSet;
-	vector<std::tr1::unordered_map<int, Object*> > classReferences;
+	vector<std::map<int, Object*> > classReferences;
 
 	int rootCount;
 	int remCount;
