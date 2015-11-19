@@ -36,6 +36,23 @@ FILE* gDetLog;
 int forceAGCAfterEveryStep = 0;
 string globalFilename;
 
+size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
+	int i;
+	
+	for (i = 1; i < argc; i++) {
+		if ((!strcmp("--force", option) || !strcmp("-f", shortOption)) && (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption))) {
+			return 1;
+		}
+		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
+			if (!strcmp(option, "--heapsize") || !strcmp(shortOption, "-h")) {
+				return (size_t)strtoul (argv[i + 1], NULL, 0);
+			} 
+		}
+	}
+
+	return 0;
+}
+
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 
@@ -72,8 +89,7 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 				if (!strcmp(argv[i + 1], "threadBased"))
 					return (int)threadBased;
 				return -1;
-			} else
-				return atoi(argv[i + 1]); // be careful! we expect the next one to be a number, otherwise we crash instantly
+			}
 		}
 	}
 
@@ -90,7 +106,7 @@ int main(int argc, char *argv[]) {
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit, regionBased, threadBased, default: nextFit)\n" \
 						"  --escape x, -e x          uses x as the as to escaped analysis (default 0)\n" \
-						"  --clsInfo x, -cls x         uses x as to show the uses of class in object creation (default 0)\n" \
+						"  --clsInfo x, -cls x       uses x as to show the uses of class in object creation (default 0)\n" \
 						);
 		exit(1);
 	}
@@ -102,7 +118,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	char *filename    = argv[1];
-	int heapSize      = setArgs(argc, argv, "--heapsize",  "-h");
+	size_t heapSize      = setHeapSize(argc, argv, "--heapsize",  "-h");
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
 	int traversal     = setArgs(argc, argv, "--traversal", "-t");
 	int collector     = setArgs(argc, argv, "--collector", "-c");
@@ -121,7 +137,7 @@ int main(int argc, char *argv[]) {
 		collector = (int)traversalGC;
    if (allocator == -1)
 		allocator = (int)nextFitAlloc;
-	if (heapSize == -1) {
+	if (heapSize == 0) {
 		if (collector != (int)traversalGC)
 			heapSize = 350000;
 		else
@@ -147,14 +163,14 @@ int main(int argc, char *argv[]) {
 	
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
-	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %d%s\nWatermark: %d\n\n", 
+	fprintf(gLogFile, "TraceFileSimulator v%s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWatermark: %d\n\n", 
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
 			"Heap Used", "Free Heap", "Generation", "GC Time");
 
-	fprintf(stderr, "Using tracefile '%s' with a heap size of %d bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
+	fprintf(stderr, "Using tracefile '%s' with a heap size of %zu bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
 	if (forceAGCAfterEveryStep)

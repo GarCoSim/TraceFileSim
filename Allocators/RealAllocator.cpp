@@ -24,7 +24,7 @@ bool RealAllocator::isRealAllocator() {
 }
 
 bool RealAllocator::isInNewSpace(Object *object) {
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t heapIndex = getHeapIndex(object);
 	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
 }
 
@@ -33,11 +33,11 @@ void RealAllocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
 
-	int size = object->getHeapSize();
+	size_t size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 
 	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %d) with id %d, old space %d, new space %d\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
+		fprintf(stderr, "error moving object (size %zu) with id %d, old space %zu, new space %zu\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
 		exit(1);
 	}
 	memcpy((void *) address, (void *) object->getAddress(), size);
@@ -46,8 +46,8 @@ void RealAllocator::moveObject(Object *object) {
 	object->setForwarded(true);
 }
 
-void RealAllocator::initializeHeap(int heapSize) {
-	myHeapBitMap = new char[(int)ceil(heapSize/8.0) ]; //modified by Tristan to use ceil() function
+void RealAllocator::initializeHeap(size_t heapSize) {
+	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ]; //modified by Tristan to use ceil() function
 
 	overallHeapSize = heapSize;
 	setHalfHeapSize(heapSize);
@@ -69,21 +69,21 @@ void RealAllocator::initializeHeap(int heapSize) {
 }
 
 void RealAllocator::freeAllSectors() {
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
 	}
 
 }
 
-void *RealAllocator::allocate(int size, int lower, int upper) {
+void *RealAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	if (size <= 0) {
 		return NULL;
 	}
 
-	int address = lower;
-	int contiguous = 0;
-	int i,j,k,bit;
+	size_t address = lower;
+	size_t contiguous = 0;
+	size_t i,j,k,bit;
 		
     i = lower;
     while (i < upper) {
@@ -127,15 +127,15 @@ void *RealAllocator::allocate(int size, int lower, int upper) {
 	return NULL;
 }
 
-unsigned int RealAllocator::getHeapIndex(Object *object) {
+size_t RealAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
-	return (unsigned int) ((char *) object->getAddress() - (char *) heap);
+	return (size_t) ((char *) object->getAddress() - (char *) heap);
 }
 
 
 void RealAllocator::gcFree(Object* object) {
-	int size = object->getHeapSize();
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t size = object->getHeapSize();
+	size_t heapIndex = getHeapIndex(object);
 
 	setFree(heapIndex, size);
 

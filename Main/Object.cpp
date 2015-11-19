@@ -12,7 +12,7 @@ extern int gLineInTrace; //added by Tristan
 
 namespace traceFileSimulator {
 
-Object::Object(int id, void *address, int size, int maxPointers, char *className) {
+Object::Object(int id, void *address, size_t size, int maxPointers, char *className) {
 	myId = id;
 	rawObject = (RawObject *) address;
 	rawObject->associatedObject = this;
@@ -30,7 +30,7 @@ Object::Object(int id, void *address, int size, int maxPointers, char *className
 	forwarded = false;
 }
 
-Object::Object(int tid, int id, void *address, int size, int maxPointers, char *className) {
+Object::Object(int tid, int id, void *address, size_t size, int maxPointers, char *className) {
 	myId = id;
 	rawObject = (RawObject *) address;
 	rawObject->associatedObject = this;
@@ -73,11 +73,11 @@ int Object::getID(){
 	return this->myId;
 }
 
-int Object::getPayloadSize(){
+size_t Object::getPayloadSize(){
 	return mySize - OBJECT_HEADER_SIZE;
 }
 
-int Object::getHeapSize(){
+size_t Object::getHeapSize(){
 	return mySize;
 }
 
@@ -127,8 +127,8 @@ void Object::setVisited(bool value){
 	isVisited = value;
 }
 
-unsigned long Object::getRegion(unsigned long heapStart,int regionSize) {
-	return (unsigned long)(((unsigned long)rawObject-heapStart)/(double)regionSize);
+size_t Object::getRegion(size_t heapStart, size_t regionSize) {
+	return (size_t)(((size_t)rawObject-heapStart)/(double)regionSize);
 }
 
 Object::~Object() {}

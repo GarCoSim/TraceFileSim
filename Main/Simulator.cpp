@@ -21,7 +21,7 @@ namespace traceFileSimulator {
 void (Simulator::*operAllocate)(TraceFileLine)  = NULL;  //allocation function pointer; by Tristan
 void (Simulator::*operRefChange)(TraceFileLine) = NULL; //reference change function pointer; by Tristan
 
-Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector, int traversal, int allocator) {
+Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator) {
 	myLastStepWorked = 1;
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
@@ -151,7 +151,7 @@ int Simulator::doNextStep(){
 	if (ONE_SECOND_PASSED) {
 		start = clock();
 		seconds++;
-		//printf("[%3ds] Line in tracefile: %7d\n", seconds, gLineInTrace);
+		printf("[%3ds] Line in tracefile: %7d\n", seconds, gLineInTrace);
 	}
 	if(myLastStepWorked){
 		//if content exists, advice the MM(memory manager) to execute

@@ -15,7 +15,7 @@ namespace traceFileSimulator {
 
 class ThreadOwnedRegion : public Region {
 public:
-	ThreadOwnedRegion(void *address,int size,int owner);
+	ThreadOwnedRegion(void *address,size_t size,int owner);
 	virtual ~ThreadOwnedRegion();
 	
 	void setOwner(int owner); 

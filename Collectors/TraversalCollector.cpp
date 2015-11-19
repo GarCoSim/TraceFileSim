@@ -77,9 +77,9 @@ void TraversalCollector::swap() {
 }
 
 void TraversalCollector::checkWatermark() {
-	int size = myAllocator->getRegionSize();
-	int free = myAllocator->getFreeSize();
-	int ratio = 100 - (100 * free / size);
+	size_t size = myAllocator->getRegionSize();
+	size_t free = myAllocator->getFreeSize();
+	size_t ratio = 100 - (100 * free / size);
 	if (ratio > myWatermark) {
 		collect((int)reasonHighWatermark);
 	}

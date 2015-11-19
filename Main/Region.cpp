@@ -20,10 +20,10 @@ std::vector<int>   freeList;
 std::vector<int>   edenList;
 
 int           trigReason = 0;
-long          sumObj;
-long          sumFree;
+size_t          sumObj;
+size_t          sumFree;
 
-Region::Region(void *address,int size) {
+Region::Region(void *address,size_t size) {
 	myAddress = address;
 	mySize    = size;
 	numObj       = 0;
@@ -39,19 +39,19 @@ void* Region::getAddress() {
 	return myAddress;
 }
 
-void Region::setSize(int size) {
+void Region::setSize(size_t size) {
    mySize = size;
 }
 
-int Region::getSize() {
+size_t Region::getSize() {
 	return mySize;
 }
 
-void Region::setCurrFree(int free) {
+void Region::setCurrFree(size_t free) {
     currFree = free;
 } 
 
-int  Region::getCurrFree() {
+size_t  Region::getCurrFree() {
     return currFree;
 }
 

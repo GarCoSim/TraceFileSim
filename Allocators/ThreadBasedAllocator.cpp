@@ -14,7 +14,7 @@ using namespace std;
 
 namespace traceFileSimulator {
 
-int edenLimit; //25% of heap size
+size_t edenLimit; //25% of heap size
 
 ThreadBasedAllocator::ThreadBasedAllocator() {
 }
@@ -24,7 +24,7 @@ bool ThreadBasedAllocator::isRealAllocator() {
 }
 
 bool ThreadBasedAllocator::isInNewSpace(Object *object) {
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t heapIndex = getHeapIndex(object);
 	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
 }
 
@@ -33,11 +33,11 @@ void ThreadBasedAllocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
 
-	int size = object->getHeapSize();
+	size_t size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 
 	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %d) with id %d, old space %d, new space %d\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
+		fprintf(stderr, "error moving object (size %zu) with id %d, old space %zu, new space %zu\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
 		exit(1);
 	}
 	memcpy((void *) address, (void *) object->getAddress(), size);
@@ -46,13 +46,13 @@ void ThreadBasedAllocator::moveObject(Object *object) {
 	object->setForwarded(true);
 }
 
-void ThreadBasedAllocator::initRegions(int heapSize) {
-	  int i;
+void ThreadBasedAllocator::initRegions(size_t heapSize) {
+	int i;
 
     numRegions = (int)heapSize/REGIONSIZE;
-    heapAddr   = (unsigned long)&heap[0];
+    heapAddr   = (size_t)&heap[0];
     regions    = (ThreadOwnedRegion**)malloc(sizeof(ThreadOwnedRegion*)*numRegions);
-    edenLimit  = (int)floor(numRegions*0.25);
+    edenLimit  = (size_t)floor(numRegions*0.25);
     for (i=0; i<numRegions; i++) {
     	 regions[i] = new ThreadOwnedRegion((void*)(i*REGIONSIZE),REGIONSIZE,-1);
     	 freeList.push_back(i);
@@ -60,9 +60,9 @@ void ThreadBasedAllocator::initRegions(int heapSize) {
 }
 
 
-void ThreadBasedAllocator::initializeHeap(int heapSize) {
+void ThreadBasedAllocator::initializeHeap(size_t heapSize) {
   	overallHeapSize = heapSize;
-	  myHeapBitMap = new char[(int)ceil(heapSize/8.0) ];
+	  myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ];
 	  heap = (unsigned char*)malloc(heapSize * 8);
 	  statLiveObjects = 0;
 	  resetRememberedAllocationSearchPoint();
@@ -78,7 +78,7 @@ void ThreadBasedAllocator::initializeHeap(int heapSize) {
 }
 
 void ThreadBasedAllocator::freeAllSectors() {
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
 	}
@@ -86,16 +86,16 @@ void ThreadBasedAllocator::freeAllSectors() {
 }
 
 
-void *ThreadBasedAllocator::allocate(int size, int lower, int upper) { //we keep this method for compatibility with other allocator.hpp
+void *ThreadBasedAllocator::allocate(size_t size, size_t lower, size_t upper) { //we keep this method for compatibility with other allocator.hpp
     if (size <= 0)
 		return NULL;
 
-	if ((int) oldSpaceRememberedHeapIndex < lower || (int) oldSpaceRememberedHeapIndex > upper)
+	if ((size_t) oldSpaceRememberedHeapIndex < lower || (size_t) oldSpaceRememberedHeapIndex > upper)
 		oldSpaceRememberedHeapIndex = lower; // essentially fall back to first fit
 
-	int potentialStart, contiguous = 1;
+	size_t potentialStart, contiguous = 1;
 	bool hasWrappedAround = false;
-	for (potentialStart=oldSpaceRememberedHeapIndex+1; !hasWrappedAround || potentialStart<=(int)oldSpaceRememberedHeapIndex; potentialStart+=contiguous) {
+	for (potentialStart=oldSpaceRememberedHeapIndex+1; !hasWrappedAround || potentialStart<=(size_t)oldSpaceRememberedHeapIndex; potentialStart+=contiguous) {
 		if (potentialStart > upper) {
 			hasWrappedAround = true;
 			potentialStart = lower;
@@ -119,7 +119,7 @@ void *ThreadBasedAllocator::allocate(int size, int lower, int upper) { //we keep
 	return NULL;
 }
 
-void *ThreadBasedAllocator::allocate(int size, int lower, int upper,int thread) {
+void *ThreadBasedAllocator::allocate(size_t size, size_t lower, size_t upper,int thread) {
 	if (size <= 0) {
 		return (void*)-1;
 	}
@@ -127,7 +127,8 @@ void *ThreadBasedAllocator::allocate(int size, int lower, int upper,int thread) 
 	if (size > REGIONSIZE)
 	 	 return (void*)-2; 
 
-  int i,rID,rOwner,currFree;
+  int i, rID, rOwner;
+  size_t currFree;
   void *currFreeAddr;
     
   i = 0;
@@ -163,15 +164,15 @@ void *ThreadBasedAllocator::allocate(int size, int lower, int upper,int thread) 
 	return (void*)-3; 
 }
 
-unsigned int ThreadBasedAllocator::getHeapIndex(Object *object) {
+size_t ThreadBasedAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
-	return (unsigned int) ((char *) object->getAddress() - (char *) heap);
+	return (size_t) ((char *) object->getAddress() - (char *) heap);
 }
 
 
 void ThreadBasedAllocator::gcFree(Object* object) {
-	int size = object->getHeapSize();
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t size = object->getHeapSize();
+	size_t heapIndex = getHeapIndex(object);
 
 	setFree(heapIndex, size);
 	statLiveObjects--;

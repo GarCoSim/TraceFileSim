@@ -22,7 +22,7 @@ extern string globalFilename;
 
 namespace traceFileSimulator {
 
-MemoryManager::MemoryManager(int heapSize, int highWatermark, int collector, int traversal, int allocator) {
+MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator) {
 	_allocator = (allocatorEnum)allocator;
 	_collector = (collectorEnum)collector;
 	_traversal = (traversalEnum)traversal;
@@ -74,9 +74,9 @@ bool MemoryManager::hasClassTable() {
 	return classTableLoaded;
 }
 
-void MemoryManager::initAllocators(int heapsize) {
+void MemoryManager::initAllocators(size_t heapsize) {
 	int i;
-	int* genSizes = computeHeapsizes(heapsize);
+	size_t* genSizes = computeHeapsizes(heapsize);
 	for (i = 0; i < GENERATIONS; i++) {
 		switch (_allocator) {
 			case realAlloc:
@@ -145,20 +145,20 @@ void MemoryManager::statAfterCompact(int myGeneration) {
 
 }
 
-void *MemoryManager::shift(int size){
+void *MemoryManager::shift(size_t size){
 	//the idea: if there is still space for this object in the highest generation,
 	//gc until promotes happen rather than crash the application
 	void *result = NULL;
 	int outOfMemory = 0;
-	int spaceOnTop = myAllocators[GENERATIONS-1]->getFreeSize();
+	size_t spaceOnTop = myAllocators[GENERATIONS-1]->getFreeSize();
 	while(result == NULL && spaceOnTop >= size){
 		if(WRITE_DETAILED_LOG==1){
-			fprintf(gDetLog,"(%d) SHIFTING for %d\n",gLineInTrace,size);
+			fprintf(gDetLog,"(%d) SHIFTING for %zu\n",gLineInTrace,size);
 		}
 		myGarbageCollectors[GENERATIONS-1]->collect((int)reasonShift);
 		outOfMemory = myGarbageCollectors[GENERATIONS-1]->promotionPhase();
 		if(outOfMemory==-1){
-			fprintf(stderr,"(%d) OUT OF MEMORY: (%d)\n",gLineInTrace,size);
+			fprintf(stderr,"(%d) OUT OF MEMORY: (%zu)\n",gLineInTrace,size);
 			exit(1);
 		}
 		result = myAllocators[0]->gcAllocate(size);
@@ -172,7 +172,7 @@ int MemoryManager::evalCollect(){
 }
 
 
-void *MemoryManager::allocate(int size, int generation) {
+void *MemoryManager::allocate(size_t size, int generation) {
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
 		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
@@ -208,7 +208,7 @@ void *MemoryManager::allocate(int size, int generation) {
 }
 
 
-void *MemoryManager::allocate(int size, int generation, int thread) { //if region-based; by Tristan
+void *MemoryManager::allocate(size_t size, int generation, int thread) { //if region-based; by Tristan
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
 		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
@@ -271,7 +271,7 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 	}
 }
 
-int MemoryManager::allocateObjectToRootset(int thread, int id,int size, int refCount, int classID) {
+int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
@@ -280,7 +280,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,int size, int refC
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 }
 
-int MemoryManager::regionAllocateObjectToRootset(int thread, int id,int size, int refCount, int classID) {//if region-based; by Tristan
+int MemoryManager::regionAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {//if region-based; by Tristan
 
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
@@ -290,10 +290,10 @@ int MemoryManager::regionAllocateObjectToRootset(int thread, int id,int size, in
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 }
 
-inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,int size, int refCount, int classID,void *address) {//post allocation; by Tristan
+inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID,void *address) {//post allocation; by Tristan
 	if (address == NULL) {
-		fprintf(gLogFile, "Failed to allocate %d bytes in trace line %d.\n",size, gLineInTrace);
-		fprintf(stderr, "ERROR(Line %d): Out of memory (%d bytes)\n",gLineInTrace,size);
+		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line %d.\n",size, gLineInTrace);
+		fprintf(stderr, "ERROR(Line %d): Out of memory (%zu bytes)\n",gLineInTrace,size);
 		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
@@ -405,7 +405,7 @@ void MemoryManager::requestReallocate(Object* object) {
 
 	if (object) {
 		int gen = object->getGeneration();
-		int size = object->getHeapSize();
+		size_t size = object->getHeapSize();
 		void *address = myAllocators[gen]->gcAllocate(size);
 		memcpy(address, object->getAddress(), size);
 		if (address == NULL) {
@@ -443,7 +443,7 @@ int MemoryManager::requestPromotion(Object* object) {
 
 	int oldGen = object->getGeneration();
 	int newGen = oldGen + 1;
-	int size = object->getHeapSize();
+	size_t size = object->getHeapSize();
 
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Request to promote %d from %d to %d\n",gLineInTrace, object->getID(), oldGen, newGen);
@@ -641,9 +641,9 @@ void MemoryManager::lastStats(long trigReason) { //display last stats for region
 	myGarbageCollectors[GENERATIONS-1]->lastStats(trigReason);
 }
 
-int* MemoryManager::computeHeapsizes(int heapSize) {
-	int heapLeft = heapSize;
-	int* result = (int*) malloc(GENERATIONS * sizeof(int));
+size_t* MemoryManager::computeHeapsizes(size_t heapSize) {
+	size_t heapLeft = heapSize;
+	size_t* result = (size_t*) malloc(GENERATIONS * sizeof(size_t));
 	int i;
 
 	for (i = GENERATIONS - 1; i >= 0; i--) {
@@ -654,16 +654,16 @@ int* MemoryManager::computeHeapsizes(int heapSize) {
 			heapLeft = heapLeft * GENRATIO;
 		}
 		if (GEN_DEBUG == 1) {
-			printf("GENDEBUG: G%d: %d\n", i, result[i]);
+			printf("GENDEBUG: G%d: %zu\n", i, result[i]);
 		}
 	}
 
 	if (GEN_DEBUG == 1) {
-		int sum = 0;
+		size_t sum = 0;
 		for (i = 0; i < GENERATIONS; i++) {
 			sum = sum + result[i];
 		}
-		printf("GENDEBUG: Sum of Generations: %d\n", sum);
+		printf("GENDEBUG: Sum of Generations: %zu\n", sum);
 	}
 
 	return result;

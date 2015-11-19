@@ -23,14 +23,14 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-    void *gcAllocate(int size);
-	void *gcAllocate(int size,int thread);
+    void *gcAllocate(size_t size);
+	void *gcAllocate(size_t size,int thread);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector
-	int getFreeSize();
-	int getHeapSize();
-	int getRegionSize();
+	size_t getFreeSize();
+	size_t getHeapSize();
+	size_t getRegionSize();
 	void resetRememberedAllocationSearchPoint();
 	void setNumberOfRegionsHeap(int value);
 	std::vector<Region*> getRegions();
@@ -47,22 +47,22 @@ public:
 
 	virtual bool isInNewSpace(Object *object);
 
-	virtual void initializeHeap(int heapSize);
+	virtual void initializeHeap(size_t heapSize);
 
 	virtual bool isRealAllocator();
 	virtual void printStats(long trigReason);
 
 protected:
-	int getUsedSpace(bool newSpace);
-	void *allocateInNewSpace(int size);
-	void setAllocated(unsigned int heapIndex, int size);
-	void setFree(unsigned int heapIndex, int size);
-	bool isBitSet(unsigned int heapIndex);
-	void setBitUsed(unsigned int heapIndex);
-	void setBitUnused(unsigned int heapIndex);
+	size_t getUsedSpace(bool newSpace);
+	void *allocateInNewSpace(size_t size);
+	void setAllocated(size_t heapIndex, size_t size);
+	void setFree(size_t heapIndex, size_t size);
+	bool isBitSet(size_t heapIndex);
+	void setBitUsed(size_t heapIndex);
+	void setBitUnused(size_t heapIndex);
 
-    virtual void *allocate(int size, int lower, int upper);
-	virtual void *allocate(int size, int lower, int upper,int thread);
+    virtual void *allocate(size_t size, size_t lower, size_t upper);
+	virtual void *allocate(size_t size, size_t lower, size_t upper,int thread);
    
 
 	bool isSplitHeap;
@@ -70,18 +70,18 @@ protected:
 
 	std::vector<Region*> balancedGCRegions;
 	unsigned int numberOfRegions;
-	unsigned int regionSize;
+	size_t regionSize;
 	unsigned int maxNumberOfEdenRegions;
 	std::vector<int> edenRegions;
 	std::vector<int> freeRegions;
 	
 	size_t overallHeapSize;
-	unsigned int newSpaceStartHeapIndex;
-	unsigned int oldSpaceStartHeapIndex;
-	unsigned int oldSpaceEndHeapIndex;
-	unsigned int newSpaceEndHeapIndex;
-	unsigned int newSpaceRememberedHeapIndex;
-	unsigned int oldSpaceRememberedHeapIndex;
+	size_t newSpaceStartHeapIndex;
+	size_t oldSpaceStartHeapIndex;
+	size_t oldSpaceEndHeapIndex;
+	size_t newSpaceEndHeapIndex;
+	size_t newSpaceRememberedHeapIndex;
+	size_t oldSpaceRememberedHeapIndex;
 
 	int statLiveObjects;
 	FILE* allocLog;

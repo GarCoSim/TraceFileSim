@@ -23,7 +23,7 @@ bool BasicAllocator::isRealAllocator() {
 }
 
 bool BasicAllocator::isInNewSpace(Object *object) {
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t heapIndex = getHeapIndex(object);
 	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
 }
 
@@ -32,11 +32,11 @@ void BasicAllocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
 
-	int size = object->getHeapSize();
+	size_t size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 
 	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %d) with id %d, old space %d, new space %d\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
+		fprintf(stderr, "error moving object (size %zu) with id %d, old space %zu, new space %zu\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
 		exit(1);
 	}
 	memcpy((void *) address, (void *) object->getAddress(), size);
@@ -45,9 +45,9 @@ void BasicAllocator::moveObject(Object *object) {
 	object->setForwarded(true);
 }
 
-void BasicAllocator::initializeHeap(int heapSize) {
+void BasicAllocator::initializeHeap(size_t heapSize) {
 	overallHeapSize = heapSize;
-	myHeapBitMap = new char[(int)ceil(heapSize/8.0) ];
+	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ];
 	heap = (unsigned char*)malloc(heapSize * 8);
 	statLiveObjects = 0;
 	resetRememberedAllocationSearchPoint();
@@ -62,18 +62,18 @@ void BasicAllocator::initializeHeap(int heapSize) {
 }
 
 void BasicAllocator::freeAllSectors() {
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < overallHeapSize; i++) {
 		setBitUnused(i);
 	}
 
 }
 
-void *BasicAllocator::allocate(int size, int lower, int upper) {
+void *BasicAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	if (size <= 0)
 		return NULL;
 
-	int potentialStart, contiguous;
+	size_t potentialStart, contiguous;
 	for (potentialStart=lower; potentialStart < upper-size; potentialStart++) {
 		if (isBitSet(potentialStart))
 			continue;
@@ -91,15 +91,15 @@ void *BasicAllocator::allocate(int size, int lower, int upper) {
 	return NULL;
 }
 
-unsigned int BasicAllocator::getHeapIndex(Object *object) {
+size_t BasicAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
-	return (unsigned int) ((char *) object->getAddress() - (char *) heap);
+	return (size_t) ((char *) object->getAddress() - (char *) heap);
 }
 
 
 void BasicAllocator::gcFree(Object* object) {
-	int size = object->getHeapSize();
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t size = object->getHeapSize();
+	size_t heapIndex = getHeapIndex(object);
 
 	setFree(heapIndex, size);
 	statLiveObjects--;

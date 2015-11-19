@@ -31,16 +31,16 @@ public:
 	bool isRealAllocator();
 	void freeAllSectors();
 	void gcFree(Object* object);
-	void initializeHeap(int heapSize);
+	void initializeHeap(size_t heapSize);
 	void moveObject(Object *object);
 	bool isInNewSpace(Object *object);
 	void freeOldSpace();
-	void initRegions(int heapSize);
+	void initRegions(size_t heapSize);
 
 private:
-	void *allocate(int size, int lower, int upper);
-	void *allocate(int size, int lower, int upper, int thread);
-	unsigned int getHeapIndex(Object *object);
+	void *allocate(size_t size, size_t lower, size_t upper);
+	void *allocate(size_t size, size_t lower, size_t upper, int thread);
+	size_t getHeapIndex(Object *object);
 
 	unsigned char *heap;
 };

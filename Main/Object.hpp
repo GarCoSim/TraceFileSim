@@ -29,22 +29,23 @@ typedef struct RawObject {
 class Object {
 public:
 	
-	Object(int id, void *address, int size, int numberOfPointers, char *className);
+	Object(int id, void *address, size_t size, int numberOfPointers, char *className);
 	// modified by mazder, constructor overloading with thread id	
-	Object(int tid, int id, void *address, int size, int numberOfPointers, char *className);
-	void setArgs(int id, int payloadSize, int maxPointers, char *className);
+	Object(int tid, int id, void *address, size_t size, int numberOfPointers, char *className);
+	void setArgs(int id, size_t payloadSize, int maxPointers, char *className);
 	virtual ~Object();
 	void*   getAddress();
 	void 	updateAddress(void *newAddress);
 	int 	getID();
-	int 	getPayloadSize();
-	int 	getHeapSize();
+	size_t 	getPayloadSize();
+	size_t 	getHeapSize();
 	int 	getPointersMax();
 	Object* getReferenceTo(int pointerNumber);
 	int 	setPointer(int pointerNumber, Object* target);
 	void *getRawPointerAddress(int pointerNumber);
 	void setRawPointerAddress(int pointerNumber, void *address);
 
+	
 	bool 	getVisited();
 	void	setVisited(bool value);
 
@@ -78,7 +79,7 @@ public:
 		forwarded = value;
 	}
 
-	unsigned long getRegion(unsigned long heap,int numRegions); //get the region where the object belongs to
+	size_t getRegion(size_t heap, size_t regionSize); //get the region where the object belongs to
 
 	// The following three fields are added
 	// to do escape analysis
@@ -94,7 +95,7 @@ private:
 	int 	   myId;
 	int        freed;
 
-	int  	   mySize;
+	size_t     mySize;
 
 	// How many pointer slots do I have?
 	int 	   myPointersMax;

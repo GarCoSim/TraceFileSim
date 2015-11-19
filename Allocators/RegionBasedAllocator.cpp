@@ -22,7 +22,7 @@ bool RegionBasedAllocator::isRealAllocator() {
 }
 
 bool RegionBasedAllocator::isInNewSpace(Object *object) {
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t heapIndex = getHeapIndex(object);
 	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
 }
 
@@ -31,11 +31,11 @@ void RegionBasedAllocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
 
-	int size = object->getHeapSize();
+	size_t size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 
 	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %d) with id %d, old space %d, new space %d\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
+		fprintf(stderr, "error moving object (size %zu) with id %d, old space %zu, new space %zu\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
 		exit(1);
 	}
 	memcpy((void *) address, (void *) object->getAddress(), size);
@@ -44,9 +44,9 @@ void RegionBasedAllocator::moveObject(Object *object) {
 	object->setForwarded(true);
 }
 
-void RegionBasedAllocator::initializeHeap(int heapSize) {
+void RegionBasedAllocator::initializeHeap(size_t heapSize) {
 	overallHeapSize = heapSize;
-	myHeapBitMap = new char[(int)ceil(heapSize/8.0) ];
+	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0)];
 	heap = (unsigned char*)malloc(heapSize); // * 8
 	statLiveObjects = 0;
 	resetRememberedAllocationSearchPoint();
@@ -68,13 +68,13 @@ void RegionBasedAllocator::freeAllSectors() {
 
 }
 
-void *RegionBasedAllocator::allocate(int size, int lower, int upper) {
+void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 
 	if (size <= 0)
 		return NULL;
 	
 	unsigned int i, currentNumberEdenRegions, edenRegionID;
-	int currentFreeSpace;
+	size_t currentFreeSpace;
 	void *currentFreeAddress;
 	
 	currentNumberEdenRegions = edenRegions.size();
@@ -118,15 +118,15 @@ void *RegionBasedAllocator::allocate(int size, int lower, int upper) {
 	return NULL;
 }
 
-unsigned int RegionBasedAllocator::getHeapIndex(Object *object) {
+size_t RegionBasedAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
-	return (unsigned int) ((char *) object->getAddress() - (char *) heap);
+	return (size_t) ((char *) object->getAddress() - (char *) heap);
 }
 
 
 void RegionBasedAllocator::gcFree(Object* object) {
-	int size = object->getHeapSize();
-	unsigned int heapIndex = getHeapIndex(object);
+	size_t size = object->getHeapSize();
+	size_t heapIndex = getHeapIndex(object);
 
 	setFree(heapIndex, size);
 	statLiveObjects--;

@@ -56,7 +56,7 @@ protected:
 	int statFreeSpaceOnHeap;
 	int statFreeSpaceFragmentCount;
 	int statCollectionReason;
-	int myWatermark;
+	size_t myWatermark;
 	int myGeneration;
 	int statFreedDuringThisGC;
 	int gcsSinceLastPromotionPhase;

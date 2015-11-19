@@ -24,16 +24,16 @@ namespace traceFileSimulator {
 class Region {
 public:
 	virtual ~Region();	
-	Region(void *address, int size);
+	Region(void *address, size_t size);
 	
-    void setSize(int size);
-    int  getSize();
+    void setSize(size_t size);
+    size_t  getSize();
 
     void  setAddress(void* address);
     void* getAddress();
          
-    void setCurrFree(int free); 
-    int  getCurrFree(); 
+    void setCurrFree(size_t free); 
+    size_t  getCurrFree(); 
 
     void incNumObj(); 
     int  getNumObj(); 
@@ -44,8 +44,6 @@ public:
     void  appendObj(long obj); 
     char* getObjects(); 
 
-    int   getRegion(long address);
-
     void  setAge(int age);
     void  incAge();
     int   getAge();
@@ -54,24 +52,24 @@ public:
     void  eraseRemset(void *obj);
 
 protected:
-	int   mySize;
+	size_t   mySize;
 	void* myAddress;
     int   myAge;
     std::set<void*> myRemset; //remembered set 
 
     int   numObj;        //how many objects in the region
-	int   currFree;      //how much free space in a region
+	size_t   currFree;      //how much free space in a region
 	void  *currFreeAddr; //address of the free area in the region
 };
 
 extern int           numRegions;
-extern unsigned long heapAddr;
+extern size_t heapAddr;
 
 extern std::vector<int> freeList;
 extern std::vector<int> edenList;
 
-extern long sumObj;
-extern long sumFree;
+extern size_t sumObj;
+extern size_t sumFree;
 extern int  trigReason;
 
 } 
