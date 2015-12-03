@@ -89,7 +89,7 @@ Allocator::Allocator() {
 }
 
 size_t Allocator::getFreeSize() {
-	unsigned int i;
+	size_t i;
 	size_t count = 0;
 	for (i=0; i<overallHeapSize; i++)
 		if (!isBitSet(i))
@@ -115,7 +115,7 @@ bool Allocator::isInNewSpace(Object *object) {
 }
 
 void Allocator::swapHeaps() {
-	unsigned int tempIndex;
+	size_t tempIndex;
 
 	tempIndex = newSpaceStartHeapIndex;
 	newSpaceStartHeapIndex = oldSpaceStartHeapIndex;
@@ -135,7 +135,7 @@ void Allocator::freeOldSpace() {
 }
 
 size_t Allocator::getUsedSpace(bool newSpace) {
-	unsigned int i;  
+	size_t i;  
 	size_t usedSpace = 0;
 	if (newSpace) {
 		for (i = newSpaceStartHeapIndex; i < newSpaceEndHeapIndex; i++)
@@ -194,7 +194,7 @@ std::vector<Region*> Allocator::getRegions() {
 void Allocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);
 
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < overallHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			fprintf(heapMap, "X");
