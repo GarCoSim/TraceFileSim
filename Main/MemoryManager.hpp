@@ -14,7 +14,6 @@
 #include "../Allocators/RealAllocator.hpp"
 #include "../Allocators/BasicAllocator.hpp"
 #include "../Allocators/NextFitAllocator.hpp"
-#include "../Allocators/ThreadBasedAllocator.hpp"
 #include "../Allocators/RegionBasedAllocator.hpp"
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"

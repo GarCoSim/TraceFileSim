@@ -91,10 +91,6 @@ void MemoryManager::initAllocators(size_t heapsize) {
 			case regionBased:
 				myAllocators[i] = new RegionBasedAllocator();
 				break;	
-			case threadBased:
-				myAllocators[i] = new ThreadBasedAllocator();
-				break;
-
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
 	}

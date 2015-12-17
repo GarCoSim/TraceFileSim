@@ -72,5 +72,7 @@ extern size_t sumObj;
 extern size_t sumFree;
 extern int  trigReason;
 
+extern Region**      regions;
+
 } 
 #endif /* REGION_HPP_ */
