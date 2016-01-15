@@ -128,7 +128,7 @@ void Object::setVisited(bool value){
 }
 
 size_t Object::getRegion(size_t heapStart, size_t regionSize) {
-	return (size_t)(((size_t)rawObject-heapStart)/(double)regionSize);
+	return (size_t)(((size_t)rawObject-heapStart)/(size_t)regionSize);
 }
 
 Object::~Object() {}

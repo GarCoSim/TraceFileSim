@@ -314,7 +314,7 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread);
-
+	
 	if (DEBUG_MODE == 1) {	
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();

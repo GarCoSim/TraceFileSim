@@ -57,7 +57,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		bool stop = false;
 		
 		for (i = REGIONEXPONENT; !stop; i++) {
-			currentRegionSize = (size_t)pow((float)2,(float)i) * 1000; //KB to Byte
+			currentRegionSize = (size_t)pow((float)2,(float)i) * MAGNITUDE_CONVERSION; //KB to Byte
 			currentNumberOfRegions = overallHeapSize/currentRegionSize;
 			
 			if (currentNumberOfRegions <= MAXREGIONS) 
@@ -96,6 +96,10 @@ size_t Allocator::getFreeSize() {
 			count++;
 
 	return count;
+}
+
+unsigned char *Allocator::getHeap () {
+	return heap;
 }
 
 void *Allocator::gcAllocate(size_t size) {
@@ -183,7 +187,8 @@ size_t Allocator::getHeapSize() {
 
 size_t Allocator::getRegionSize() {
 	// this method can be generalized/overridden to support an arbitrary number of regions.
-	return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
+	return regionSize;
+	//return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
 }
 
 std::vector<Region*> Allocator::getRegions() {

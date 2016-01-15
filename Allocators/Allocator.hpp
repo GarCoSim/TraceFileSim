@@ -34,6 +34,7 @@ public:
 	void resetRememberedAllocationSearchPoint();
 	void setNumberOfRegionsHeap(int value);
 	std::vector<Region*> getRegions();
+	unsigned char *getHeap();
 
 	//stats
 	void printMap();
@@ -82,6 +83,8 @@ protected:
 	size_t newSpaceEndHeapIndex;
 	size_t newSpaceRememberedHeapIndex;
 	size_t oldSpaceRememberedHeapIndex;
+	
+	unsigned char *heap;
 
 	int statLiveObjects;
 	FILE* allocLog;

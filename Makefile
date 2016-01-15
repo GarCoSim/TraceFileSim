@@ -1,4 +1,4 @@
-CXXFLAGS = -Wall
+CXXFLAGS = -Wall -g
 
 ALLOCATORS = Allocators/Allocator.o Allocators/BasicAllocator.o Allocators/NextFitAllocator.o Allocators/RealAllocator.o Allocators/RegionBasedAllocator.o
 COLLECTORS = Collectors/Collector.o Collectors/MarkSweepCollector.o Collectors/TraversalCollector.o Collectors/BalancedCollector.o

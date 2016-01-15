@@ -31,13 +31,15 @@ public:
 	BalancedCollector();
 	virtual ~BalancedCollector();
 	void collect(int reason);
-	//void checkWatermark();
 	void initializeHeap();
-	//int promotionPhase();
 
 private:
-	vector<Region*> collectionSet();
-	//Other things. TBD
+	std::vector<Region*> buildCollectionSet();
+	void preCollect();
+	void copy(std::vector<Region*> collectionSet);
+	void emptyHelpers();
+	void getCollectionSetRoots(std::vector<Region*> collectionSet);
+	void copyObjects(std::vector<Region*> collectionSet);
 
 };
 

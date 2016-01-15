@@ -15,6 +15,8 @@
 #define VISUALIZE_GCS 	1
 #define OBJECT_HEADER_SIZE 16
 
+#define MAGNITUDE_CONVERSION 1024
+
 //DEBUGGING
 #define DEBUG_MODE            0
 #define WRITE_DETAILED_LOG    0

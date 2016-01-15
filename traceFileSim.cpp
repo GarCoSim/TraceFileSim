@@ -45,7 +45,33 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 		}
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--heapsize") || !strcmp(shortOption, "-h")) {
-				return (size_t)strtoul (argv[i + 1], NULL, 0);
+				
+				char suffix;
+				char *arg = argv[i + 1];
+
+				// if we have no suffix we can skip this check
+				if (isdigit(arg[strlen(arg) - 1]))
+					return (size_t)strtoul (arg, NULL, 0);
+
+				suffix = arg[strlen(arg) - 1];
+
+				// get rid of a trailing b/B
+				if (suffix == 'B' || suffix == 'b')
+					suffix = arg[strlen(arg) - 2];
+
+				switch(suffix) {
+					case 'K':
+					case 'k':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION;
+					case 'M':
+					case 'm':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION;
+					case 'G':
+					case 'g':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION;
+					default:
+						return (size_t)strtoul (arg, NULL, 0);
+				}
 			} 
 		}
 	}
