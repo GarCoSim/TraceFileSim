@@ -19,20 +19,21 @@ int gLineInTrace;
 int gAllocations;
 FILE* gLogFile;
 FILE* gDetLog;
+FILE* balancedLogFile;
 int forceAGCAfterEveryStep = 0;
 string globalFilename;
 int hierDepth;
 
 size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-	
+
 	for (i = 1; i < argc; i++) {
 		if ((!strcmp("--force", option) || !strcmp("-f", shortOption)) && (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption))) {
 			return 1;
 		}
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--heapsize") || !strcmp(shortOption, "-h")) {
-				
+
 				char suffix;
 				char *arg = argv[i + 1];
 
@@ -59,7 +60,7 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 					default:
 						return (size_t)strtoul (arg, NULL, 0);
 				}
-			} 
+			}
 		}
 	}
 
@@ -68,7 +69,7 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 
 string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-	
+
 	for (i = 1; i < argc; i++){
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--logLocation") || !strcmp(shortOption, "-l")) {
@@ -109,6 +110,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)basicAlloc;
 				if (!strcmp(argv[i + 1], "nextFit"))
 					return (int)nextFitAlloc;
+				if (!strcmp(argv[i + 1], "regionBased"))
+					return (int)regionBased;
 				return -1;
 			} else if (!strcmp(option, "--writebarrier") || !strcmp(shortOption, "-wb")) {
 				if (!strcmp(argv[i + 1], "disabled"))
@@ -174,7 +177,7 @@ int main(int argc, char *argv[]) {
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 	long long logIdentifier = setIdentifier(argc, argv);
-	
+
 
 	if (highWatermark == -1)
 		highWatermark = 90;
@@ -200,9 +203,9 @@ int main(int argc, char *argv[]) {
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
 
-	
+
 	CREATE_GLOBAL_FILENAME((string)filename);
-	
+
 	string logFileName;
 	char *customLogChar = &customLog[0u];
 	if(strcmp(customLogChar, "")){
@@ -219,13 +222,27 @@ int main(int argc, char *argv[]) {
 	else
 		logFileName = globalFilename + ".log";
 
+	if(escapeAnalysis == -1){
+		escapeAnalysis = 0;
+	}
+
+	if(clsInfo == -1){
+		clsInfo = 0;
+	}
+
+	string balancedLogFileName;
+	balancedLogFileName = globalFilename + "Balanced.log";
+
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
 	if(logIdentifier!=-1){
 		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
 	}
+	balancedLogFile = fopen(balancedLogFileName.c_str(), "w+");
+
 	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
+
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
@@ -250,6 +267,7 @@ int main(int argc, char *argv[]) {
 			fflush(gDetLog);
 		}
 	}
+
 	simulator->printStats();
 	simulator->lastStats();
 
@@ -260,8 +278,9 @@ int main(int argc, char *argv[]) {
 	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
 
 	fclose(gLogFile);
+	fclose(balancedLogFile);
+
 	delete(simulator);
+
 	return EXIT_SUCCESS;
 }
-
-

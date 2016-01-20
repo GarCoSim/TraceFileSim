@@ -22,6 +22,7 @@ extern clock_t start, stop;
 namespace traceFileSimulator {
 // This collector immplements a split-heap copying collection policy
 TraversalCollector::TraversalCollector() {
+
 }
 
 /**
@@ -57,9 +58,9 @@ void TraversalCollector::swap() {
 	Object *currentObj;
 	RawObject* raw;
 	while(heapPosition<myAllocator->getOldSpaceEndHeapIndex()){
-		
+
 		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
-		
+
 		if(raw!=NULL){
 			currentObj = (Object *)raw->associatedObject;
 			if(!currentObj){
@@ -68,7 +69,7 @@ void TraversalCollector::swap() {
 				ERRMSG(ss.str().c_str());
 				exit(1);
 			}
-			
+
 			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
 			heapPosition += currentObj->getHeapSize();
 
@@ -284,7 +285,7 @@ void TraversalCollector::hierarchicalCopying() {
 		int kids = currentObj->getPointersMax();
 		copyAndForwardObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
-		
+
 		//Leaf of mini-tree: switch to breadth-first
 		if(currentObj->getDepth() % hierDepth == hierDepth-1){
 			for(i = 0; i < kids; i++){
@@ -329,4 +330,4 @@ void TraversalCollector::reallocateAllLiveObjects() {
 TraversalCollector::~TraversalCollector() {
 }
 
-} 
+}

@@ -32,7 +32,7 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, in
 
 	if (!myMemManager->loadClassTable((string)traceFilePath)){
 		fprintf(stdout, "No class table found\n");
-		// even thougth -cls 1 paramenters passed in main function 
+		// even thougth -cls 1 paramenters passed in main function
 	}
 
 	counter = 0;
@@ -152,7 +152,7 @@ int Simulator::doNextStep(){
 			case '-':
 				deleteRoot(line);
 				break;
-			case 'c': 
+			case 'c':
 				referenceOperationClassField(line);
 				break;
 			case 'r': // for now we ignore the class option
@@ -161,7 +161,7 @@ int Simulator::doNextStep(){
 				break;
 			case 's': // for now we ignore the class option
 				storeOperation(line);
-				break;	
+				break;
 
 			default:
 				//gLineInTrace++;
@@ -176,7 +176,7 @@ int Simulator::doNextStep(){
 		}
 	}
 	// commented by mazder
-	if (forceAGCAfterEveryStep) 
+	if (forceAGCAfterEveryStep)
 		myMemManager->forceGC();
 
 	/*This line calls a garbage collec after each line. Usually useful
@@ -221,7 +221,7 @@ void Simulator::referenceOperationClassField(TraceFileLine line){
 }
 
 void Simulator::readOperation(TraceFileLine line){
-	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
+	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field
 	bool offsetFlag = false; 	 // to decide either offest or index is given
 
 	//fprintf(stderr, "Reading %i\n", line.objectID);
@@ -234,20 +234,20 @@ void Simulator::readOperation(TraceFileLine line){
 	if(staticFlag){
 		/* read access to class field */
 		if(offsetFlag){
-			/* when fieldoffset is given */ 
+			/* when fieldoffset is given */
 		}
 		else{
-			/* when fieldIndex is given */ 
+			/* when fieldIndex is given */
 		}
 
 	}
 	else{
 		/* read access to object field */
 		if(offsetFlag){
-			/* when fieldoffset is given */ 
+			/* when fieldoffset is given */
 		}
 		else{
-			/* when fieldoffset is given */ 
+			/* when fieldoffset is given */
 		}
 	}
 
@@ -256,7 +256,7 @@ void Simulator::readOperation(TraceFileLine line){
 /* This is to store static primitive field in class and primitive field in an object */
 
 void Simulator::storeOperation(TraceFileLine line){
-	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
+	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field
 	bool offsetFlag = false; 	 // to decide either offest or index is given
 
 	if (line.classID != -1)
@@ -267,20 +267,20 @@ void Simulator::storeOperation(TraceFileLine line){
 	if(staticFlag){
 		/* read access to class field */
 		if(offsetFlag){
-			/* when fieldoffset is given */ 
+			/* when fieldoffset is given */
 		}
 		else{
-			/* when fieldIndex is given */ 
+			/* when fieldIndex is given */
 		}
 
 	}
 	else{
 		/* read access to object field */
 		if(offsetFlag){
-			/* when fieldoffset is given */ 
+			/* when fieldoffset is given */
 		}
 		else{
-			/* when fieldoffset is given */ 
+			/* when fieldoffset is given */
 		}
 	}
 
@@ -293,5 +293,5 @@ void Simulator::printStats(){
 Simulator::~Simulator() {
 	delete(myMemManager);
 }
-	
+
 }

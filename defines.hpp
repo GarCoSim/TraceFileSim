@@ -42,7 +42,7 @@
 #define PROMOTIONAGEFACTOR 0
 #define SHIFTING           1
 #define SHIFTINGFACTOR     2
- 
+
 //RECYCLER
 #define BLACK 1
 #define GREY 2
@@ -68,7 +68,8 @@ enum collectorEnum {
 enum allocatorEnum {
 						realAlloc = 0,
 						basicAlloc,
-						nextFitAlloc
+						nextFitAlloc,
+						regionBased
 				};
 
 enum gcReason {
@@ -88,18 +89,18 @@ enum writebarriersEnum {
 				};
 
 // create some fancy strings for debug output
-#define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : "depthFirst")
-#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : (collector == (int)recyclerGC ? "recycler" : "copying")))
-#define ALLOCATOR_STRING (allocator == (int)realAlloc ? "real" : (allocator == (int)basicAlloc ? "basic" : "nextFit"))
+#define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : (traversal == (int)depthFirst ? "depthFirst" : "hotness"))
+#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : (collector == (int)recyclerGC ? "recycler" : (collector == (int)balanced? "balanced" : "copying"))))
+#define ALLOCATOR_STRING (allocator == (int)regionBased ? "regionBased" : (allocator == (int)basicAlloc ? "basic" : "nextFit"))
 #define WRITEBARRIER_STRING (writebarrier == (int)recycler ? "recycler" : (writebarrier == (int)referenceCounting ? "referenceCounting" : "disabled"))
 #define FINALGC_STRING (finalGC == 1 ? "enabled" : "disabled")
 
 #define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
 
 //added by Tristan
-#define MAX64BIT 0xFFFFFFFFFFFFFFFF //18446744073709551615 
-#define MAX32BIT 0xFFFFFFFF         //4294967295           
-#define MAX16BIT 0xFFFF             //65535   				
-#define MAX8BIT  0xFF               //255   
+#define MAX64BIT 0xFFFFFFFFFFFFFFFF //18446744073709551615
+#define MAX32BIT 0xFFFFFFFF         //4294967295
+#define MAX16BIT 0xFFFF             //65535
+#define MAX8BIT  0xFF               //255
 
 #endif

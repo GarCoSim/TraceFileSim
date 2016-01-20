@@ -13,6 +13,7 @@
 #include <math.h>
 
 extern int gLineInTrace;
+extern FILE* balancedLogFile;
 
 using namespace std;
 
@@ -34,6 +35,66 @@ void Allocator::setHalfHeapSize(bool value) {
 	}
 }
 
+void Allocator::setNumberOfRegionsHeap(int value) {
+
+	if (value == 2) {
+		numberOfRegions = value;
+		regionSize = overallHeapSize/value;
+		oldSpaceStartHeapIndex = 0;
+		oldSpaceEndHeapIndex = overallHeapSize / 2;
+		newSpaceStartHeapIndex = oldSpaceEndHeapIndex;
+		newSpaceEndHeapIndex = overallHeapSize;
+		isSplitHeap = true;
+	}
+	else if (value == 1) {
+		numberOfRegions = value;
+		regionSize = overallHeapSize;
+		oldSpaceStartHeapIndex = 0;
+		oldSpaceEndHeapIndex = overallHeapSize;
+		isSplitHeap = false;
+	}
+	else if (value == 0) {
+		//determine numberOfRegions and regionSize based on overallHeapSize
+		unsigned int i, currentNumberOfRegions;
+		size_t currentRegionSize;
+		currentRegionSize = 0;
+		currentNumberOfRegions = 0;
+		bool stop = false;
+
+		for (i = REGIONEXPONENT; !stop; i++) {
+			currentRegionSize = (size_t)pow((float)2,(float)i) * MAGNITUDE_CONVERSION; //KB to Byte
+			currentNumberOfRegions = overallHeapSize/currentRegionSize;
+
+			if (currentNumberOfRegions <= MAXREGIONS)
+				stop = true;
+			if (i >= 24) //2^24 = 16.8GB, should be more than enough space per region
+				stop = true;
+		}
+
+		numberOfRegions = currentNumberOfRegions;
+		regionSize = currentRegionSize;
+		maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
+
+		//initialize regions
+		Region* balancedRegion;
+		size_t currentAddress = 0;
+
+		for (i = 0; i < numberOfRegions; i++) {
+			balancedRegion = new Region ((void*)currentAddress, regionSize);
+
+			balancedGCRegions.push_back(balancedRegion);
+			freeRegions.push_back(i);
+
+			currentAddress = currentAddress + regionSize;
+		}
+
+		fprintf(balancedLogFile, "Region Statistics:\n\n");
+		fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
+		fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
+		fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
+		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n", maxNumberOfEdenRegions);
+	}
+}
 
 Allocator::Allocator() {
 }
@@ -89,7 +150,7 @@ void *Allocator::allocateInNewSpace(size_t size) {
 
 bool Allocator::isInNewSpace(Object *object) {
 	size_t heapIndex = getHeapIndex(object);
-	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
+	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex;
 }
 
 size_t Allocator::getHeapIndex(Object *object) {
@@ -118,7 +179,7 @@ void Allocator::freeOldSpace() {
 }
 
 size_t Allocator::getUsedSpace(bool newSpace) {
-	size_t i;  
+	size_t i;
 	size_t usedSpace = 0;
 	if (newSpace) {
 		for (i = newSpaceStartHeapIndex; i < newSpaceEndHeapIndex; i++)
@@ -135,7 +196,7 @@ size_t Allocator::getUsedSpace(bool newSpace) {
 void Allocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
-	
+
 	size_t size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 
@@ -154,7 +215,7 @@ void Allocator::initializeHeap(size_t heapSize) {
 	overallHeapSize = heapSize;
 	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ];
 	heap = (unsigned char*)malloc(heapSize);
-	
+
 	statLiveObjects = 0;
 	resetRememberedAllocationSearchPoint();
 
