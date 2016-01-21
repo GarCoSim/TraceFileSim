@@ -16,7 +16,7 @@
 #include <math.h>
 #include "Object.hpp"
 
-#define REGIONSIZE 4194304//524288 //From Tristan
+#define REGIONSIZE 4194304//524288
 
 using std::vector;
 namespace traceFileSimulator {
@@ -35,7 +35,7 @@ public:
     void setCurrFree(size_t free); 
     size_t  getCurrFree(); 
 
-    void incrementObjectCount(); 
+    void incNumObj(); 
     int  getNumObj(); 
 
     void  setCurrFreeAddr(void* addr); 
@@ -49,20 +49,20 @@ public:
     int   getAge();
 
     void  insertRemset(void *obj);
-    void  eraseRemset(void *obj);
+    void  clearRemset(); //Method to clear all remset at once
+    void  deleteFromRemset(void *obj); //Method renamed. EraseRemset was too ambiguous. 
 
 protected:
 	size_t   mySize;
 	void* myAddress;
     int   myAge;
-    std::set<void*> myRemset; //remembered set 
+    std::vector<void*> myRemset; //remembered set. Changed to vesctor as we want to have duplicates allowed
 
     int   numObj;        //how many objects in the region
 	size_t   currFree;      //how much free space in a region
 	void  *currFreeAddr; //address of the free area in the region
 };
 
-//From Tristan
 extern int           numRegions;
 extern size_t heapAddr;
 
@@ -72,8 +72,6 @@ extern std::vector<int> edenList;
 extern size_t sumObj;
 extern size_t sumFree;
 extern int  trigReason;
-
-extern Region**      regions;
 
 } 
 #endif /* REGION_HPP_ */
