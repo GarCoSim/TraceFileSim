@@ -24,7 +24,7 @@ typedef struct RawObject {
 
 class Object {
 public:
-	
+
 	Object(int id, void *address, size_t size, int numberOfPointers, char *className);
 	void setArgs(int id, size_t payloadSize, int maxPointers, char *className);
 	virtual ~Object();
@@ -39,10 +39,10 @@ public:
 	void *getRawPointerAddress(int pointerNumber);
 	void setRawPointerAddress(int pointerNumber, void *address);
 
-	
+
 	bool 	getVisited();
 	void	setVisited(bool value);
-	
+
 	int getDepth();
 	void setDepth(int d);
 
@@ -76,7 +76,7 @@ public:
 		forwarded = value;
 	}
 
-
+	size_t getRegion(size_t heap, size_t regionSize); //get the region where the object belongs to
 
 	int getReferenceCount();
 	void increaseReferenceCount();
@@ -110,5 +110,5 @@ private:
     int color;
 };
 
-} 
+}
 #endif /* OBJECT_HPP_ */

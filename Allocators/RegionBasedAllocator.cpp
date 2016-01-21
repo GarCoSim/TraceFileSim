@@ -48,7 +48,7 @@ void RegionBasedAllocator::freeAllSectors() {
 }
 
 void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
-
+	
 	if (size <= 0)
 		return NULL;
 	
@@ -69,7 +69,13 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			balancedRegions[edenRegionID]->incrementObjectCount();
 			
 			setAllocated((long)currentFreeAddress, size);
-			fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
+			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
+			
+			//Lets trigger a GC right at the end
+			if ((long)currentFreeAddress == 694280) {
+				return NULL;
+			}
+			
 			return &heap[(long)currentFreeAddress];
 		}
 	}
@@ -90,7 +96,7 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 				edenRegions.push_back(edenRegionID);
 				
 				setAllocated((long)currentFreeAddress, size);
-				fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
+				//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
 				return &heap[(long)currentFreeAddress];
 			}
 			else if (size > currentFreeSpace) {

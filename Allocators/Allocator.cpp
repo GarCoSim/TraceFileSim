@@ -268,6 +268,9 @@ std::vector<unsigned int> Allocator::getEdenRegions() {
 	return edenRegions;
 }
 
+unsigned int Allocator::getObjectRegion(Object* object) {
+	return (unsigned int)(((size_t)object->getAddress()-(size_t)&heap[0])/regionSize);
+}
 
 void Allocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);

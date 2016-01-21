@@ -29,6 +29,7 @@ public:
 	void setNumberOfRegionsHeap(int value);
 	std::vector<Region*> getRegions();
 	std::vector<unsigned int>  getEdenRegions();
+	unsigned int getObjectRegion(Object* object);
 	unsigned char *getHeap();
 	size_t getSpaceToNextObject(size_t start);
 	unsigned char *getNextObjectAddress(size_t start);

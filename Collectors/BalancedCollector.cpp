@@ -13,6 +13,7 @@
 extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern FILE* balancedLogFile;
 
 extern FILE* gcFile;
 
@@ -31,9 +32,9 @@ void BalancedCollector::collect(int reason) {
 	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
 	
 	
-	std::vector<Region*> collectionSet = buildCollectionSet();
+	buildCollectionSet();
 	
-	copy(collectionSet);
+	copy();
 	
 	
 	stop = clock();
@@ -45,30 +46,35 @@ void BalancedCollector::initializeHeap() {
 	myAllocator->setNumberOfRegionsHeap(0); 
 }
 
-std::vector<Region*> BalancedCollector::buildCollectionSet() {
+void BalancedCollector::buildCollectionSet() {
+	fprintf(balancedLogFile, "Building collection set:\n");
 	std::vector<Region*> allRegions = myAllocator->getRegions();
-	std::vector<Region*> collectionSet;
+	myCollectionSet.clear();
 	std::vector<unsigned int> edenRegions = myAllocator->getEdenRegions();
 	unsigned int i, j;
+	
+	//For now: Add all and only the Eden Regions
 	for (i = 0; i < allRegions.size(); i++) {
-		Region* currentRegion = allRegions[i];
+		for (j = 0; j < edenRegions.size(); j++) {
+			if (i == edenRegions[j]) {
+				myCollectionSet.push_back (i);
+				fprintf(balancedLogFile, "Added region %i to collection set\n", i);
+			}
+		}
+		
 		/*
+		Region* currentRegion = allRegions[i];
+		
 		//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) 
 		//there is maximum age which can also be picked with some non-0 probability
 		float mortalityRate;
 		int regionAge = currentRegion->getAge();
 		float probability = regionAge*(MAXAGEP+1)/MAXAGE+1; 
 		if ( rand() < probability ) {
-			collectionSet.push_back (currentRegion);
+			myCollectionSet.push_back (i);
 		}
 		*/
-		for (j = 0; j < edenRegions.size(); j++) {
-			if (i == edenRegions[j]) {
-				collectionSet.push_back (currentRegion);
-			}
-		}
 	}
-	return collectionSet;
 }
 
 void BalancedCollector::preCollect() {
@@ -79,13 +85,13 @@ void BalancedCollector::preCollect() {
 
 
 
-void BalancedCollector::copy(std::vector<Region*> collectionSet) {
-	
+void BalancedCollector::copy() {
+	fprintf(balancedLogFile, "Start copying\n");
 	emptyHelpers();
 
-	getCollectionSetRoots(collectionSet);
+	getCollectionSetRoots();
 	
-	copyObjects(collectionSet);
+	copyObjects();
 }
 
 void BalancedCollector::emptyHelpers() {
@@ -95,28 +101,32 @@ void BalancedCollector::emptyHelpers() {
 		myStack.pop();
 }
 
-void BalancedCollector::getCollectionSetRoots(std::vector<Region*> collectionSet) {
+void BalancedCollector::getCollectionSetRoots() {
+	fprintf(balancedLogFile, "Get Root Objects from collection set\n");
 	Object* currentObj;
-	int i, j;
-	unsigned int k;
-	size_t objectRegion;
-	size_t regionSize = myAllocator->getRegionSize();
-	unsigned char *heap = myAllocator->getHeap();
+	int i;
+	unsigned int objectRegion, k, j;
 
 	// enqueue all roots, add only objects from collectionSet
 	vector<Object*> roots;
 	for (i = 0; i < NUM_THREADS; i++) {
 		roots = myObjectContainer->getRoots(i);
-		for (j = 0; j < (int)roots.size(); j++) {
+		fprintf(balancedLogFile, "Found %zu root objects\n", roots.size());
+		
+		for (j = 0; j < roots.size(); j++) {
 			currentObj = roots[j];
-			if (currentObj) {
+			if (currentObj && !currentObj->getVisited()) {
+				currentObj->setVisited(true);
 				//Add object only if it belongs to region from collectionSet
-				objectRegion = currentObj->getRegion((size_t)&heap[0], regionSize);
-				for (k = 0; k < collectionSet.size(); k++) {
-					//if (objectRegion == collectionSet[k].getAddress()) {
-						//myQueue.push(currentObj);
-						//myStack.push(currentObj);
-					//}
+				fprintf(balancedLogFile, "Current object: ID = %i. ", currentObj->getID());
+				objectRegion = myAllocator->getObjectRegion(currentObj);
+				fprintf(balancedLogFile, " Appropriate object Region: %u\n", objectRegion);
+				for (k = 0; k < myCollectionSet.size(); k++) {
+					if (objectRegion == myCollectionSet[k]) {
+						myQueue.push(currentObj);
+						myStack.push(currentObj);
+						fprintf(balancedLogFile, "Added object %i.\n\n", currentObj->getID());
+					}
 				}
 			}
 		}
@@ -124,7 +134,7 @@ void BalancedCollector::getCollectionSetRoots(std::vector<Region*> collectionSet
 }
 
 
-void BalancedCollector::copyObjects(std::vector<Region*> collectionSet) {
+void BalancedCollector::copyObjects() {
 	//unsigned int i;
 	//Object* currentObj;
 	//Region* currentRegion;
@@ -154,8 +164,8 @@ void BalancedCollector::copyObjects(std::vector<Region*> collectionSet) {
 	*/	
 	
 	
-	//unsigned char *blaHeap = myAllocators[0]->getHeap();
-	//size_t regionBla = object->getRegion((size_t)&blaHeap[0], myAllocators[0]->getRegionSize());
+	//unsigned char *blaHeap = myAllocator->getHeap();
+	//size_t regionBla = object->getRegion((size_t)&blaHeap[0], myAllocator->getRegionSize());
 		
 		/*
 		//Stuff from TraversalCollector

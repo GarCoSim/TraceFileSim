@@ -119,6 +119,10 @@ void Object::increaseReferenceCount() {
 	referenceCount++;
 }
 
+size_t Object::getRegion(size_t heapStart, size_t regionSize) {
+       return (size_t)(((size_t)rawObject-heapStart)/(size_t)regionSize);
+}
+
 void Object::decreaseReferenceCount() {
 	//if (referenceCount > 0)
 		referenceCount--;
