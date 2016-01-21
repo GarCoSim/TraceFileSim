@@ -47,18 +47,28 @@ void BalancedCollector::initializeHeap() {
 
 std::vector<Region*> BalancedCollector::buildCollectionSet() {
 	std::vector<Region*> allRegions = myAllocator->getRegions();
-	std::vector<Region*> collection;
-	int i;
-	for (i = 0; i < (int)allRegions.size(); i++) {
+	std::vector<Region*> collectionSet;
+	std::vector<unsigned int> edenRegions = myAllocator->getEdenRegions();
+	unsigned int i, j;
+	for (i = 0; i < allRegions.size(); i++) {
 		Region* currentRegion = allRegions[i];
-		//float mortalityRate;
+		/*
+		//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) 
+		//there is maximum age which can also be picked with some non-0 probability
+		float mortalityRate;
 		int regionAge = currentRegion->getAge();
-		float probability = regionAge*(MAXAGEP+1)/MAXAGE+1; //linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) (there is maximum age which can also be picked with some non-0 probability)
+		float probability = regionAge*(MAXAGEP+1)/MAXAGE+1; 
 		if ( rand() < probability ) {
-			collection.push_back (allRegions[i]);
+			collectionSet.push_back (currentRegion);
+		}
+		*/
+		for (j = 0; j < edenRegions.size(); j++) {
+			if (i == edenRegions[j]) {
+				collectionSet.push_back (currentRegion);
+			}
 		}
 	}
-	return collection;
+	return collectionSet;
 }
 
 void BalancedCollector::preCollect() {
@@ -88,6 +98,7 @@ void BalancedCollector::emptyHelpers() {
 void BalancedCollector::getCollectionSetRoots(std::vector<Region*> collectionSet) {
 	Object* currentObj;
 	int i, j;
+	unsigned int k;
 	size_t objectRegion;
 	size_t regionSize = myAllocator->getRegionSize();
 	unsigned char *heap = myAllocator->getHeap();
@@ -101,8 +112,12 @@ void BalancedCollector::getCollectionSetRoots(std::vector<Region*> collectionSet
 			if (currentObj) {
 				//Add object only if it belongs to region from collectionSet
 				objectRegion = currentObj->getRegion((size_t)&heap[0], regionSize);
-				myQueue.push(currentObj);
-				myStack.push(currentObj);
+				for (k = 0; k < collectionSet.size(); k++) {
+					//if (objectRegion == collectionSet[k].getAddress()) {
+						//myQueue.push(currentObj);
+						//myStack.push(currentObj);
+					//}
+				}
 			}
 		}
 	}

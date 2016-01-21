@@ -26,11 +26,13 @@ void Allocator::setHalfHeapSize(bool value) {
 		oldSpaceEndHeapIndex = overallHeapSize / 2;
 		newSpaceStartHeapIndex = oldSpaceEndHeapIndex;
 		newSpaceEndHeapIndex = overallHeapSize;
+		regionSize = overallHeapSize/2;
 		isSplitHeap = true;
 	}
 	else {
 		oldSpaceStartHeapIndex = 0;
 		oldSpaceEndHeapIndex = overallHeapSize;
+		regionSize = overallHeapSize;
 		isSplitHeap = false;
 	}
 }
@@ -82,7 +84,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		for (i = 0; i < numberOfRegions; i++) {
 			balancedRegion = new Region ((void*)currentAddress, regionSize);
 
-			balancedGCRegions.push_back(balancedRegion);
+			balancedRegions.push_back(balancedRegion);
 			freeRegions.push_back(i);
 
 			currentAddress = currentAddress + regionSize;
@@ -92,7 +94,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
 		fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
 		fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
-		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n", maxNumberOfEdenRegions);
+		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
 	}
 }
 
@@ -254,7 +256,16 @@ size_t Allocator::getHeapSize() {
 
 int Allocator::getRegionSize() {
 	// this method can be generalized/overridden to support an arbitrary number of regions.
-	return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
+	return regionSize;
+	//return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;
+}
+
+std::vector<Region*> Allocator::getRegions() {
+	return balancedRegions;
+}
+
+std::vector<unsigned int> Allocator::getEdenRegions() {
+	return edenRegions;
 }
 
 

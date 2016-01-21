@@ -120,9 +120,8 @@ void Object::increaseReferenceCount() {
 }
 
 void Object::decreaseReferenceCount() {
-	//if (referenceCount > 0) 
+	//if (referenceCount > 0)
 		referenceCount--;
-
 	//if (referenceCount == 0)
 	//	fprintf(stderr, "RC dropped to zero\n");
 }
@@ -136,7 +135,7 @@ void Object::setColor(int color) {
 }
 
 Object::~Object() {
-	
+
 }
-	
+
 }

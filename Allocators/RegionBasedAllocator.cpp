@@ -9,6 +9,7 @@
 #include "RegionBasedAllocator.hpp"
 
 extern int gLineInTrace;
+extern FILE* balancedLogFile;
 using namespace std;
 
 
@@ -56,18 +57,19 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	void *currentFreeAddress;
 	
 	currentNumberEdenRegions = edenRegions.size();
-
+	
 	for (i = 0; i < currentNumberEdenRegions; i++) {
-		edenRegionID = edenRegions.at(i);
-		currentFreeSpace = balancedGCRegions[i]->getCurrFree();
+		currentFreeSpace = balancedRegions[i]->getCurrFree();
 		
 		if (size <= currentFreeSpace) {
-			currentFreeAddress = balancedGCRegions[edenRegionID]->getCurrFreeAddr();	
-			balancedGCRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
-			balancedGCRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
-			balancedGCRegions[edenRegionID]->incNumObj();
+			edenRegionID = edenRegions.at(i);
+			currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();	
+			balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
+			balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
+			balancedRegions[edenRegionID]->incrementObjectCount();
 			
 			setAllocated((long)currentFreeAddress, size);
+			fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
 			return &heap[(long)currentFreeAddress];
 		}
 	}
@@ -76,25 +78,30 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 
 		if (freeRegions.size() > 0) {
 			edenRegionID = freeRegions.front();
-			currentFreeSpace = balancedGCRegions[edenRegionID]->getCurrFree();
+			currentFreeSpace = balancedRegions[edenRegionID]->getCurrFree();
 			
 			if (size <= currentFreeSpace) {
-				currentFreeAddress = balancedGCRegions[edenRegionID]->getCurrFreeAddr();
-				balancedGCRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
-				balancedGCRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
-				balancedGCRegions[edenRegionID]->incNumObj();
+				currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();
+				balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
+				balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
+				balancedRegions[edenRegionID]->incrementObjectCount();
 				
 				freeRegions.erase(freeRegions.begin());
 				edenRegions.push_back(edenRegionID);
 				
 				setAllocated((long)currentFreeAddress, size);
+				fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
 				return &heap[(long)currentFreeAddress];
+			}
+			else if (size > currentFreeSpace) {
+				fprintf(stderr, "Allocation for arraylets not yet implemented!\n");
 			}
 		}
 	}
 
 	return NULL;
 }
+
 
 size_t RegionBasedAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.

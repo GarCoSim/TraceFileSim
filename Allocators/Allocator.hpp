@@ -26,6 +26,9 @@ public:
 	size_t getHeapSize();
 	int getRegionSize();
 	void resetRememberedAllocationSearchPoint();
+	void setNumberOfRegionsHeap(int value);
+	std::vector<Region*> getRegions();
+	std::vector<unsigned int>  getEdenRegions();
 	unsigned char *getHeap();
 	size_t getSpaceToNextObject(size_t start);
 	unsigned char *getNextObjectAddress(size_t start);
@@ -60,12 +63,19 @@ protected:
 	size_t getHeapIndex(Object *object);
 
     virtual void *allocate(size_t size, size_t lower, size_t upper) = 0;
-   
+
 
 	bool isSplitHeap;
 	char* myHeapBitMap;
 
-	
+	std::vector<Region*> balancedRegions;
+	std::vector<unsigned int> edenRegions;
+	std::vector<unsigned int> freeRegions;
+
+	unsigned int numberOfRegions;
+	size_t regionSize;
+	unsigned int maxNumberOfEdenRegions;
+
 	size_t overallHeapSize;
 	size_t newSpaceStartHeapIndex;
 	size_t oldSpaceStartHeapIndex;
@@ -73,7 +83,7 @@ protected:
 	size_t newSpaceEndHeapIndex;
 	size_t newSpaceRememberedHeapIndex;
 	size_t oldSpaceRememberedHeapIndex;
-	
+
 	unsigned char *heap;
 
 	int statLiveObjects;
@@ -81,5 +91,5 @@ protected:
 	FILE* heapMap;
 };
 
-} 
+}
 #endif /* ALLOCATOR_HPP_ */
