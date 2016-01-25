@@ -12,16 +12,6 @@ extern int gLineInTrace; //added by Tristan
 
 namespace traceFileSimulator {
 
-Region**      regions;
-int           numRegions = 0;
-unsigned long heapAddr;
-
-std::vector<int>   freeList;
-std::vector<int>   edenList;
-
-int           trigReason = 0;
-size_t          sumObj;
-size_t          sumFree;
 
 Region::Region(void *address,size_t size) {
 	myAddress = address;
@@ -29,6 +19,7 @@ Region::Region(void *address,size_t size) {
 	numObj       = 0;
 	currFreeAddr = address;
 	currFree     = size;
+	myAge = 0;
 }
 
 void Region::setAddress(void* address) {
@@ -55,7 +46,7 @@ size_t  Region::getCurrFree() {
     return currFree;
 }
 
-void Region::incNumObj() {
+void Region::incrementObjectCount() {
     numObj++;
 }
 
@@ -87,15 +78,27 @@ void Region::insertRemset(void* obj) {
     myRemset.insert(obj);
 }
 
-void  Region::clearRemset() {
-    myRemset.clear();
-}
+void Region::eraseRemset(void* obj) {
+    std::set<void*>::iterator it;
 
-void Region::deleteFromRemset(void* obj) {
-    myRemset.erase(obj);
+    it = myRemset.find(obj);
+    if (it != myRemset.end() )
+	   myRemset.erase(myRemset.find(obj));
 }
 
 Region::~Region() {
 }
 
+
+//From Tristan
+Region**      regions;
+int           numRegions = 0;
+unsigned long heapAddr;
+
+std::vector<int>   freeList;
+std::vector<int>   edenList;
+
+int           trigReason = 0;
+size_t          sumObj;
+size_t          sumFree;
 }
