@@ -48,14 +48,14 @@ public:
     void  incAge();
     int   getAge();
 
-    void  insertRemset(void *obj);
-    void  eraseRemset(void *obj);
+    void  insertObjectReference(void *obj);
+    void  eraseObjectReference(void *obj);
 
 protected:
 	size_t   mySize;
 	void* myAddress;
     int   myAge;
-    std::set<void*> myRemset; //remembered set 
+    std::vector<void*> myRemset; //remembered set 
 
     int   numObj;        //how many objects in the region
 	size_t   currFree;      //how much free space in a region

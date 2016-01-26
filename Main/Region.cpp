@@ -74,16 +74,22 @@ int Region::getAge() {
     return myAge;
 }
 
-void Region::insertRemset(void* obj) {
-    myRemset.insert(obj);
+void Region::insertObjectReference(void* obj) {
+    myRemset.push_back(obj);
+	fprintf(stderr, "insertObjectReference: %p\n", obj);
 }
 
-void Region::eraseRemset(void* obj) {
-    std::set<void*>::iterator it;
+void Region::eraseObjectReference(void* obj) {
+    std::vector<void*>::iterator iterator;
 
-    it = myRemset.find(obj);
-    if (it != myRemset.end() )
-	   myRemset.erase(myRemset.find(obj));
+	for(iterator = myRemset.begin();  iterator != myRemset.end(); iterator++)
+	{
+		fprintf(stderr, "eraseObjectReference: %p\n", *iterator);
+	}
+	
+    //it = myRemset.find(obj);
+    //if (it != myRemset.end() )
+	 //  myRemset.erase(myRemset.find(obj));
 }
 
 Region::~Region() {

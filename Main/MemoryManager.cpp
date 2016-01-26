@@ -17,8 +17,8 @@
 #include "../Collectors/TraversalCollector.hpp"
 #include "../Collectors/RecyclerCollector.hpp"
 #include "../WriteBarriers/WriteBarrier.hpp"
-#include "../WriteBarriers/RecyclerWriteBarrier.hpp" 
-#include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp" 
+#include "../WriteBarriers/RecyclerWriteBarrier.hpp"
+#include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp"
 
 #include <sstream>
 #include <stdlib.h>
@@ -142,7 +142,7 @@ void MemoryManager::initWritebarrier() {
 			myWriteBarrier = NULL;
 			break;
 		case recycler:
-			myWriteBarrier = new RecyclerWriteBarrier(); 
+			myWriteBarrier = new RecyclerWriteBarrier();
 			break;
 		case referenceCounting:
 			myWriteBarrier = new ReferenceCountingWriteBarrier();
@@ -266,7 +266,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 	void *address;
 
-	address = allocate(size, 0);  
+	address = allocate(size, 0);
 
     if (address == NULL) {
 		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line %d.\n",size, gLineInTrace);
@@ -288,8 +288,8 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 	if (myWriteBarrier)
 		myWriteBarrier->process(NULL, object);
 
-	
-	if (DEBUG_MODE == 1) {	
+
+	if (DEBUG_MODE == 1) {
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
@@ -313,7 +313,7 @@ int MemoryManager::requestRootDelete(int thread, int id){
 		if (ZOMBIE)
 			myGarbageCollectors[0]->collect(reasonFailedAlloc);
 	}
-	
+
 	return 0;
 }
 
@@ -399,10 +399,10 @@ void MemoryManager::requestReallocate(Object* object) {
 			exit(1);
 		}
 		object->updateAddress(address);
-		//TODO what about the old RawObject? How does it get freed? 
+		//TODO what about the old RawObject? How does it get freed?
 		// In markSweep collection, the entire heap is explicitly freed (but no
 		// objects are deleted) during the compaction phase.
-		
+
 		//object->setFreed(0);
 
 	}
@@ -488,6 +488,8 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Set pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
 	}
+
+
 	parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
 	//id 0 represents the NULL object.
 	child = NULL;
@@ -504,7 +506,7 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 			return 0;
 		}
 	}
-	
+
 	if (parent){
 		parentGeneration = parent->getGeneration();
 		oldChild = parent->getReferenceTo(parentSlot);
@@ -542,6 +544,8 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 			}
 		}
 	}
+
+
 	if (DEBUG_MODE == 1) {
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
@@ -553,13 +557,32 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 			myGarbageCollectors[0]->collect(reasonFailedAlloc);
 	}
 
+	// added by mazder for escape analysis
+	/****************************************/
+	if(escapeAnalysis){
+		// parent ----> child
+		if (childID !=0 ){
+			if( (parent->myTid) !=  (child->myTid) ){
+				// child and  its all successors are to be escaped
+				if(!child->escaped) {
+					// mark child and its all successors are escaped
+					markObject(child);
+				}
+			}
+			else{
+				if( (parent->escaped) && (!child->escaped) ){
+					// mark child and its all successors are escaped
+					markObject(child);
+				}
+			}
+		}
+	}
+	/****************************************/
 	return 0;
 }
 
-
 void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
-
-	Object* myChild; 
+	Object* myChild;
 	Object* myOldChild;
 
 	myOldChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
@@ -572,6 +595,31 @@ void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID)
 		if (ZOMBIE)
 			myGarbageCollectors[0]->collect(reasonFailedAlloc);
 	}
+}
+
+//BalancedVersion
+int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int childID) {
+	unsigned long parentRegion,childRegion,oldChildRegion;
+
+	preSetPointer(thread,parentID,parentSlot,childID);
+
+	parentRegion = parent->getRegion(heapAddr,REGIONSIZE);
+	if (child) {
+		childRegion =  child->getRegion(heapAddr,REGIONSIZE);
+		if (parentRegion != childRegion)
+			regions[childRegion]->insertObjectReference((void*)parent);
+
+	}
+	if (oldChild) {
+		oldChildRegion = oldChild->getRegion(heapAddr,REGIONSIZE);
+		if (parentRegion != oldChildRegion) {
+
+			regions[oldChildRegion]->eraseObjectReference((void*)parent);
+
+		}
+	}
+
+	return 0;
 }
 
 void MemoryManager::clearRemSets(){
