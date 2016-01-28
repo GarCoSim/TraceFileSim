@@ -28,6 +28,7 @@
 
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern FILE* balancedLogFile;
 extern int gLineInTrace;
 extern string globalFilename;
 
@@ -597,29 +598,34 @@ void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID)
 	}
 }
 
-//BalancedVersion
 int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int childID) {
+
+	fprintf(balancedLogFile, "regionSetPointer\n");
 	unsigned long parentRegion,childRegion,oldChildRegion;
 
 	preSetPointer(thread,parentID,parentSlot,childID);
 
-	parentRegion = parent->getRegion(heapAddr,REGIONSIZE);
+	parentRegion = myAllocators[0]->getObjectRegion(parent);
+
 	if (child) {
-		childRegion =  child->getRegion(heapAddr,REGIONSIZE);
+		childRegion =  myAllocators[0]->getObjectRegion(child);
+
 		if (parentRegion != childRegion)
-			regions[childRegion]->insertObjectReference((void*)parent);
+			myAllocators[0]->getRegions()[childRegion]->insertObjectReference((void*)parent);
 
 	}
 	if (oldChild) {
-		oldChildRegion = oldChild->getRegion(heapAddr,REGIONSIZE);
-		if (parentRegion != oldChildRegion) {
+		oldChildRegion = myAllocators[0]->getObjectRegion(oldChild);
 
-			regions[oldChildRegion]->eraseObjectReference((void*)parent);
+		if (parentRegion != oldChildRegion) {
+			myAllocators[0]->getRegions()[oldChildRegion]->eraseObjectReference((void*)parent);
 
 		}
 	}
+	fprintf(balancedLogFile, "\n\n");
 
 	return 0;
+
 }
 
 void MemoryManager::clearRemSets(){

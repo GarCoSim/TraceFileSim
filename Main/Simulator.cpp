@@ -19,6 +19,8 @@ extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
+void (Simulator::*operationReference)(TraceFileLine) = NULL;
+
 Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC) {
 	myLastStepWorked = 1;
 	myFinalGC = finalGC;
@@ -34,6 +36,13 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, in
 		fprintf(stdout, "No class table found\n");
 		// even thougth -cls 1 paramenters passed in main function
 	}
+
+	if (allocator == (int)regionBased) {
+       operationReference = &Simulator::regionReferenceOperation;
+    }
+    else {
+	   operationReference = &Simulator::referenceOperation;
+    }
 
 	counter = 0;
 	start = clock();
@@ -138,7 +147,7 @@ int Simulator::doNextStep(){
 		//if content exists, advice the MM(memory manager) to execute
 		switch(line.type) {
 			case 'w':
-			    referenceOperation(line);
+				(*this.*operationReference)(line);
 				break;
 			case 'a':
 			    allocateToRootset(line);

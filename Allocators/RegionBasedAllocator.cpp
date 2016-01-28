@@ -70,11 +70,11 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			
 			setAllocated((long)currentFreeAddress, size);
 			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
-			
-			//Lets trigger a GC right at the end
-			if ((long)currentFreeAddress == 694280) {
-				return NULL;
-			}
+			fprintf(balancedLogFile, "Allocated to: %i\n", edenRegionID);
+			//Lets trigger a GC right at the end. Valid for tracefile HelloWorld
+			//if ((long)currentFreeAddress == 694280) {
+			//	return NULL;
+			//}
 			
 			return &heap[(long)currentFreeAddress];
 		}
@@ -97,6 +97,7 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 				
 				setAllocated((long)currentFreeAddress, size);
 				//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
+				fprintf(balancedLogFile, "Allocated to: %i\n", edenRegionID);
 				return &heap[(long)currentFreeAddress];
 			}
 			else if (size > currentFreeSpace) {

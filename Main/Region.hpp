@@ -55,7 +55,7 @@ protected:
 	size_t   mySize;
 	void* myAddress;
     int   myAge;
-    std::vector<void*> myRemset; //remembered set 
+    std::set<void*> myRemset; //remembered set 
 
     int   numObj;        //how many objects in the region
 	size_t   currFree;      //how much free space in a region

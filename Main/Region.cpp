@@ -9,6 +9,7 @@
 #include "Region.hpp"
 
 extern int gLineInTrace; //added by Tristan
+extern FILE* balancedLogFile;
 
 namespace traceFileSimulator {
 
@@ -75,21 +76,43 @@ int Region::getAge() {
 }
 
 void Region::insertObjectReference(void* obj) {
-    myRemset.push_back(obj);
-	fprintf(stderr, "insertObjectReference: %p\n", obj);
+	
+	std::set<void*>::iterator it;
+	
+	fprintf(balancedLogFile, "myRemset for region %p before: \n", myAddress);
+	for (it = myRemset.begin(); it != myRemset.end(); it++)
+	{
+		fprintf(balancedLogFile, "Object: %p\n", *it);
+	}
+	
+    myRemset.insert(obj);
+	
+	fprintf(balancedLogFile, "insertObjectReference: %p\n", obj);
+	
+	fprintf(balancedLogFile, "myRemset after: \n");
+	for (it = myRemset.begin(); it != myRemset.end(); it++)
+	{
+		fprintf(balancedLogFile, "Object: %p\n", *it);
+	}
 }
 
 void Region::eraseObjectReference(void* obj) {
-    std::vector<void*>::iterator iterator;
-
-	for(iterator = myRemset.begin();  iterator != myRemset.end(); iterator++)
+	//std::set<void*>::iterator it;
+    //it = myRemset.find (obj);
+	//myRemset.erase (it, myRemset.end());
+	fprintf(balancedLogFile, "myRemset for region %p before: \n", myAddress);
+	std::set<void*>::iterator it;
+	for (it = myRemset.begin(); it != myRemset.end(); it++)
 	{
-		fprintf(stderr, "eraseObjectReference: %p\n", *iterator);
+		fprintf(balancedLogFile, "Object: %p\n", *it);
 	}
-	
-    //it = myRemset.find(obj);
-    //if (it != myRemset.end() )
-	 //  myRemset.erase(myRemset.find(obj));
+	myRemset.erase (obj);
+	fprintf(balancedLogFile, "Erased Object Reference: %p\n", obj);
+	fprintf(balancedLogFile, "myRemset after: \n");
+	for (it = myRemset.begin(); it != myRemset.end(); it++)
+	{
+		fprintf(balancedLogFile, "Object: %p\n", *it);
+	}
 }
 
 Region::~Region() {
