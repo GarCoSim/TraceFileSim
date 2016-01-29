@@ -76,6 +76,14 @@ public:
 		forwarded = value;
 	}
 
+	void setForwardedPointer (RawObject* target){
+		rawObject = target;
+	}
+
+	RawObject* getForwardedPointer (){
+		return forwardedPointer;
+	}
+
 	size_t getRegion(size_t heap, size_t regionSize); //get the region where the object belongs to
 
 	int getReferenceCount();
@@ -108,6 +116,9 @@ private:
 
     int referenceCount;
     int color;
+
+    RawObject *forwardedPointer;
+
 };
 
 }
