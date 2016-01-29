@@ -51,6 +51,14 @@
 
 #define ZOMBIE 0
 
+//BALANCED GC
+//#define MINREGIONSIZE	512000 //in case of change, also change REGIONEXPONENT appropriately
+//#define REGIONEXPONENT  9 //9 results in MINREGINOSIZE of 512KB; 2^9 = 512KB
+#define MINREGIONSIZE	2000 //in case of change, also change REGIONEXPONENT appropriately
+#define REGIONEXPONENT  1 //2 results in MINREGINOSIZE of 512KB; 2^1 = 2KB
+#define MINREGIONS		1024
+#define MAXREGIONS		2047
+#define EDENREGIONS     25 //% of the whole heap
 
 enum traversalEnum {
 					breadthFirst = 0,

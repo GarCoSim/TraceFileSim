@@ -275,7 +275,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
-
+	fprintf(balancedLogFile, "ID: %i\n", id);
 	//create Object
 	Object *object;
 
@@ -599,9 +599,7 @@ void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID)
 }
 
 int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int childID) {
-
-	fprintf(balancedLogFile, "regionSetPointer\n");
-	unsigned long parentRegion,childRegion,oldChildRegion;
+	unsigned long parentRegion,childRegion;
 
 	preSetPointer(thread,parentID,parentSlot,childID);
 
@@ -610,19 +608,11 @@ int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int
 	if (child) {
 		childRegion =  myAllocators[0]->getObjectRegion(child);
 
-		if (parentRegion != childRegion)
+		if (parentRegion != childRegion) {
 			myAllocators[0]->getRegions()[childRegion]->insertObjectReference((void*)parent);
-
-	}
-	if (oldChild) {
-		oldChildRegion = myAllocators[0]->getObjectRegion(oldChild);
-
-		if (parentRegion != oldChildRegion) {
-			myAllocators[0]->getRegions()[oldChildRegion]->eraseObjectReference((void*)parent);
-
 		}
+
 	}
-	fprintf(balancedLogFile, "\n\n");
 
 	return 0;
 

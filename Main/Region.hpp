@@ -24,7 +24,7 @@ namespace traceFileSimulator {
 class Region {
 public:
 	virtual ~Region();	
-	Region(void *address, size_t size);
+	Region(void *address, size_t size, size_t heapAddress);
 	
     void setSize(size_t size);
     size_t  getSize();
@@ -53,6 +53,7 @@ public:
 
 protected:
 	size_t   mySize;
+	size_t myHeapAddress;
 	void* myAddress;
     int   myAge;
     std::set<void*> myRemset; //remembered set 

@@ -14,8 +14,9 @@ extern FILE* balancedLogFile;
 namespace traceFileSimulator {
 
 
-Region::Region(void *address,size_t size) {
+Region::Region(void *address,size_t size, size_t heapAddress) {
 	myAddress = address;
+	myHeapAddress = heapAddress;
 	mySize    = size;
 	numObj       = 0;
 	currFreeAddr = address;
@@ -76,43 +77,33 @@ int Region::getAge() {
 }
 
 void Region::insertObjectReference(void* obj) {
-	
-	std::set<void*>::iterator it;
-	
-	fprintf(balancedLogFile, "myRemset for region %p before: \n", myAddress);
-	for (it = myRemset.begin(); it != myRemset.end(); it++)
-	{
-		fprintf(balancedLogFile, "Object: %p\n", *it);
-	}
-	
     myRemset.insert(obj);
-	
-	fprintf(balancedLogFile, "insertObjectReference: %p\n", obj);
-	
-	fprintf(balancedLogFile, "myRemset after: \n");
-	for (it = myRemset.begin(); it != myRemset.end(); it++)
-	{
-		fprintf(balancedLogFile, "Object: %p\n", *it);
-	}
 }
 
-void Region::eraseObjectReference(void* obj) {
-	//std::set<void*>::iterator it;
-    //it = myRemset.find (obj);
-	//myRemset.erase (it, myRemset.end());
-	fprintf(balancedLogFile, "myRemset for region %p before: \n", myAddress);
+void Region::eraseObjectReference(void* obj) {	
 	std::set<void*>::iterator it;
-	for (it = myRemset.begin(); it != myRemset.end(); it++)
-	{
-		fprintf(balancedLogFile, "Object: %p\n", *it);
-	}
-	myRemset.erase (obj);
-	fprintf(balancedLogFile, "Erased Object Reference: %p\n", obj);
-	fprintf(balancedLogFile, "myRemset after: \n");
-	for (it = myRemset.begin(); it != myRemset.end(); it++)
-	{
-		fprintf(balancedLogFile, "Object: %p\n", *it);
-	}
+    Object *parent;
+    parent = (Object*)obj;
+	
+    it = myRemset.find(parent);
+    if (it != myRemset.end()) {
+        Object *child;
+        int k;
+        int thisRegion = (unsigned long)myAddress/mySize;
+        int childRegion;
+        int numChild   = parent->getPointersMax(); //check if no more child is pointing to this region
+        for (k=0; k<numChild; k++) {
+            child = parent->getReferenceTo(k);
+            if (child) {
+				childRegion = (unsigned int)(((size_t)child->getAddress()-myHeapAddress)/mySize); //need this!
+				
+                if (thisRegion == childRegion) //if a child points to this region, then don't erase from remset
+                    return; 
+            }
+        }
+        myRemset.erase(myRemset.find(parent));
+    }
+	
 }
 
 Region::~Region() {

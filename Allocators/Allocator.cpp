@@ -82,7 +82,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		size_t currentAddress = 0;
 
 		for (i = 0; i < numberOfRegions; i++) {
-			balancedRegion = new Region ((void*)currentAddress, regionSize);
+			balancedRegion = new Region ((void*)currentAddress, regionSize, (size_t)&heap[0]);
 
 			balancedRegions.push_back(balancedRegion);
 			freeRegions.push_back(i);

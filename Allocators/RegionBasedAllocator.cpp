@@ -70,11 +70,11 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			
 			setAllocated((long)currentFreeAddress, size);
 			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
-			fprintf(balancedLogFile, "Allocated to: %i\n", edenRegionID);
+			fprintf(balancedLogFile, "Allocated to: %i. ", edenRegionID);
 			//Lets trigger a GC right at the end. Valid for tracefile HelloWorld
-			//if ((long)currentFreeAddress == 694280) {
-			//	return NULL;
-			//}
+			if ((long)currentFreeAddress == 694280) {
+				return NULL;
+			}
 			
 			return &heap[(long)currentFreeAddress];
 		}
