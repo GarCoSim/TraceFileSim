@@ -29,11 +29,10 @@ void BalancedCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
+	fprintf(stderr, "GC #%d at %0.3fs\n", statGcNumber + 1, elapsed_secs);
 	
-	
+	preCollect();
 	buildCollectionSet();
-	
 	copy();
 	
 	
@@ -47,9 +46,12 @@ void BalancedCollector::initializeHeap() {
 }
 
 void BalancedCollector::buildCollectionSet() {
-	fprintf(balancedLogFile, "Building collection set:\n");
+	fprintf(balancedLogFile, "\n\nBuilding collection set:\n");
 	std::vector<Region*> allRegions = myAllocator->getRegions();
+	
 	myCollectionSet.clear();
+	myCollectionSet.resize(myAllocator->getRegions().size(), 0);
+	
 	std::vector<unsigned int> edenRegions = myAllocator->getEdenRegions();
 	unsigned int i, j;
 	
@@ -57,7 +59,7 @@ void BalancedCollector::buildCollectionSet() {
 	for (i = 0; i < allRegions.size(); i++) {
 		for (j = 0; j < edenRegions.size(); j++) {
 			if (i == edenRegions[j]) {
-				myCollectionSet.push_back (i);
+				myCollectionSet.at(i) = 1;
 				fprintf(balancedLogFile, "Added region %i to collection set\n", i);
 			}
 		}
@@ -87,52 +89,102 @@ void BalancedCollector::preCollect() {
 
 void BalancedCollector::copy() {
 	fprintf(balancedLogFile, "Start copying\n");
-	emptyHelpers();
 
-	getCollectionSetRoots();
+	copyRootObjects();
 	
 	copyObjects();
+	
+	fprintf(balancedLogFile, "Copying done\n");
 }
 
-void BalancedCollector::emptyHelpers() {
-	while (!myQueue.empty())
-		myQueue.pop();
-	while (!myStack.empty())
-		myStack.pop();
-}
 
-void BalancedCollector::getCollectionSetRoots() {
-	fprintf(balancedLogFile, "Get Root Objects from collection set\n");
+void BalancedCollector::copyRootObjects() {
+	fprintf(balancedLogFile, "Copy Root Objects\n");
 	Object* currentObj;
-	int i;
-	unsigned int objectRegion, k, j;
+	int i, regionAge;
+	unsigned int objectRegion, j;
 
-	// enqueue all roots, add only objects from collectionSet
+	// enqueue all roots, copy only objects from collectionSet
 	vector<Object*> roots;
 	for (i = 0; i < NUM_THREADS; i++) {
 		roots = myObjectContainer->getRoots(i);
-		fprintf(balancedLogFile, "Found %zu root objects\n", roots.size());
+		//fprintf(balancedLogFile, "Found %zu root objects\n", roots.size());
 		
 		for (j = 0; j < roots.size(); j++) {
 			currentObj = roots[j];
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
 				//Add object only if it belongs to region from collectionSet
-				fprintf(balancedLogFile, "Current object: ID = %i. ", currentObj->getID());
+				//fprintf(balancedLogFile, "Current object: ID = %i. ", currentObj->getID());
 				objectRegion = myAllocator->getObjectRegion(currentObj);
-				fprintf(balancedLogFile, " Appropriate object Region: %u\n", objectRegion);
-				for (k = 0; k < myCollectionSet.size(); k++) {
-					if (objectRegion == myCollectionSet[k]) {
-						myQueue.push(currentObj);
-						myStack.push(currentObj);
-						fprintf(balancedLogFile, "Added object %i.\n\n", currentObj->getID());
-					}
+				//fprintf(balancedLogFile, " Appropriate object Region: %u\n", objectRegion);
+
+				if (myCollectionSet[objectRegion] == 1) {
+					//copy the object
+					regionAge = myAllocator->getRegions().at(objectRegion)->getAge();
+					fprintf(balancedLogFile, "Copying object %i from region %u with age %i.\n", currentObj->getID(), objectRegion, regionAge);
+					copyObject(currentObj, regionAge);
+					
 				}
 			}
 		}
 	}
+	fprintf(balancedLogFile, "Copying Root Objects done\n");
 }
 
+void BalancedCollector::copyObject(Object* object, int regionAge) {
+	
+	//std::vector<unsigned int> copyToRegions[MAXREGIONAGE];
+	int freeRegionID;
+	unsigned int i;
+	size_t currentFreeSpace;
+	void *currentFreeAddress;
+	
+	
+	//copy Object to a new Region
+	//get the copy-to-Region
+	if (copyToRegions[regionAge].empty()) {
+		fprintf(balancedLogFile, "Empty\n");
+		freeRegionID = myAllocator->getNextFreeRegionID();
+		Region* region = myAllocator->getRegions().at(freeRegionID);
+		region->setAge(regionAge+1);
+		copyToRegions[regionAge].push_back(freeRegionID);
+	}
+	
+	for (i = 0; i < copyToRegions[regionAge].size(); i++) {
+		currentFreeSpace = myAllocator->getRegions().at(i)->getCurrFree();
+		if (object->getHeapSize() <= currentFreeSpace) {
+			currentFreeAddress = myAllocator->getRegions().at(i)->getCurrFreeAddr();
+			myAllocator->getRegions().at(i)->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)object->getHeapSize()));
+			myAllocator->getRegions().at(i)->setCurrFree(currentFreeSpace-(long)object->getHeapSize());
+			myAllocator->getRegions().at(i)->incrementObjectCount();
+			
+			myAllocator->setAllocated((long)currentFreeAddress, object->getHeapSize());
+			
+			
+			
+			
+			//Object *newObject;
+	
+			//newObject = new Object(id, address, size, refCount, getClassName(classID));
+
+			//newObject->setGeneration(0);
+			//add to Containers
+			//addRootToContainers(newObject, thread);
+			
+			
+			
+			
+			
+			//update Root-pointer
+	
+			//update forwarding pointer
+	
+	
+			//copy all Children as well
+		}
+	}
+}
 
 void BalancedCollector::copyObjects() {
 	//unsigned int i;

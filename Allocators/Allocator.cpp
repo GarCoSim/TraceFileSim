@@ -268,6 +268,16 @@ std::vector<unsigned int> Allocator::getEdenRegions() {
 	return edenRegions;
 }
 
+int Allocator::getNextFreeRegionID() {
+	int id = freeRegions.front();
+	freeRegions.erase(freeRegions.begin());
+	return id;
+}
+
+std::vector<unsigned int> Allocator::getFreeRegions() {
+	return freeRegions;
+}
+
 unsigned int Allocator::getObjectRegion(Object* object) {
 	return (unsigned int)(((size_t)object->getAddress()-(size_t)&heap[0])/regionSize);
 }

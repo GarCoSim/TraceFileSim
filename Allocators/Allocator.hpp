@@ -21,6 +21,8 @@ public:
     void *gcAllocate(size_t size);
 	virtual void gcFree(Object* object);
 
+	void setAllocated(size_t heapIndex, size_t size);
+	
 	//used mainly by garbage collector
 	size_t getFreeSize();
 	size_t getHeapSize();
@@ -28,7 +30,9 @@ public:
 	void resetRememberedAllocationSearchPoint();
 	void setNumberOfRegionsHeap(int value);
 	std::vector<Region*> getRegions();
-	std::vector<unsigned int>  getEdenRegions();
+	std::vector<unsigned int> getEdenRegions();
+	std::vector<unsigned int> getFreeRegions();
+	int getNextFreeRegionID();
 	unsigned int getObjectRegion(Object* object);
 	unsigned char *getHeap();
 	size_t getSpaceToNextObject(size_t start);
@@ -56,7 +60,6 @@ public:
 protected:
 	size_t getUsedSpace(bool newSpace);
 	void *allocateInNewSpace(size_t size);
-	void setAllocated(size_t heapIndex, size_t size);
 	void setFree(size_t heapIndex, size_t size);
 	bool isBitSet(size_t heapIndex);
 	void setBitUsed(size_t heapIndex);

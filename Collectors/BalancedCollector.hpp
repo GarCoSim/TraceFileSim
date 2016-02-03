@@ -35,11 +35,13 @@ public:
 
 private:
 	std::vector<unsigned int> myCollectionSet;
+	std::vector<unsigned int> copyToRegions[MAXREGIONAGE];
 	void buildCollectionSet();
 	void preCollect();
 	void copy();
+	void copyRootObjects();
+	void copyObject(Object* object, int regionAge);
 	void emptyHelpers();
-	void getCollectionSetRoots();
 	void copyObjects();
 	
 

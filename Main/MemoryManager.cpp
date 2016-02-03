@@ -275,7 +275,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		exit(1);
 	}
-	fprintf(balancedLogFile, "ID: %i\n", id);
+	//fprintf(balancedLogFile, "ID: %i\n", id);
 	//create Object
 	Object *object;
 
