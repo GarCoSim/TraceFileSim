@@ -15,6 +15,7 @@
 extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern FILE* balancedLogFile;
 extern FILE* gcFile;
 extern int hierDepth;
 extern clock_t start, stop;
@@ -184,7 +185,8 @@ void TraversalCollector::getAllRoots() {
 				}
 			}
 		}
-	} else {
+	}
+	else {
 		for (j = 0; j < myObjectContainer->getGenRootSize(); j++) {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && !currentObj->getVisited()) {

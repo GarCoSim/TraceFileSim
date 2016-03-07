@@ -16,6 +16,7 @@ extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 
+
 FILE* gcFile;
 
 clock_t start, stop;

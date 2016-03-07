@@ -25,29 +25,50 @@ BalancedCollector::BalancedCollector() {
 }
 
 
+void BalancedCollector::initializeHeap() {
+	myAllocator->setNumberOfRegionsHeap(0); 
+}
+
+
 void BalancedCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, "GC #%d at %0.3fs\n", statGcNumber + 1, elapsed_secs);
-	
+
+	while (!myQueue.empty()) {
+		myQueue.pop();
+	}
+	while (!myUpdatePointerQueue.empty()) {
+		myUpdatePointerQueue.pop();
+	}
+	int i;
+	for (i = 0; i < MAXREGIONAGE; i++) {
+		copyToRegions[i].clear();
+	}
+
+	allRegions = myAllocator->getRegions();
+
 	preCollect();
 	buildCollectionSet();
 	copy();
-	
+	//addCopiedRegionsToFreeList();
 	
 	stop = clock();
 	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
 }
 
-void BalancedCollector::initializeHeap() {
-	myAllocator->setNumberOfRegionsHeap(0); 
+
+void BalancedCollector::preCollect() {
+	start = clock();
+	statFreedDuringThisGC = 0;
+	statGcNumber++;
 }
+
 
 void BalancedCollector::buildCollectionSet() {
 	fprintf(balancedLogFile, "\n\nBuilding collection set:\n");
-	std::vector<Region*> allRegions = myAllocator->getRegions();
 	
 	myCollectionSet.clear();
 	myCollectionSet.resize(myAllocator->getRegions().size(), 0);
@@ -79,114 +100,185 @@ void BalancedCollector::buildCollectionSet() {
 	}
 }
 
-void BalancedCollector::preCollect() {
-	start = clock();
-	statFreedDuringThisGC = 0;
-	statGcNumber++;
-}
-
-
 
 void BalancedCollector::copy() {
 	fprintf(balancedLogFile, "Start copying\n");
-
-	copyRootObjects();
 	
-	copyObjects();
+	getRootObjects();
+	copyRootObjects();
+	//updatePointers();
+	
+	//copyRemsetObjects();
 	
 	fprintf(balancedLogFile, "Copying done\n");
 }
 
 
-void BalancedCollector::copyRootObjects() {
-	fprintf(balancedLogFile, "Copy Root Objects\n");
+void BalancedCollector::getRootObjects() {
+	fprintf(balancedLogFile, "Get Root Objects\n");
 	Object* currentObj;
-	int i, regionAge;
+	int i;
 	unsigned int objectRegion, j;
 
 	// enqueue all roots, copy only objects from collectionSet
 	vector<Object*> roots;
 	for (i = 0; i < NUM_THREADS; i++) {
 		roots = myObjectContainer->getRoots(i);
-		//fprintf(balancedLogFile, "Found %zu root objects\n", roots.size());
+		fprintf(balancedLogFile, "Found %zu root objects for Thread %i\n", roots.size(), i);
 		
 		for (j = 0; j < roots.size(); j++) {
 			currentObj = roots[j];
+			//fprintf(balancedLogFile, "Current root object from outside: %i. ID: %i\n", j, currentObj->getID());
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
-				//Add object only if it belongs to region from collectionSet
 				//fprintf(balancedLogFile, "Current object: ID = %i. ", currentObj->getID());
 				objectRegion = myAllocator->getObjectRegion(currentObj);
 				//fprintf(balancedLogFile, " Appropriate object Region: %u\n", objectRegion);
 
-				if (myCollectionSet[objectRegion] == 1) {
-					//copy the object
-					regionAge = myAllocator->getRegions().at(objectRegion)->getAge();
-					fprintf(balancedLogFile, "Copying object %i from region %u with age %i.\n", currentObj->getID(), objectRegion, regionAge);
-					copyObject(currentObj, regionAge);
+				if (myCollectionSet[objectRegion] == 1) { //Object belongs to Collection-set-Region
+					myQueue.push(currentObj);
+					//regionAge = myAllocator->getRegions().at(objectRegion)->getAge();
+					//fprintf(balancedLogFile, "Current root object from inside: %i\n", j);
+					//fprintf(balancedLogFile, "Thread %i. Added object %i from region %u to queue.\n", i, currentObj->getID(), objectRegion);
+					//copyObject(currentObj, regionAge);
 					
 				}
 			}
 		}
 	}
-	fprintf(balancedLogFile, "Copying Root Objects done\n");
+	myUpdatePointerQueue = myQueue;
+	fprintf(balancedLogFile, "Getting Root Objects done. Added %zu objects to the queue.\n\n", myQueue.size());
 }
 
-void BalancedCollector::copyObject(Object* object, int regionAge) {
+void BalancedCollector::copyRootObjects() {
+	fprintf(balancedLogFile, "Copy Root Objects\n");
 	
-	//std::vector<unsigned int> copyToRegions[MAXREGIONAGE];
-	int freeRegionID;
-	unsigned int i;
-	size_t currentFreeSpace;
-	void *currentFreeAddress;
-	
-	
-	//copy Object to a new Region
-	//get the copy-to-Region
-	if (copyToRegions[regionAge].empty()) {
-		fprintf(balancedLogFile, "Empty\n");
-		freeRegionID = myAllocator->getNextFreeRegionID();
-		Region* region = myAllocator->getRegions().at(freeRegionID);
-		region->setAge(regionAge+1);
-		copyToRegions[regionAge].push_back(freeRegionID);
-	}
-	
-	for (i = 0; i < copyToRegions[regionAge].size(); i++) {
-		currentFreeSpace = myAllocator->getRegions().at(i)->getCurrFree();
-		if (object->getHeapSize() <= currentFreeSpace) {
-			currentFreeAddress = myAllocator->getRegions().at(i)->getCurrFreeAddr();
-			myAllocator->getRegions().at(i)->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)object->getHeapSize()));
-			myAllocator->getRegions().at(i)->setCurrFree(currentFreeSpace-(long)object->getHeapSize());
-			myAllocator->getRegions().at(i)->incrementObjectCount();
-			
-			myAllocator->setAllocated((long)currentFreeAddress, object->getHeapSize());
-			
-			
-			
-			
-			//Object *newObject;
-	
-			//newObject = new Object(id, address, size, refCount, getClassName(classID));
+	int i;
+	unsigned int childRegion;
+	Object* currentObj;
+	Object* child;
 
-			//newObject->setGeneration(0);
-			//add to Containers
-			//addRootToContainers(newObject, thread);
-			
-			
-			
-			
-			
-			//update Root-pointer
-	
-			//update forwarding pointer
-	
-	
-			//copy all Children as well
+	//breadth first through the tree using a queue
+	while (!myQueue.empty()) {
+		currentObj = myQueue.front();
+		myQueue.pop();
+		int children = currentObj->getPointersMax();
+		copyAndForwardObject(currentObj);
+
+		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
+
+		for (i = 0; i < children; i++) {
+			child = currentObj->getReferenceTo(i);
+			if (child) {
+				childRegion =  myAllocator->getObjectRegion(child);
+				if (!child->getVisited() && myCollectionSet[childRegion] == 1) {
+				child->setVisited(true);
+				myQueue.push(child);
+				myUpdatePointerQueue.push(child);
+				}
+			}
 		}
 	}
+	
+	fprintf(balancedLogFile, "Copying Root Objects done\n\n");
 }
 
-void BalancedCollector::copyObjects() {
+void BalancedCollector::copyAndForwardObject(Object *obj) {
+	unsigned int i, currentCopyToRegionID, objRegionID;
+	size_t currentFreeSpace, objectSize;
+	void *currentFreeAddress, *addressBefore, *addressAfter;
+	int objRegionAge;
+
+	objRegionID  = myAllocator->getObjectRegion(obj);
+	objRegionAge = allRegions[objRegionID]->getAge();
+	addressBefore = (void*) obj->getAddress();
+	objectSize = obj->getHeapSize();
+
+	//Find a region to copy to
+	for (i = 0; i < copyToRegions[objRegionAge].size(); i++) {
+		currentCopyToRegionID = copyToRegions[objRegionAge][i];
+		currentFreeSpace = allRegions[currentCopyToRegionID]->getCurrFree();
+		if (objectSize <= currentFreeSpace) {
+			currentFreeAddress = allRegions[currentCopyToRegionID]->getCurrFreeAddr();	
+			allRegions[currentCopyToRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)objectSize));
+			allRegions[currentCopyToRegionID]->setCurrFree(currentFreeSpace-objectSize);
+			allRegions[currentCopyToRegionID]->incrementObjectCount();
+			
+			myAllocator->setAllocated((long)currentFreeAddress, objectSize);
+
+			void * addressHeap;
+			unsigned char *heap = myAllocator->getHeap();
+			addressHeap = &heap[(long)currentFreeAddress];
+
+			memcpy((void *) addressHeap, (void *) obj->getAddress(), objectSize);
+
+			obj->updateAddress((void *) addressHeap);
+			obj->setForwarded(true);
+
+			addressAfter = (void *) obj->getAddress();
+			addForwardingEntry(addressBefore, addressAfter);
+			fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+			return;
+		}
+	}
+
+	//No copyToRegion found, so add a new one
+	if ( myAllocator->getFreeRegions().size() > 0) {
+			currentCopyToRegionID = myAllocator->getNextFreeRegionID();
+			currentFreeSpace = allRegions[currentCopyToRegionID]->getCurrFree();
+
+			copyToRegions[objRegionAge].push_back(currentCopyToRegionID);
+			allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
+
+			if (objectSize <= currentFreeSpace) {
+				fprintf(balancedLogFile, "\nGetting new copyToRegion with id: %u\n", currentCopyToRegionID);
+				currentFreeAddress = allRegions[currentCopyToRegionID]->getCurrFreeAddr();
+				allRegions[currentCopyToRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)objectSize));
+				allRegions[currentCopyToRegionID]->setCurrFree(currentFreeSpace-objectSize);
+				allRegions[currentCopyToRegionID]->incrementObjectCount();
+				
+				
+				myAllocator->setAllocated((long)currentFreeAddress, objectSize);
+
+				void * addressHeap;
+				unsigned char *heap = myAllocator->getHeap();
+				addressHeap = &heap[(long)currentFreeAddress];
+
+				memcpy((void *) addressHeap, (void *) obj->getAddress(), objectSize);
+
+				obj->updateAddress((void *) addressHeap);
+				obj->setForwarded(true);
+
+				addressAfter = (void *) obj->getAddress();
+				addForwardingEntry(addressBefore, addressAfter);
+				fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+				return;
+			}
+			else if (objectSize > currentFreeSpace) {
+				fprintf(stderr, "Allocation for arraylets not yet implemented!\n");
+			}
+		}
+
+		fprintf(stderr, "No more Regions for copying available!\n");
+}
+
+void BalancedCollector::updatePointers() {
+	fprintf(balancedLogFile, "Update pointers\n");
+
+	Object* currentObj;
+
+	while (!myUpdatePointerQueue.empty()) {
+		currentObj = myUpdatePointerQueue.front();
+		myUpdatePointerQueue.pop();
+
+		currentObj->setVisited(false);
+	}
+
+	fprintf(balancedLogFile, "Updating pointers done\n");
+}
+
+
+void BalancedCollector::copyRemsetObjects() {
 	//unsigned int i;
 	//Object* currentObj;
 	//Region* currentRegion;

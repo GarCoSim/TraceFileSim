@@ -36,13 +36,20 @@ public:
 private:
 	std::vector<unsigned int> myCollectionSet;
 	std::vector<unsigned int> copyToRegions[MAXREGIONAGE];
+	std::vector<Region*> allRegions;
+	queue<Object *> myUpdatePointerQueue;
 	void buildCollectionSet();
 	void preCollect();
 	void copy();
+	void getRootObjects();
 	void copyRootObjects();
 	void copyObject(Object* object, int regionAge);
+	void copyAndForwardObject(Object *obj);
+	void updatePointers();
 	void emptyHelpers();
-	void copyObjects();
+	void copyRemsetObjects();
+	
+
 	
 
 };

@@ -32,13 +32,14 @@ public:
 	std::vector<Region*> getRegions();
 	std::vector<unsigned int> getEdenRegions();
 	std::vector<unsigned int> getFreeRegions();
-	int getNextFreeRegionID();
+	unsigned int getNextFreeRegionID();
 	unsigned int getObjectRegion(Object* object);
 	unsigned char *getHeap();
 	size_t getSpaceToNextObject(size_t start);
 	unsigned char *getNextObjectAddress(size_t start);
 	size_t getOldSpaceStartHeapIndex();
 	size_t getOldSpaceEndHeapIndex();
+
 
 	//stats
 	void printMap();
@@ -56,6 +57,8 @@ public:
 
 	virtual bool isRealAllocator();
 	virtual void printStats(long trigReason);
+
+
 
 protected:
 	size_t getUsedSpace(bool newSpace);

@@ -268,8 +268,8 @@ std::vector<unsigned int> Allocator::getEdenRegions() {
 	return edenRegions;
 }
 
-int Allocator::getNextFreeRegionID() {
-	int id = freeRegions.front();
+unsigned int Allocator::getNextFreeRegionID() {
+	unsigned int id = freeRegions.front();
 	freeRegions.erase(freeRegions.begin());
 	return id;
 }

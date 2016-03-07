@@ -91,6 +91,7 @@ size_t Object::getHeapSize(){
 int Object::getPointersMax(){
 	return myPointersMax;
 }
+
 Object* Object::getReferenceTo(int pointerNumber){
 	RawObject *target = rawObject->pointers[pointerNumber];
 	if (target)
@@ -111,6 +112,14 @@ int Object::setPointer(int pointerNumber, Object* target){
 	else
 		rawObject->pointers[pointerNumber] = NULL;
 	return 1;
+}
+
+void Object::setForwardedPointer (Object* target){
+	forwardedPointer = target->rawObject;
+}
+
+Object* Object::getForwardedPointer (){
+	return forwardedPointer->associatedObject;
 }
 
 void *Object::getRawPointerAddress(int pointerNumber) {

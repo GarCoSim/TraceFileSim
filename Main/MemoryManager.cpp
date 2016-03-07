@@ -216,6 +216,45 @@ void *MemoryManager::allocate(size_t size, int generation) {
 		}
 
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
+		if (size == 99999999) {
+			result = myAllocators[generation]->gcAllocate(56);
+		}
+		else {
+			result = myAllocators[generation]->gcAllocate(size);
+		}
+		gen++;
+	}
+	if (gen > generation) {
+		//gcs were made. promote if possible
+		myGarbageCollectors[gen - 1]->promotionPhase();
+	}
+
+	if(GENERATIONS > 1 && result == NULL && SHIFTING == 1){
+		//try shifting
+		result = shift(size);
+	}
+
+	return result;
+}
+
+
+void *MemoryManager::allocate(size_t size, int generation, int thread) { //if region-based; by Tristan
+	//check if legal generation
+	if (generation < 0 || generation > GENERATIONS - 1) {
+		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
+				gLineInTrace, generation);
+		exit(1);
+	}
+	void *result = NULL;
+	int gen = generation;
+	//try allocating in the generation
+	result = myAllocators[generation]->gcAllocate(size,thread);
+	while ((long)result < 0 && gen < GENERATIONS) {
+		if (WRITE_DETAILED_LOG == 1) {
+			fprintf(gDetLog,
+					"(%d) Trigger Gc in generation %d.\n",
+					gLineInTrace, gen);
+		}
 
 		result = myAllocators[generation]->gcAllocate(size);
 
@@ -261,44 +300,29 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 }
 
 int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {
-	//if (id == 5918)
-	//	fprintf(stderr, "Adding object 5918 in MemoryManager\n");
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
+
 	void *address;
 
-	address = allocate(size, 0);
-
-    if (address == NULL) {
-		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line %d.\n",size, gLineInTrace);
-		fprintf(stderr, "ERROR(Line %d): Out of memory (%zu bytes)\n",gLineInTrace,size);
-		myGarbageCollectors[GENERATIONS-1]->lastStats();
-		exit(1);
-	}
-	//fprintf(balancedLogFile, "ID: %i\n", id);
-	//create Object
-	Object *object;
-
-	object = new Object(id, address, size, refCount, getClassName(classID));
-
-
-	object->setGeneration(0);
-	//add to Containers
-	addRootToContainers(object, thread);
-
-	if (myWriteBarrier)
-		myWriteBarrier->process(NULL, object);
-
-
-	if (DEBUG_MODE == 1) {
-		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
-		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
+	if (id == 9218) { //trigger GC with last allocate
+		address = allocate(99999999, 0);
+	} else {
+		address = allocate(size, 0);
 	}
 
-	return 0;
+    return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 }
 
+int MemoryManager::regionAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {//if region-based; by Tristan
 
+	if (WRITE_DETAILED_LOG == 1)
+		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
+
+    void* address = allocate(size, 0,thread);
+
+    return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+}
 
 int MemoryManager::requestRootDelete(int thread, int id){
 	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread, id);

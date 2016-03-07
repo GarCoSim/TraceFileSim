@@ -38,8 +38,13 @@ public:
 	int 	setPointer(int pointerNumber, Object* target);
 	void *getRawPointerAddress(int pointerNumber);
 	void setRawPointerAddress(int pointerNumber, void *address);
+	void 	setForwardedPointer(Object* target);
+	Object* getForwardedPointer();
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Rootset collection added to balanced collector
 	bool 	getVisited();
 	void	setVisited(bool value);
 
