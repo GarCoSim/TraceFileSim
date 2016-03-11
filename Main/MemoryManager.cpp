@@ -303,9 +303,9 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
-	void *address;
+	void* address;
 
-	if (id == 9218) { //trigger GC with last allocate
+	if (id == 9218) { //trigger GC with last allocate (9218 for HelloWorld)
 		address = allocate(99999999, 0);
 	} else {
 		address = allocate(size, 0);
@@ -322,6 +322,43 @@ int MemoryManager::regionAllocateObjectToRootset(int thread, int id,size_t size,
     void* address = allocate(size, 0,thread);
 
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+}
+
+inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID,void *address) {//post allocation; by Tristan
+	if (address == NULL) {
+		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line %d.\n",size, gLineInTrace);
+		fprintf(stderr, "ERROR(Line %d): Out of memory (%zu bytes)\n",gLineInTrace,size);
+		myGarbageCollectors[GENERATIONS-1]->lastStats();
+		exit(1);
+	}
+	//fprintf(balancedLogFile, "ID: %i\n", id);
+	//create Object
+	Object *object;
+	// modified by mazder, added thread id
+	if(escapeAnalysis){
+ 	    object = new Object(thread, id, address, size, refCount, getClassName(classID));
+		totalObject++;
+	}
+	else {
+		object = new Object(id, address, size, refCount, getClassName(classID));
+		totalObject++;
+	}
+
+	// increase class usage
+	if(clsInfo && ( (int)classStat.size() !=0 ) ){
+		classStat[classID] = classStat[classID]+1;
+	}
+
+	object->setGeneration(0);
+	//add to Containers
+	addRootToContainers(object, thread);
+
+	if (DEBUG_MODE == 1) {
+		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
+		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
+	}
+
+	return 0;
 }
 
 int MemoryManager::requestRootDelete(int thread, int id){

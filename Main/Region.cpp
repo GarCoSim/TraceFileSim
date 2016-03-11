@@ -76,24 +76,35 @@ int Region::getAge() {
     return myAge;
 }
 
-void Region::insertObjectReference(void* obj) {
-    myRemset.insert(obj);
+std::set<void*> Region::getRemset() {
+    return myRemset;
 }
 
-void Region::eraseObjectReference(void* obj) {	
+void Region::insertObjectReference(void* address) {
+        myRemset.insert(address);
+}
+
+
+void Region::eraseObjectReferenceWithoutCheck(void *address) {
+    myRemset.erase(myRemset.find(address));
+}
+
+void Region::eraseObjectReference(void *address) {	
 	std::set<void*>::iterator it;
-    Object *parent;
-    parent = (Object*)obj;
 	
-    it = myRemset.find(parent);
+    it = myRemset.find(address);
     if (it != myRemset.end()) {
         Object *child;
         int k;
         int thisRegion = (unsigned long)myAddress/mySize;
         int childRegion;
-        int numChild   = parent->getPointersMax(); //check if no more child is pointing to this region
+
+        RawObject *rawObject = (RawObject *) address;
+        Object *obj = rawObject->associatedObject;
+
+        int numChild   = obj->getPointersMax(); //check if no more child is pointing to this region
         for (k=0; k<numChild; k++) {
-            child = parent->getReferenceTo(k);
+            child = obj->getReferenceTo(k);
             if (child) {
 				childRegion = (unsigned int)(((size_t)child->getAddress()-myHeapAddress)/mySize); //need this!
 				
@@ -101,7 +112,7 @@ void Region::eraseObjectReference(void* obj) {
                     return; 
             }
         }
-        myRemset.erase(myRemset.find(parent));
+        myRemset.erase(myRemset.find(address));
     }
 	
 }

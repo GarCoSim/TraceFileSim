@@ -20,8 +20,8 @@ RegionBasedAllocator::RegionBasedAllocator() {
 
 bool RegionBasedAllocator::isRealAllocator() {
 	return true;
-}
 
+}
 
 void RegionBasedAllocator::initializeHeap(size_t heapSize) {
 	overallHeapSize = heapSize;

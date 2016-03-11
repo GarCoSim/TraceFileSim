@@ -138,6 +138,7 @@ void TraversalCollector::getAllRoots() {
 		myMemManager->clearRemSets();
 
 		vector<Object*> roots;
+
 		if(order==breadthFirst){
 			for (i = 0; i < NUM_THREADS; i++) {
 				roots = myObjectContainer->getRoots(i);

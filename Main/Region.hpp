@@ -48,8 +48,11 @@ public:
     void  incAge();
     int   getAge();
 
-    void  insertObjectReference(void *obj);
-    void  eraseObjectReference(void *obj);
+    std::set<void*> getRemset();
+
+    void  insertObjectReference(void* address);
+    void  eraseObjectReference(void* address);
+    void  eraseObjectReferenceWithoutCheck(void* address);
 
 protected:
 	size_t   mySize;
@@ -64,7 +67,7 @@ protected:
 };
 
 //From Tristan
-extern int           numRegions;
+extern int numRegions;
 extern size_t heapAddr;
 
 extern std::vector<int> freeList;
@@ -74,7 +77,7 @@ extern size_t sumObj;
 extern size_t sumFree;
 extern int  trigReason;
 
-extern Region**      regions;
+extern Region** regions;
 
-} 
+}
 #endif /* REGION_HPP_ */

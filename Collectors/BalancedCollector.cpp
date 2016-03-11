@@ -36,29 +36,51 @@ void BalancedCollector::collect(int reason) {
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, "GC #%d at %0.3fs\n", statGcNumber + 1, elapsed_secs);
 
+
+	allRegions = myAllocator->getRegions();
+	emptyHelpers();
+	preCollect();
+
+
+	buildCollectionSet();
+	copy();
+	updateRemsetPointers();
+	myPrintStatsQueue = myUpdatePointerQueue;
+
+	//fprintf(balancedLogFile, "\nObjects before updatePointers: \n");
+	//printObjects();
+	updatePointers();
+	//fprintf(balancedLogFile, "\nObjects after updatePointers: \n");
+	//printObjects();
+
+	//cleanUpCopiedRegions();
+	
+	postCollect();
+
+	stop = clock();
+	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
+	
+	
+}
+
+
+void BalancedCollector::emptyHelpers() {
 	while (!myQueue.empty()) {
 		myQueue.pop();
 	}
+
 	while (!myUpdatePointerQueue.empty()) {
 		myUpdatePointerQueue.pop();
 	}
+
 	int i;
 	for (i = 0; i < MAXREGIONAGE; i++) {
 		copyToRegions[i].clear();
 	}
 
-	allRegions = myAllocator->getRegions();
-
-	preCollect();
-	buildCollectionSet();
-	copy();
-	//addCopiedRegionsToFreeList();
-	
-	stop = clock();
-	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
+	statFreedDuringThisGC = 0;
 }
-
 
 void BalancedCollector::preCollect() {
 	start = clock();
@@ -80,10 +102,11 @@ void BalancedCollector::buildCollectionSet() {
 	for (i = 0; i < allRegions.size(); i++) {
 		for (j = 0; j < edenRegions.size(); j++) {
 			if (i == edenRegions[j]) {
-				myCollectionSet.at(i) = 1;
+				myCollectionSet[i] = 1;
 				fprintf(balancedLogFile, "Added region %i to collection set\n", i);
 			}
 		}
+	}
 		
 		/*
 		Region* currentRegion = allRegions[i];
@@ -97,7 +120,6 @@ void BalancedCollector::buildCollectionSet() {
 			myCollectionSet.push_back (i);
 		}
 		*/
-	}
 }
 
 
@@ -106,9 +128,8 @@ void BalancedCollector::copy() {
 	
 	getRootObjects();
 	copyRootObjects();
-	//updatePointers();
-	
 	//copyRemsetObjects();
+
 	
 	fprintf(balancedLogFile, "Copying done\n");
 }
@@ -128,19 +149,14 @@ void BalancedCollector::getRootObjects() {
 		
 		for (j = 0; j < roots.size(); j++) {
 			currentObj = roots[j];
-			//fprintf(balancedLogFile, "Current root object from outside: %i. ID: %i\n", j, currentObj->getID());
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
-				//fprintf(balancedLogFile, "Current object: ID = %i. ", currentObj->getID());
+				//fprintf(balancedLogFile, "Current object: ID = %i. Child: ID = %i. Address = %ld\n", currentObj->getID(), currentObj->getReferenceTo(0)->getID(), (long)currentObj->getReferenceTo(0)->getAddress());
 				objectRegion = myAllocator->getObjectRegion(currentObj);
 				//fprintf(balancedLogFile, " Appropriate object Region: %u\n", objectRegion);
 
 				if (myCollectionSet[objectRegion] == 1) { //Object belongs to Collection-set-Region
 					myQueue.push(currentObj);
-					//regionAge = myAllocator->getRegions().at(objectRegion)->getAge();
-					//fprintf(balancedLogFile, "Current root object from inside: %i\n", j);
-					//fprintf(balancedLogFile, "Thread %i. Added object %i from region %u to queue.\n", i, currentObj->getID(), objectRegion);
-					//copyObject(currentObj, regionAge);
 					
 				}
 			}
@@ -151,7 +167,7 @@ void BalancedCollector::getRootObjects() {
 }
 
 void BalancedCollector::copyRootObjects() {
-	fprintf(balancedLogFile, "Copy Root Objects\n");
+	fprintf(balancedLogFile, "Copy Root Objects\n\n");
 	
 	int i;
 	unsigned int childRegion;
@@ -163,15 +179,23 @@ void BalancedCollector::copyRootObjects() {
 		currentObj = myQueue.front();
 		myQueue.pop();
 		int children = currentObj->getPointersMax();
+
+		//fprintf(balancedLogFile, "Copying object:\n");
+		//printStuff(currentObj);
 		copyAndForwardObject(currentObj);
+		//fprintf(balancedLogFile, "After Copying object:\n");
+		//printStuff(currentObj);
+		//fprintf(balancedLogFile, "\n");
+				
 
 		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
-
+		//fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());
 		for (i = 0; i < children; i++) {
 			child = currentObj->getReferenceTo(i);
-			if (child) {
+			if (child && !child->getVisited()) {
+				//fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());
 				childRegion =  myAllocator->getObjectRegion(child);
-				if (!child->getVisited() && myCollectionSet[childRegion] == 1) {
+				if (myCollectionSet[childRegion] == 1) {
 				child->setVisited(true);
 				myQueue.push(child);
 				myUpdatePointerQueue.push(child);
@@ -180,7 +204,7 @@ void BalancedCollector::copyRootObjects() {
 		}
 	}
 	
-	fprintf(balancedLogFile, "Copying Root Objects done\n\n");
+	fprintf(balancedLogFile, "\nCopying Root Objects done. Copied %u objects.\n\n", statFreedDuringThisGC);
 }
 
 void BalancedCollector::copyAndForwardObject(Object *obj) {
@@ -217,7 +241,8 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 
 			addressAfter = (void *) obj->getAddress();
 			addForwardingEntry(addressBefore, addressAfter);
-			fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+			statFreedDuringThisGC++;
+			//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
 			return;
 		}
 	}
@@ -231,7 +256,7 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 			allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
 
 			if (objectSize <= currentFreeSpace) {
-				fprintf(balancedLogFile, "\nGetting new copyToRegion with id: %u\n", currentCopyToRegionID);
+				//fprintf(balancedLogFile, "\nGetting new copyToRegion with id: %u\n", currentCopyToRegionID);
 				currentFreeAddress = allRegions[currentCopyToRegionID]->getCurrFreeAddr();
 				allRegions[currentCopyToRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)objectSize));
 				allRegions[currentCopyToRegionID]->setCurrFree(currentFreeSpace-objectSize);
@@ -251,7 +276,8 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 
 				addressAfter = (void *) obj->getAddress();
 				addForwardingEntry(addressBefore, addressAfter);
-				fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+				statFreedDuringThisGC++;
+				//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
 				return;
 			}
 			else if (objectSize > currentFreeSpace) {
@@ -262,17 +288,65 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 		fprintf(stderr, "No more Regions for copying available!\n");
 }
 
-void BalancedCollector::updatePointers() {
-	fprintf(balancedLogFile, "Update pointers\n");
+void BalancedCollector::updateRemsetPointers() {
+	fprintf(balancedLogFile, "Update remset pointers\n");
 
+	unsigned int i;
+	std::set<void*> currentRemset;
+	std::set<void*>::iterator remsetIterator;
+	//void *pointerAddress;
+
+
+	for (i = 0; i < allRegions.size(); i++) {
+		if (myCollectionSet[i] == 0) { //Not from collection set
+			currentRemset = allRegions[i]->getRemset();
+			for (remsetIterator = currentRemset.begin(); remsetIterator != currentRemset.end(); ++remsetIterator) {
+				
+			    //allRegions[i]->eraseObjectReferenceWithoutCheck(*remsetIterator);
+
+			    /*
+			    pointerAddress = *remsetIterator->getAddress();
+			    if (pointerAddress != NULL && forwardPointers.find(pointerAddress) != forwardPointers.end()) {
+
+			    }
+			    else {
+
+			    }
+					
+
+			    allRegions[i]->insertObjectReference(*remsetIterator);
+			    */
+			}
+		}
+	}
+		
+
+	fprintf(balancedLogFile, "Updating remset pointers done\n");
+}
+
+void BalancedCollector::updatePointers() {
+	fprintf(balancedLogFile, "Update  pointers\n");
+
+	int j;
 	Object* currentObj;
+	void *childAddress;
+	int children;
 
 	while (!myUpdatePointerQueue.empty()) {
 		currentObj = myUpdatePointerQueue.front();
 		myUpdatePointerQueue.pop();
+		children = currentObj->getPointersMax();
+		for (j = 0; j < children; j++) {
+			childAddress = currentObj->getRawPointerAddress(j);
+			if (childAddress != NULL && forwardPointers.find(childAddress) != forwardPointers.end())
+				currentObj->setRawPointerAddress(j, forwardPointers[childAddress]);
+		}
 
 		currentObj->setVisited(false);
 	}
+
+	
+	clearForwardingEntries();
 
 	fprintf(balancedLogFile, "Updating pointers done\n");
 }
@@ -330,6 +404,33 @@ void BalancedCollector::copyRemsetObjects() {
 		}
 		*/
 	
+}
+
+void BalancedCollector::printObjects(){
+	Object* currentObj;
+	queue<Object *> myPrintStatsQueueSave = myPrintStatsQueue; //Do this to keep elements in the myPrintStatsQueue for next call
+	while(!myPrintStatsQueue.empty()) {
+		currentObj = myPrintStatsQueue.front();
+		myPrintStatsQueue.pop();
+		printStuff(currentObj);
+	}
+	myPrintStatsQueue = myPrintStatsQueueSave;
+}
+
+void BalancedCollector::printStuff(Object* obj){
+	int k;
+	Object* child;
+	void* rawChildAddress;
+	fprintf(balancedLogFile, "ID = %i. Address = %ld.    ", obj->getID(), (long)obj->getAddress());
+	int children = obj->getPointersMax();
+	for (k = 0; k < children; k++) {
+		child = obj->getReferenceTo(k);
+		rawChildAddress = obj->getRawPointerAddress(k);
+		if (child) {
+			fprintf(balancedLogFile, "Child %i: ID = %i. Address = %ld.  ", k, child->getID(), (long)rawChildAddress);
+		}
+	}
+	fprintf(balancedLogFile, "\n");
 }
 
 BalancedCollector::~BalancedCollector() {

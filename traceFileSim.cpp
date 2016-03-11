@@ -162,6 +162,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	fprintf(stderr, "TraceFileSimulator v%lf\n\n", VERSION);
+
 	if(WRITE_DETAILED_LOG) {
 		gDetLog = fopen("detailed.log","w+");
 	}

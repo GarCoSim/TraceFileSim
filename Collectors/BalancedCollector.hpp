@@ -38,6 +38,7 @@ private:
 	std::vector<unsigned int> copyToRegions[MAXREGIONAGE];
 	std::vector<Region*> allRegions;
 	queue<Object *> myUpdatePointerQueue;
+	queue<Object *> myPrintStatsQueue;
 	void buildCollectionSet();
 	void preCollect();
 	void copy();
@@ -48,10 +49,9 @@ private:
 	void updatePointers();
 	void emptyHelpers();
 	void copyRemsetObjects();
-	
-
-	
-
+	void updateRemsetPointers();
+	void printObjects(); //Good function to get stats from runs with Aaaron's Test Tracefiles
+	void printStuff(Object *obj);
 };
 
 }
