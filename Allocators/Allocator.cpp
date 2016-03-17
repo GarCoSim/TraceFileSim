@@ -282,6 +282,24 @@ unsigned int Allocator::getObjectRegion(Object* object) {
 	return (unsigned int)(((size_t)object->getAddress()-(size_t)&heap[0])/regionSize);
 }
 
+unsigned int Allocator::getObjectRegionByRawObject(void* object) {
+	return (unsigned int)(((size_t)object-(size_t)&heap[0])/regionSize);
+}
+
+void Allocator::addNewFreeRegion(unsigned int regionID){
+	freeRegions.push_back(regionID);
+}
+
+void Allocator::removeEdenRegion(unsigned int regionID){
+	unsigned int i;
+	for (i = 0; i < edenRegions.size(); i++) {
+		if (edenRegions[i] == regionID) {
+			edenRegions.erase(edenRegions.begin() + i);
+			return;
+		}
+	}
+}
+
 void Allocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);
 

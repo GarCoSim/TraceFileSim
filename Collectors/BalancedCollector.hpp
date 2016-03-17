@@ -52,6 +52,8 @@ private:
 	void updateRemsetPointers();
 	void printObjects(); //Good function to get stats from runs with Aaaron's Test Tracefiles
 	void printStuff(Object *obj);
+	void reOrganizeRegions();
+	void printStats();
 };
 
 }

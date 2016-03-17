@@ -305,7 +305,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 
 	void* address;
 
-	if (id == 9218) { //trigger GC with last allocate (9218 for HelloWorld)
+	if (id == 999999999) { //trigger GC with last allocate (9218 for HelloWorld)
 		address = allocate(99999999, 0);
 	} else {
 		address = allocate(size, 0);
@@ -670,13 +670,12 @@ int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int
 		childRegion =  myAllocators[0]->getObjectRegion(child);
 
 		if (parentRegion != childRegion) {
-			myAllocators[0]->getRegions()[childRegion]->insertObjectReference((void*)parent);
+			myAllocators[0]->getRegions()[childRegion]->insertObjectReference(parent->getAddress());
 		}
 
 	}
 
 	return 0;
-
 }
 
 void MemoryManager::clearRemSets(){

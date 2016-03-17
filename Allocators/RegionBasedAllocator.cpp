@@ -58,17 +58,18 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	currentNumberEdenRegions = edenRegions.size();
 	
 	for (i = 0; i < currentNumberEdenRegions; i++) {
-		currentFreeSpace = balancedRegions[i]->getCurrFree();
+		edenRegionID = edenRegions[i];
+		currentFreeSpace = balancedRegions[edenRegionID]->getCurrFree();
 		
 		if (size <= currentFreeSpace) {
-			edenRegionID = edenRegions.at(i);
 			currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();	
 			balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
+			//fprintf(balancedLogFile, "Bla: %zu\n", currentFreeSpace-size);
 			balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
 			balancedRegions[edenRegionID]->incrementObjectCount();
 			
 			setAllocated((long)currentFreeAddress, size);
-			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
+			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld. currentFreeSpace = %zu \n", size, edenRegionID, (long)currentFreeAddress, currentFreeSpace);
 			//fprintf(balancedLogFile, "Allocated to: %i. ", edenRegionID);
 
 			return &heap[(long)currentFreeAddress];

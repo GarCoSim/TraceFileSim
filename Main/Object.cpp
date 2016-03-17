@@ -114,12 +114,12 @@ int Object::setPointer(int pointerNumber, Object* target){
 	return 1;
 }
 
-void Object::setForwardedPointer (Object* target){
-	forwardedPointer = target->rawObject;
+void Object::setForwardedPointer (void* address){
+	forwardedPointer = address;
 }
 
-Object* Object::getForwardedPointer (){
-	return forwardedPointer->associatedObject;
+void* Object::getForwardedPointer (){
+	return forwardedPointer;
 }
 
 void *Object::getRawPointerAddress(int pointerNumber) {

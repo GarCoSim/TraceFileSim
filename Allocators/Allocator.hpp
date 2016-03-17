@@ -22,7 +22,7 @@ public:
 	virtual void gcFree(Object* object);
 
 	void setAllocated(size_t heapIndex, size_t size);
-	
+
 	//used mainly by garbage collector
 	size_t getFreeSize();
 	size_t getHeapSize();
@@ -34,12 +34,14 @@ public:
 	std::vector<unsigned int> getFreeRegions();
 	unsigned int getNextFreeRegionID();
 	unsigned int getObjectRegion(Object* object);
+	unsigned int getObjectRegionByRawObject(void* object);
 	unsigned char *getHeap();
 	size_t getSpaceToNextObject(size_t start);
 	unsigned char *getNextObjectAddress(size_t start);
 	size_t getOldSpaceStartHeapIndex();
 	size_t getOldSpaceEndHeapIndex();
-
+	void addNewFreeRegion(unsigned int regionID);
+	void removeEdenRegion(unsigned int regionID);
 
 	//stats
 	void printMap();

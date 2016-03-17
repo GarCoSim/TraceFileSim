@@ -80,6 +80,14 @@ std::set<void*> Region::getRemset() {
     return myRemset;
 }
 
+void Region::reset() {
+    numObj       = 0;
+    currFreeAddr = myAddress;
+    currFree     = mySize;
+    myAge = 0;
+    myRemset.clear();
+}
+
 void Region::insertObjectReference(void* address) {
         myRemset.insert(address);
 }

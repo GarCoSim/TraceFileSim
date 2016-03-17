@@ -54,6 +54,8 @@ public:
     void  eraseObjectReference(void* address);
     void  eraseObjectReferenceWithoutCheck(void* address);
 
+    void reset();
+
 protected:
 	size_t   mySize;
 	size_t myHeapAddress;
