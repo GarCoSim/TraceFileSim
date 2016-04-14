@@ -179,10 +179,10 @@ void BalancedCollector::copyRootObjects() {
 		int children = currentObj->getPointersMax();
 
 		//fprintf(balancedLogFile, "Copying object:\n");
-		//printStuff(currentObj);
+		printStuff(currentObj);
 		copyAndForwardObject(currentObj);
 		//fprintf(balancedLogFile, "After Copying object:\n");
-		//printStuff(currentObj);
+		printStuff(currentObj);
 		//fprintf(balancedLogFile, "\n");
 				
 
