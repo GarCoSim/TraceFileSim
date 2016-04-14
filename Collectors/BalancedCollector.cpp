@@ -211,9 +211,9 @@ void BalancedCollector::getRemsetObjects() {
 	Object* currentObj;
 	std::set<void*> currentRemset;
 	std::set<void*>::iterator remsetIterator;
-	int i, j;
+	int j;
 	int children;
-	unsigned int parentRegion, childRegion;
+	unsigned int parentRegion, childRegion, i;
 	Object* child;
 	void* remsetPointer; 
 
@@ -234,16 +234,17 @@ void BalancedCollector::getRemsetObjects() {
 							child = currentObj->getReferenceTo(j);
 							if (child) {
 								currentObj->setRawPointerAddress(j, child->getForwardedPointer());
-							}
-							child = currentObj->getReferenceTo(j);
+							
+								child = currentObj->getReferenceTo(j);
 
-							childRegion =  myAllocator->getObjectRegion(child);
+								childRegion =  myAllocator->getObjectRegion(child);
 
-							if (child && myCollectionSet[childRegion] == 1) {
-								
-								myQueue.push(child);
-								myUpdatePointerQueue.push(child);
+								if (child && myCollectionSet[childRegion] == 1) {
+									
+									myQueue.push(child);
+									myUpdatePointerQueue.push(child);
 
+								}
 							}
 						}
 					}
