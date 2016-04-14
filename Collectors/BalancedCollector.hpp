@@ -44,11 +44,12 @@ private:
 	void copy();
 	void getRootObjects();
 	void copyRootObjects();
+	void getRemsetObjects();
+	void copyRemsetObjects();
 	void copyObject(Object* object, int regionAge);
 	void copyAndForwardObject(Object *obj);
 	void updatePointers();
 	void emptyHelpers();
-	void copyRemsetObjects();
 	void updateRemsetPointers();
 	void printObjects(); //Good function to get stats from runs with Aaaron's Test Tracefiles
 	void printStuff(Object *obj);

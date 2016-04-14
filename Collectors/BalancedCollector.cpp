@@ -125,7 +125,8 @@ void BalancedCollector::copy() {
 	
 	getRootObjects();
 	copyRootObjects();
-	//copyRemsetObjects();
+	getRemsetObjects();
+	copyRootObjects();
 
 	
 	fprintf(balancedLogFile, "Copying done\n");
@@ -164,7 +165,7 @@ void BalancedCollector::getRootObjects() {
 }
 
 void BalancedCollector::copyRootObjects() {
-	fprintf(balancedLogFile, "Copy Root Objects\n\n");
+	fprintf(balancedLogFile, "Copy Objects in queue\n\n");
 	
 	int i;
 	unsigned int childRegion;
@@ -201,7 +202,56 @@ void BalancedCollector::copyRootObjects() {
 		}
 	}
 	
-	fprintf(balancedLogFile, "\nCopying Root Objects done. Copied %u objects.\n\n", statFreedDuringThisGC);
+	fprintf(balancedLogFile, "\nCopying enqueued Objects done. Copied %u objects.\n\n", statFreedDuringThisGC);
+}
+
+void BalancedCollector::getRemsetObjects() {
+	fprintf(balancedLogFile, "Get Remset Objects\n");
+
+	Object* currentObj;
+	std::set<void*> currentRemset;
+	std::set<void*>::iterator remsetIterator;
+	int i, j;
+	int children;
+	unsigned int parentRegion, childRegion;
+	Object* child;
+	void* remsetPointer; 
+
+	for (i = 0; i < myCollectionSet.size(); i++) {
+		if (myCollectionSet[i] == 1) {
+			currentRemset = allRegions[i]->getRemset();
+			for (remsetIterator = currentRemset.begin(); remsetIterator != currentRemset.end(); ++remsetIterator) {
+				
+				remsetPointer = *remsetIterator;
+				RawObject *rawObject = (RawObject *) remsetPointer; 
+				currentObj = rawObject->associatedObject;
+				myUpdatePointerQueue.push(currentObj);
+
+					parentRegion =  myAllocator->getObjectRegion(currentObj);
+					if (myCollectionSet[parentRegion] == 0) {
+						children = currentObj->getPointersMax();
+						for (j = 0; j < children; j++) {
+							child = currentObj->getReferenceTo(j);
+							if (child) {
+								currentObj->setRawPointerAddress(j, child->getForwardedPointer());
+							}
+							child = currentObj->getReferenceTo(j);
+
+							childRegion =  myAllocator->getObjectRegion(child);
+
+							if (child && myCollectionSet[childRegion] == 1) {
+								
+								myQueue.push(child);
+								myUpdatePointerQueue.push(child);
+
+							}
+						}
+					}
+			}
+		}
+	}
+	fprintf(balancedLogFile, "Getting Remset Objects done. Added %zu objects to the queue.\n", myQueue.size());
+	fprintf(balancedLogFile, "%zu pointers to be modified.\n\n", myUpdatePointerQueue.size());
 }
 
 void BalancedCollector::copyAndForwardObject(Object *obj) {
@@ -343,6 +393,7 @@ void BalancedCollector::updatePointers() {
 	Object* currentObj;
 	Object* child;
 	int children;
+	int parentRegion, childRegion;
 
 	while (!myUpdatePointerQueue.empty()) {
 		currentObj = myUpdatePointerQueue.front();
@@ -350,8 +401,14 @@ void BalancedCollector::updatePointers() {
 		children = currentObj->getPointersMax();
 		for (j = 0; j < children; j++) {
 			child = currentObj->getReferenceTo(j);
-			if (child)
+			if (child) {
 				currentObj->setRawPointerAddress(j, child->getForwardedPointer());
+				childRegion =  myAllocator->getObjectRegion(child);
+				parentRegion =  myAllocator->getObjectRegion(currentObj);
+				if (childRegion!=parentRegion) {
+					allRegions[childRegion]->insertObjectReference(currentObj->getAddress());
+				}
+			}
 		}
 
 		currentObj->setVisited(false);
