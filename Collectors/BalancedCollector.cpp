@@ -233,14 +233,9 @@ void BalancedCollector::getRemsetObjects() {
 						for (j = 0; j < children; j++) {
 							child = currentObj->getReferenceTo(j);
 							if (child) {
-								currentObj->setRawPointerAddress(j, child->getForwardedPointer());
-							
-								child = currentObj->getReferenceTo(j);
-
 								childRegion =  myAllocator->getObjectRegion(child);
 
-								if (child && myCollectionSet[childRegion] == 1) {
-									
+								if (myCollectionSet[childRegion] == 1) {
 									myQueue.push(child);
 									myUpdatePointerQueue.push(child);
 
