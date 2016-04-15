@@ -232,7 +232,8 @@ void BalancedCollector::getRemsetObjects() {
 						children = currentObj->getPointersMax();
 						for (j = 0; j < children; j++) {
 							child = currentObj->getReferenceTo(j);
-							if (child) {
+							if (child && !child->getVisited()) {
+								child->setVisited(true);
 								childRegion =  myAllocator->getObjectRegion(child);
 
 								if (myCollectionSet[childRegion] == 1) {
