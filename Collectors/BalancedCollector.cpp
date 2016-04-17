@@ -7,8 +7,8 @@
 
 #include "BalancedCollector.hpp"
 #define MAXAGE 23 //The biggest age that will be considered
-#define MAXAGEP 0.1 //Probability of MAXAGE to be chosen
-//#define RAND_MAX 1 //for random numbers to be generated
+#define MAXAGEP 10 //Probability of MAXAGE to be chosen in %
+#define COLLECTIONSETSIZE 0.5 //Absolute maximum size of collection set. default is 0.5 which means 50% of all regions
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -88,9 +88,12 @@ void BalancedCollector::preCollect() {
 
 void BalancedCollector::buildCollectionSet() {
 	fprintf(balancedLogFile, "\n\nBuilding collection set:\n");
+
+	int setSize = (int)(COLLECTIONSETSIZE*allRegions.size());
 	
 	myCollectionSet.clear();
 	myCollectionSet.resize(allRegions.size(), 0);
+	int regionsInSet = 0;
 	
 	std::vector<unsigned int> edenRegions = myAllocator->getEdenRegions();
 	unsigned int i, j;
@@ -99,24 +102,33 @@ void BalancedCollector::buildCollectionSet() {
 	for (i = 0; i < allRegions.size(); i++) {
 		for (j = 0; j < edenRegions.size(); j++) {
 			if (i == edenRegions[j]) {
+				regionsInSet++;
 				myCollectionSet[i] = 1;
-				fprintf(balancedLogFile, "Added region %i to collection set\n", i);
+				fprintf(balancedLogFile, "Added eden region %i to collection set\n", i);
 			}
 		}
 	}
-		
-		/*
-		Region* currentRegion = allRegions[i];
-		
-		//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) 
-		//there is maximum age which can also be picked with some non-0 probability
-		float mortalityRate;
-		int regionAge = currentRegion->getAge();
-		float probability = regionAge*(MAXAGEP+1)/MAXAGE+1; 
-		if ( rand() < probability ) {
-			myCollectionSet.push_back (i);
+
+	Region* currentRegion;
+	int regionAge;
+	float probability;
+	int dice;
+
+	//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) 
+	//there is maximum age which can also be picked with some non-0 probability
+	for (i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
+		if (myCollectionSet[i]==0) {
+			currentRegion = allRegions[i];
+			regionAge = currentRegion->getAge();
+			probability = (100-MAXAGEP)/(0-MAXAGE)*regionAge+100;
+			dice = rand()%100+1;
+			if (dice<=probability) {
+				myCollectionSet[i] = 1;
+				fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
+				regionsInSet++;
+			}
 		}
-		*/
+	}
 }
 
 
