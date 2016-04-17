@@ -41,13 +41,13 @@ private:
 	queue<Object *> myPrintStatsQueue;
 	void buildCollectionSet();
 	void preCollect();
-	void copy();
+	int copy();
 	void getRootObjects();
-	void copyRootObjects();
+	int copyRootObjects();
 	void getRemsetObjects();
 	void copyRemsetObjects();
 	void copyObject(Object* object, int regionAge);
-	void copyAndForwardObject(Object *obj);
+	int copyAndForwardObject(Object *obj);
 	void updatePointers();
 	void emptyHelpers();
 	void updateRemsetPointers();

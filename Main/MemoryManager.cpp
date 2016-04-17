@@ -216,12 +216,9 @@ void *MemoryManager::allocate(size_t size, int generation) {
 		}
 
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
-		if (size == 99999999) {
-			result = myAllocators[generation]->gcAllocate(56);
-		}
-		else {
-			result = myAllocators[generation]->gcAllocate(size);
-		}
+
+		result = myAllocators[generation]->gcAllocate(size);
+
 		gen++;
 	}
 	if (gen > generation) {
@@ -314,11 +311,7 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 		return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 	}
 
-	if (id == 999999999) { //trigger GC with last allocate (9218 for HelloWorld)
-		address = allocate(99999999, 0);
-	} else {
-		address = allocate(size, 0);
-}
+	address = allocate(size, 0);
 
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 }
@@ -353,9 +346,6 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 		totalObject++;
 	}
 
-	if (object->getID() == 12552) {
-		fprintf(stderr, "Allocated obejct 12552 to address %ld\n", (long)object->getAddress());
-	}
 
 	// increase class usage
 	if(clsInfo && ( (int)classStat.size() !=0 ) ){
