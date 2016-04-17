@@ -43,9 +43,8 @@ private:
 	void preCollect();
 	int copy();
 	void getRootObjects();
-	int copyRootObjects();
+	void copyObjectsInQueues();
 	void getRemsetObjects();
-	void copyRemsetObjects();
 	void copyObject(Object* object, int regionAge);
 	int copyAndForwardObject(Object *obj);
 	void updatePointers();
@@ -59,4 +58,3 @@ private:
 
 }
 #endif /* BALANCEDCOLLECTOR_HPP_ */
-
