@@ -108,24 +108,27 @@ void BalancedCollector::buildCollectionSet() {
 			}
 		}
 	}
-
+	
 	Region* currentRegion;
 	int regionAge;
 	float probability;
 	int dice;
-
+	
 	//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP) 
 	//there is maximum age which can also be picked with some non-0 probability
 	for (i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
 		if (myCollectionSet[i]==0) {
 			currentRegion = allRegions[i];
-			regionAge = currentRegion->getAge();
-			probability = (100-MAXAGEP)/(0-MAXAGE)*regionAge+100;
-			dice = rand()%100+1;
-			if (dice<=probability) {
-				myCollectionSet[i] = 1;
-				fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
-				regionsInSet++;
+			if (currentRegion->getNumObj() > 0) {
+				regionAge = currentRegion->getAge();
+				probability = (100-MAXAGEP)/(0-MAXAGE)*regionAge+100;
+				dice = rand()%100+1;
+				if (dice<=probability) {
+					myCollectionSet[i] = 1;
+					//fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
+					fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
+					regionsInSet++;
+				}
 			}
 		}
 	}
@@ -160,14 +163,14 @@ void BalancedCollector::getRootObjects() {
 		for (j = 0; j < roots.size(); j++) {
 			currentObj = roots[j];
 			if (currentObj && !currentObj->getVisited()) {
-				currentObj->setVisited(true);
+
 				//fprintf(balancedLogFile, "Current object: ID = %i. Child: ID = %i. Address = %ld\n", currentObj->getID(), currentObj->getReferenceTo(0)->getID(), (long)currentObj->getReferenceTo(0)->getAddress());
 				objectRegion = myAllocator->getObjectRegion(currentObj);
 				//fprintf(balancedLogFile, " Appropriate object Region: %u\n", objectRegion);
 
 				if (myCollectionSet[objectRegion] == 1) { //Object belongs to Collection-set-Region
 					myQueue.push(currentObj);
-					
+					currentObj->setVisited(true);
 				}
 			}
 		}
@@ -196,19 +199,25 @@ void BalancedCollector::copyRootObjects() {
 		//fprintf(balancedLogFile, "After Copying object:\n");
 		printStuff(currentObj);
 		//fprintf(balancedLogFile, "\n");
-				
+			
+		
 
 		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
 		//fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());
+
 		for (i = 0; i < children; i++) {
+
 			child = currentObj->getReferenceTo(i);
 			if (child && !child->getVisited()) {
 				//fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());
 				childRegion =  myAllocator->getObjectRegion(child);
 				if (myCollectionSet[childRegion] == 1) {
-				child->setVisited(true);
-				myQueue.push(child);
-				myUpdatePointerQueue.push(child);
+
+					child->setVisited(true);
+					myQueue.push(child);
+					myUpdatePointerQueue.push(child);
+
+
 				}
 			}
 		}
@@ -245,10 +254,10 @@ void BalancedCollector::getRemsetObjects() {
 						for (j = 0; j < children; j++) {
 							child = currentObj->getReferenceTo(j);
 							if (child && !child->getVisited()) {
-								child->setVisited(true);
 								childRegion =  myAllocator->getObjectRegion(child);
 
 								if (myCollectionSet[childRegion] == 1) {
+									child->setVisited(true);
 									myQueue.push(child);
 									myUpdatePointerQueue.push(child);
 
@@ -268,6 +277,7 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 	size_t currentFreeSpace, objectSize;
 	void *currentFreeAddress, *addressAfter;
 	int objRegionAge;
+
 
 	objRegionID  = myAllocator->getObjectRegion(obj);
 	objRegionAge = allRegions[objRegionID]->getAge();
@@ -297,6 +307,7 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 			obj->setForwardedPointer(addressAfter);
 			statFreedDuringThisGC++;
 			//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+
 			return;
 		}
 	}
@@ -331,6 +342,7 @@ void BalancedCollector::copyAndForwardObject(Object *obj) {
 				obj->setForwardedPointer(addressAfter);
 				statFreedDuringThisGC++;
 				//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+				
 				return;
 			}
 			else if (objectSize > currentFreeSpace) {
@@ -489,6 +501,7 @@ void BalancedCollector::reOrganizeRegions(){
 	for (i = 0; i < myCollectionSet.size(); i++) {
 		if (myCollectionSet[i] == 1) {
 			currentRegion = allRegions[i];
+			//fprintf(stderr, "Resetting region %u\n", i);
 			currentRegion->reset();
 			myAllocator->addNewFreeRegion(i);
 			myAllocator->removeEdenRegion(i);

@@ -305,11 +305,20 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 
 	void* address;
 
+	if (size > 32000) { //bigger than region with heap size of 32m
+		address = allocate(32000, 0);
+		return postAllocateObjectToRootset(thread,id,32000,refCount,classID,address);
+	}
+	else {
+		address = allocate(size, 0);
+		return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+	}
+
 	if (id == 999999999) { //trigger GC with last allocate (9218 for HelloWorld)
 		address = allocate(99999999, 0);
 	} else {
 		address = allocate(size, 0);
-	}
+}
 
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 }
@@ -342,6 +351,10 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 	else {
 		object = new Object(id, address, size, refCount, getClassName(classID));
 		totalObject++;
+	}
+
+	if (object->getID() == 12552) {
+		fprintf(stderr, "Allocated obejct 12552 to address %ld\n", (long)object->getAddress());
 	}
 
 	// increase class usage
@@ -668,7 +681,6 @@ int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int
 
 	if (child) {
 		childRegion =  myAllocators[0]->getObjectRegion(child);
-
 		if (parentRegion != childRegion) {
 			myAllocators[0]->getRegions()[childRegion]->insertObjectReference(parent->getAddress());
 		}
