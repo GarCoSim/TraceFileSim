@@ -402,7 +402,7 @@ void BalancedCollector::updatePointers() {
 				currentObj->setRawPointerAddress(j, child->getForwardedPointer());
 				childRegion =  myAllocator->getObjectRegion(child);
 				parentRegion =  myAllocator->getObjectRegion(currentObj);
-				if (childRegion!=parentRegion) {
+				if (childRegion!=parentRegion && myCollectionSet[parentRegion] == 0) {
 					allRegions[childRegion]->insertObjectReference(currentObj->getAddress());
 				}
 			}
