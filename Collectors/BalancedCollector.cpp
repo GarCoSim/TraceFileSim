@@ -74,7 +74,7 @@ void BalancedCollector::collect(int reason) {
 
 	statFreedDuringThisGC = totalObjectsInCollectionSet - statCopiedDuringThisGC;
 	statFreedObjects += statFreedDuringThisGC;
-	fprintf(stderr, "totalObjectsInCollectionSet: %i\n", totalObjectsInCollectionSet);
+	//fprintf(stderr, "totalObjectsInCollectionSet: %i\n", totalObjectsInCollectionSet);
 
 	postCollect();
 	printStats();
