@@ -200,6 +200,8 @@ void TraversalCollector::getAllRoots() {
 }
 
 void TraversalCollector::copyAndForwardObject(Object *o) {
+	statCopiedDuringThisGC++;
+	statCopiedObjects++;
 	void *addressBefore, *addressAfter;
 	addressBefore = (void *) o->getAddress();
 	myAllocator->moveObject(o);
@@ -274,7 +276,6 @@ void TraversalCollector::hierarchicalCopying() {
 	int i;
 	Object* currentObj;
 	Object* child;
-
 
 	while (!myDoubleQueue.empty()) {
 		currentObj = myDoubleQueue.front();

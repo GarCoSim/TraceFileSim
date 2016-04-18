@@ -54,6 +54,8 @@ private:
 	void printStuff(Object *obj);
 	void reOrganizeRegions();
 	void printStats();
+
+	int totalObjectsInCollectionSet;
 };
 
 }

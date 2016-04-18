@@ -247,8 +247,8 @@ int main(int argc, char *argv[]) {
 
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
-			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
-			"Heap Used", "Free Heap", "Generation", "GC Time");
+			"Line", "GC Reason", "Total GCs", "Objects Freed", "Objs freed during GC", "Objs Copied", "Objs Copied during GC",
+			"Live Objects", "Heap Used", "Free Heap", "Generation", "GC Time");
 
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %zu bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);

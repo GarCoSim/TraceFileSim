@@ -44,6 +44,9 @@ void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container,
 	statCollectionReason = (int)reasonStatistics;
 	statFreedDuringThisGC = 0;
 
+	statCopiedDuringThisGC = 0;
+	statCopiedObjects = 0;
+
 	order = (traversalEnum)traversal;
 }
 
@@ -97,9 +100,9 @@ void Collector::printStats() {
 	allGCs += longestGC;
 
 	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
+	fprintf(gLogFile, "%8d | %14s | %10d | %14d | %20d | %12d | %21d "
 			"| %13d | %10zu | %10d | %10d | %4.3f\n", gLineInTrace,
-			statCollectionReasonString, statGcNumber, statFreedObjects,
+			statCollectionReasonString, statGcNumber, statFreedObjects, statFreedDuringThisGC, statCopiedObjects, statCopiedDuringThisGC,
 			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs);
 	fflush(gLogFile);
 	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {

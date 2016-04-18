@@ -47,8 +47,11 @@ void BalancedCollector::collect(int reason) {
 	returnVal = copy();
 	if (returnVal == -1) {
 		//No more regions for copying available, end simulation
-		postCollect();
-		printStats();
+		//statFreedDuringThisGC = totalObjectsInCollectionSet - statCopiedDuringThisGC;
+		//statFreedObjects += statFreedDuringThisGC;
+		//postCollect();
+		//printStats();
+		fprintf(balancedLogFile, "No more free Regions available to copy Objects!\n");
 		stop = clock();
 		elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 		fprintf(stderr, " took %0.3fs\n", elapsed_secs);
@@ -65,7 +68,14 @@ void BalancedCollector::collect(int reason) {
 	//fprintf(balancedLogFile, "\nObjects after updatePointers: \n");
 	//printObjects();
 
+
+
 	reOrganizeRegions();
+
+	statFreedDuringThisGC = totalObjectsInCollectionSet - statCopiedDuringThisGC;
+	statFreedObjects += statFreedDuringThisGC;
+	fprintf(stderr, "totalObjectsInCollectionSet: %i\n", totalObjectsInCollectionSet);
+
 	postCollect();
 	printStats();
 	stop = clock();
@@ -87,21 +97,23 @@ void BalancedCollector::emptyHelpers() {
 	for (i = 0; i < MAXREGIONAGE; i++) {
 		copyToRegions[i].clear();
 	}
-
-	statFreedDuringThisGC = 0;
 }
 
 void BalancedCollector::preCollect() {
 	start = clock();
-	statFreedDuringThisGC = 0;
+	statCopiedDuringThisGC = 0;
+	totalObjectsInCollectionSet = 0;
 	statGcNumber++;
 }
 
 
 void BalancedCollector::buildCollectionSet() {
 	fprintf(balancedLogFile, "\n\nBuilding collection set:\n");
-
+	Region* currentRegion;
 	int setSize = (int)(COLLECTIONSETSIZE*allRegions.size());
+	int regionAge;
+	float probability;
+	int dice;
 
 	myCollectionSet.clear();
 	myCollectionSet.resize(allRegions.size(), 0);
@@ -116,15 +128,12 @@ void BalancedCollector::buildCollectionSet() {
 			if (i == edenRegions[j]) {
 				regionsInSet++;
 				myCollectionSet[i] = 1;
+				currentRegion = allRegions[i];
+				totalObjectsInCollectionSet += currentRegion->getNumObj();
 				//fprintf(balancedLogFile, "Added eden region %i to collection set\n", i);
 			}
 		}
 	}
-
-	Region* currentRegion;
-	int regionAge;
-	float probability;
-	int dice;
 
 	//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP)
 	//there is maximum age which can also be picked with some non-0 probability
@@ -140,6 +149,7 @@ void BalancedCollector::buildCollectionSet() {
 					//fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
 					//fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
 					regionsInSet++;
+					totalObjectsInCollectionSet += currentRegion->getNumObj();
 				}
 			}
 		}
@@ -262,7 +272,7 @@ void BalancedCollector::copyObjectsInQueues() {
 		}
 	}
 
-	fprintf(balancedLogFile, "\nCopying enqueued Objects done. Copied %u objects.\n\n", statFreedDuringThisGC);
+	fprintf(balancedLogFile, "\nCopying enqueued Objects done. Copied %u objects.\n\n", statCopiedDuringThisGC);
 	return 0;
 }
 
@@ -345,7 +355,8 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 
 			addressAfter = (void *) obj->getAddress();
 			obj->setForwardedPointer(addressAfter);
-			statFreedDuringThisGC++;
+			statCopiedDuringThisGC++;
+			statCopiedObjects++;
 			//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
 
 			return 0;
@@ -380,7 +391,8 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 
 				addressAfter = (void *) obj->getAddress();
 				obj->setForwardedPointer(addressAfter);
-				statFreedDuringThisGC++;
+				statCopiedDuringThisGC++;
+				statCopiedObjects++;
 				//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
 
 				return 0;

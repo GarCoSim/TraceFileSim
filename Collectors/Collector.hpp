@@ -72,6 +72,8 @@ protected:
 	size_t myWatermark;
 	int myGeneration;
 	int statFreedDuringThisGC;
+	int statCopiedDuringThisGC;
+	int statCopiedObjects;
 	int gcsSinceLastPromotionPhase;
 	int myTraversal;
 	int statHeapSide;
