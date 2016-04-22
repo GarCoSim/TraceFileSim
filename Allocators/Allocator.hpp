@@ -22,14 +22,15 @@ public:
 	Allocator();
 	virtual ~Allocator();
 
-	void *gcAllocate(int size);
+    void *gcAllocate(size_t size);
 	virtual void gcFree(Object* object);
 
 	//used mainly by garbage collector
-	int getFreeSize();
-	int getHeapSize();
+	size_t getFreeSize();
+	size_t getHeapSize();
 	int getRegionSize();
 	void resetRememberedAllocationSearchPoint();
+	unsigned char *getHeap();
 
 	//stats
 	void printMap();
@@ -43,31 +44,36 @@ public:
 
 	virtual bool isInNewSpace(Object *object);
 
-	virtual void initializeHeap(int heapSize);
+	virtual void initializeHeap(size_t heapSize);
 
 	virtual bool isRealAllocator();
+	virtual void printStats(long trigReason);
 
 protected:
-	int getUsedSpace(bool newSpace);
-	void *allocateInNewSpace(int size);
-	void setAllocated(unsigned int heapIndex, int size);
-	void setFree(unsigned int heapIndex, int size);
-	bool isBitSet(unsigned int heapIndex);
-	void setBitUsed(unsigned int heapIndex);
-	void setBitUnused(unsigned int heapIndex);
-	virtual void *allocate(int size, int lower, int upper);
+	size_t getUsedSpace(bool newSpace);
+	void *allocateInNewSpace(size_t size);
+	void setAllocated(size_t heapIndex, size_t size);
+	void setFree(size_t heapIndex, size_t size);
+	bool isBitSet(size_t heapIndex);
+	void setBitUsed(size_t heapIndex);
+	void setBitUnused(size_t heapIndex);
 
+    virtual void *allocate(size_t size, size_t lower, size_t upper);
+   
 
 	bool isSplitHeap;
 	char* myHeapBitMap;
 
+	
 	size_t overallHeapSize;
-	unsigned int newSpaceStartHeapIndex;
-	unsigned int oldSpaceStartHeapIndex;
-	unsigned int oldSpaceEndHeapIndex;
-	unsigned int newSpaceEndHeapIndex;
-	unsigned int newSpaceRememberedHeapIndex;
-	unsigned int oldSpaceRememberedHeapIndex;
+	size_t newSpaceStartHeapIndex;
+	size_t oldSpaceStartHeapIndex;
+	size_t oldSpaceEndHeapIndex;
+	size_t newSpaceEndHeapIndex;
+	size_t newSpaceRememberedHeapIndex;
+	size_t oldSpaceRememberedHeapIndex;
+	
+	unsigned char *heap;
 
 	int statLiveObjects;
 	FILE* allocLog;

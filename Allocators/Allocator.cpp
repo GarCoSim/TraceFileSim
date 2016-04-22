@@ -13,6 +13,7 @@ using namespace std;
 
 namespace traceFileSimulator {
 
+//keep setHalfHeapSize() for now, replace it eventually with setNumberOfRegionsHeap
 void Allocator::setHalfHeapSize(bool value) {
 	if (value) {
 		oldSpaceStartHeapIndex = 0;
@@ -28,12 +29,13 @@ void Allocator::setHalfHeapSize(bool value) {
 	}
 }
 
+
 Allocator::Allocator() {
 }
 
-int Allocator::getFreeSize() {
-	unsigned int i;
-	int count = 0;
+size_t Allocator::getFreeSize() {
+	size_t i;
+	size_t count = 0;
 	for (i=0; i<overallHeapSize; i++)
 		if (!isBitSet(i))
 			count++;
@@ -41,12 +43,15 @@ int Allocator::getFreeSize() {
 	return count;
 }
 
+unsigned char *Allocator::getHeap () {
+	return heap;
+}
 
-void *Allocator::gcAllocate(int size) {
+void *Allocator::gcAllocate(size_t size) {
 	return allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex);
 }
 
-void *Allocator::allocateInNewSpace(int size) {
+void *Allocator::allocateInNewSpace(size_t size) {
 	return allocate(size, newSpaceStartHeapIndex, newSpaceEndHeapIndex);
 }
 
@@ -55,7 +60,7 @@ bool Allocator::isInNewSpace(Object *object) {
 }
 
 void Allocator::swapHeaps() {
-	unsigned int tempIndex;
+	size_t tempIndex;
 
 	tempIndex = newSpaceStartHeapIndex;
 	newSpaceStartHeapIndex = oldSpaceStartHeapIndex;
@@ -74,8 +79,9 @@ void Allocator::freeOldSpace() {
 	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
 }
 
-int Allocator::getUsedSpace(bool newSpace) {
-	unsigned int i, usedSpace = 0;
+size_t Allocator::getUsedSpace(bool newSpace) {
+	size_t i;  
+	size_t usedSpace = 0;
 	if (newSpace) {
 		for (i = newSpaceStartHeapIndex; i < newSpaceEndHeapIndex; i++)
 			if (isBitSet(i))
@@ -85,7 +91,7 @@ int Allocator::getUsedSpace(bool newSpace) {
 			if (isBitSet(i))
 				usedSpace++;
 	}
-	return (int) usedSpace;
+	return (size_t) usedSpace;
 }
 
 void Allocator::moveObject(Object *object) {
@@ -93,12 +99,12 @@ void Allocator::moveObject(Object *object) {
 }
 
 
-void Allocator::initializeHeap(int heapSize) {
+void Allocator::initializeHeap(size_t heapSize) {
 }
 
-void Allocator::setAllocated(unsigned int heapIndex, int size) {
-	int i;
-	unsigned int toMark = heapIndex;
+void Allocator::setAllocated(size_t heapIndex, size_t size) {
+	size_t i;
+	size_t toMark = heapIndex;
 
 	for (i = 0; i < size; i++) {
 		setBitUsed(toMark);
@@ -106,9 +112,9 @@ void Allocator::setAllocated(unsigned int heapIndex, int size) {
 	}
 }
 
-void Allocator::setFree(unsigned int heapIndex, int size) {
-	int i;
-	unsigned int toFree = heapIndex;
+void Allocator::setFree(size_t heapIndex, size_t size) {
+	size_t i;
+	size_t toFree = heapIndex;
 
 	for (i = 0; i < size; i++) {
 		setBitUnused(toFree);
@@ -116,7 +122,7 @@ void Allocator::setFree(unsigned int heapIndex, int size) {
 	}
 }
 
-int Allocator::getHeapSize() {
+size_t Allocator::getHeapSize() {
 	return overallHeapSize;
 }
 
@@ -129,7 +135,7 @@ int Allocator::getRegionSize() {
 void Allocator::printMap() {
 	fprintf(heapMap, "%7d", gLineInTrace);
 
-	unsigned int i;
+	size_t i;
 	for (i = 0; i < overallHeapSize; i++) {
 		if (isBitSet(i) == 1) {
 			fprintf(heapMap, "X");
@@ -141,34 +147,34 @@ void Allocator::printMap() {
 	fprintf(heapMap, "\n");
 }
 
-inline bool Allocator::isBitSet(unsigned int heapIndex) {
-	int byteNR = heapIndex>>3;
-	int bit = 7 - heapIndex % 8;
+inline bool Allocator::isBitSet(size_t heapIndex) {
+	size_t byteNR = heapIndex>>3;
+	size_t bit = 7 - heapIndex % 8;
 	return ((myHeapBitMap[byteNR] & (1 << bit))>0)?true:false;
 }
 
-void Allocator::setBitUsed(unsigned int heapIndex) {
-	if (heapIndex > (unsigned int) overallHeapSize) {
+void Allocator::setBitUsed(size_t heapIndex) {
+	if (heapIndex > (size_t) overallHeapSize) {
 		fprintf(stderr,
-				"ERROR(Line %d): setBitUsed request to illegal slot %d\n",
+				"ERROR(Line %d): setBitUsed request to illegal slot %zu\n",
 				gLineInTrace, heapIndex);
 		exit(1);
 	}
 
-	int byte = heapIndex / 8;
-	int bit = 7 - heapIndex % 8;
+	size_t byte = heapIndex / 8;
+	size_t bit = 7 - heapIndex % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] | 1 << bit;
 }
 
-void Allocator::setBitUnused(unsigned int heapIndex) {
-	if (heapIndex > (unsigned int) overallHeapSize) {
-		fprintf(stderr, "add %d heap %zd\n", heapIndex, overallHeapSize);
+void Allocator::setBitUnused(size_t heapIndex) {
+	if (heapIndex > (size_t) overallHeapSize) {
+		fprintf(stderr, "add %zu heap %zu\n", heapIndex, overallHeapSize);
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
 	}
 
-	int byte = heapIndex / 8;
-	int bit = 7 - heapIndex % 8;
+	size_t byte = heapIndex / 8;
+	size_t bit = 7 - heapIndex % 8;
 
 	myHeapBitMap[byte] = myHeapBitMap[byte] & ~(1 << bit);
 }
@@ -178,9 +184,9 @@ void Allocator::printStats() {
 		printMap();
 	}
 
-	int bytesAllocated = overallHeapSize - getFreeSize();
+	size_t bytesAllocated = overallHeapSize - getFreeSize();
 
-	fprintf(allocLog, "%7d: alloc: %7d obj: %7d\n", gLineInTrace,
+	fprintf(allocLog, "%7d: alloc: %zu obj: %7d\n", gLineInTrace,
 			bytesAllocated, statLiveObjects);
 }
 
@@ -199,8 +205,11 @@ void Allocator::freeAllSectors() {
 void Allocator::gcFree(Object* object) {
 }
 
-void *Allocator::allocate(int size, int lower, int upper) {
+void *Allocator::allocate(size_t size, size_t lower, size_t upper) {
 	return NULL;
+}
+
+void Allocator::printStats(long trigReason) {
 }
 
 Allocator::~Allocator() {

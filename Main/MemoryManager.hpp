@@ -31,10 +31,10 @@ namespace traceFileSimulator {
 
 class MemoryManager {
 public:
-	MemoryManager(int heapSize, int highWatermark, int collector, int traversal, int allocator);
+	MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator);
 	virtual ~MemoryManager();
 	//operations possible from trace file
-	int allocateObjectToRootset(int thread, int id, int size, int refCount, int classID);
+	int allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID);
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);
@@ -59,16 +59,17 @@ public:
 	void lastStats();
 	void dumpHeap();
 
+
 private:
 	bool isAlreadyRoot(int thread, int id);
-	int* computeHeapsizes(int heapSize);
-	void initAllocators(int heapsize);
+	size_t* computeHeapsizes(size_t heapSize);
+	void initAllocators(size_t heapsize);
 	void initContainers();
 	void initGarbageCollectors(int highWatermark);
-	void *allocate(int size, int generation);
+	void *allocate(size_t size, int generation);
 	void addRootToContainers(Object* object, int thread);
 	void addToContainers(Object* object);
-	void *shift(int size);
+	void *shift(size_t size);
 	
 	allocatorEnum _allocator;
 	collectorEnum _collector;
@@ -81,7 +82,7 @@ private:
 	ObjectContainer* myObjectContainers[GENERATIONS];
 	Collector* myGarbageCollectors[GENERATIONS];
 	int stats[GENERATIONS];
-
+	Object *parent,*child,*oldChild;
 };
 
 } 

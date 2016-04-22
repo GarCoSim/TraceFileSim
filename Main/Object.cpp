@@ -12,7 +12,7 @@ extern int gLineInTrace; //added by Tristan
 
 namespace traceFileSimulator {
 
-Object::Object(int id, void *address, int size, int maxPointers, char *className) {
+Object::Object(int id, void *address, size_t size, int maxPointers, char *className) {
 	myId = id;
 	rawObject = (RawObject *) address;
 	rawObject->associatedObject = this;
@@ -30,6 +30,33 @@ Object::Object(int id, void *address, int size, int maxPointers, char *className
 	forwarded = false;
 }
 
+Object::Object(int tid, int id, void *address, size_t size, int maxPointers, char *className) {
+	myId = id;
+	rawObject = (RawObject *) address;
+	rawObject->associatedObject = this;
+	mySize = size;
+	myPointersMax = maxPointers;
+	for (int i=0; i<myPointersMax; i++)
+		rawObject->pointers[i] = NULL;
+	myGeneration = 0;
+	myAge = 0;
+	myName = className;
+
+	// stats
+	isVisited = false;
+	freed = 0;
+	forwarded = false;
+
+	// added by mazder
+	myTid = tid;
+	escaped = false;
+	//start measuring life time
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	born = 1000000*tv.tv_sec+tv.tv_usec;
+}
+
+
 void Object::setGeneration(int generation){
 	myGeneration = generation;
 }
@@ -46,11 +73,11 @@ int Object::getID(){
 	return this->myId;
 }
 
-int Object::getPayloadSize(){
+size_t Object::getPayloadSize(){
 	return mySize - OBJECT_HEADER_SIZE;
 }
 
-int Object::getHeapSize(){
+size_t Object::getHeapSize(){
 	return mySize;
 }
 
@@ -98,6 +125,10 @@ void Object::updateAddress(void *newAddress) {
 
 void Object::setVisited(bool value){
 	isVisited = value;
+}
+
+size_t Object::getRegion(size_t heapStart, size_t regionSize) {
+	return (size_t)(((size_t)rawObject-heapStart)/(size_t)regionSize);
 }
 
 Object::~Object() {}

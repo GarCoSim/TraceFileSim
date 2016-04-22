@@ -15,7 +15,7 @@ extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
-Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int garbageCollector, int traversal, int allocator) {
+Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator) {
 	myLastStepWorked = 1;
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
@@ -25,8 +25,10 @@ Simulator::Simulator(char* traceFilePath, int heapSize, int highWatermark, int g
 
 	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator);
 
-	if (!myMemManager->loadClassTable((string)traceFilePath))
+	if (!myMemManager->loadClassTable((string)traceFilePath)){
 		fprintf(stdout, "No class table found\n");
+		// even thougth -cls 1 paramenters passed in main function 
+	}
 
 	counter = 0;
 	start = clock();
@@ -112,6 +114,7 @@ void Simulator::lastStats() {
 	myMemManager->lastStats();
 }
 
+
 int Simulator::doNextStep(){
 	TraceFileLine line;
 	getNextLine(&line);
@@ -124,10 +127,10 @@ int Simulator::doNextStep(){
 		//if content exists, advice the MM(memory manager) to execute
 		switch(line.type) {
 			case 'w':
-				referenceOperation(line);
+			    referenceOperation(line);
 				break;
 			case 'a':
-				allocateToRootset(line);
+			    allocateToRootset(line);
 				//next line is a '+', which we skip since it adds the newly created object
 				//to the rootset, which already happened in the simulator
 				getNextLine(NULL);
@@ -184,6 +187,7 @@ void Simulator::allocateToRootset(TraceFileLine line){
 	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
 }
 
+
 void Simulator::deleteRoot(TraceFileLine line){
 	myMemManager->requestRootDelete(line.threadID, line.objectID);
 }
@@ -194,14 +198,6 @@ void Simulator::addToRoot(TraceFileLine line){
 
 void Simulator::referenceOperation(TraceFileLine line){
 	myMemManager->setPointer(line.threadID, line.parentID, line.parentSlot, line.objectID);
-
-	if(line.fieldOffset != -1){
-		/* when fieldOffset is given */
-	}
-	else{
-		/* when fieldIndex is given */
-	}
-
 }
 
 // Added by Mazder

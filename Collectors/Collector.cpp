@@ -53,7 +53,7 @@ void Collector::checkWatermark() {
 
 void Collector::printStats() {
 	statFreeSpaceOnHeap = myAllocator->getFreeSize();
-	int heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
+	size_t heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
 	char *statCollectionReasonString;
 
 	switch ((gcReason)statCollectionReason) {
@@ -93,7 +93,7 @@ void Collector::printStats() {
 
 	statLiveObjectCount = myObjectContainer->countElements();
 	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
-			"| %13d | %10d | %10d | %10d | %4.3f\n", gLineInTrace,
+			"| %13d | %10zu | %10d | %10d | %4.3f\n", gLineInTrace,
 			statCollectionReasonString, statGcNumber, statFreedObjects,
 			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs);
 	fflush(gLogFile);
@@ -105,7 +105,7 @@ void Collector::printStats() {
 		sprintf(fl, "gen%d.log",myGeneration);
 		FILE* genfile = fopen(fl,"a");
 
-		fprintf(genfile,"%d\n",heapUsed);
+		fprintf(genfile,"%zu\n",heapUsed);
 		fflush(genfile);
 		fclose(genfile);
 	}
@@ -152,8 +152,9 @@ int Collector::promotionPhase() {
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));   
 }
+
 
 Collector::~Collector() {
 }

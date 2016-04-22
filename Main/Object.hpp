@@ -11,6 +11,8 @@
 #include <vector>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctime>
+#include<sys/time.h>
 #include <string.h> //added by Tristan; for memset in setArgs()
 
 using std::vector;
@@ -26,20 +28,24 @@ typedef struct RawObject {
 
 class Object {
 public:
-	Object(int id, void *address, int size, int numberOfPointers, char *className);
-	void setArgs(int id, int payloadSize, int maxPointers, char *className);
+	
+	Object(int id, void *address, size_t size, int numberOfPointers, char *className);
+	// modified by mazder, constructor overloading with thread id	
+	Object(int tid, int id, void *address, size_t size, int numberOfPointers, char *className);
+	void setArgs(int id, size_t payloadSize, int maxPointers, char *className);
 	virtual ~Object();
-	void *getAddress();
+	void*   getAddress();
 	void 	updateAddress(void *newAddress);
 	int 	getID();
-	int 	getPayloadSize();
-	int 	getHeapSize();
+	size_t 	getPayloadSize();
+	size_t 	getHeapSize();
 	int 	getPointersMax();
 	Object* getReferenceTo(int pointerNumber);
 	int 	setPointer(int pointerNumber, Object* target);
 	void *getRawPointerAddress(int pointerNumber);
 	void setRawPointerAddress(int pointerNumber, void *address);
 
+	
 	bool 	getVisited();
 	void	setVisited(bool value);
 
@@ -73,26 +79,36 @@ public:
 		forwarded = value;
 	}
 
+	size_t getRegion(size_t heap, size_t regionSize); //get the region where the object belongs to
+
+	// The following three fields are added
+	// to do escape analysis
+	// to find object longevity
+	// to see the thread realtionships 
+    // to calculate life time 
+    int myTid;
+    bool escaped; 
+	unsigned long born;
+
 private:
 	RawObject *rawObject;
-	int 	myId;
-	int freed;
+	int 	   myId;
+	int        freed;
 
-	int  	mySize;
+	size_t     mySize;
 
 	// How many pointer slots do I have?
-	int 	myPointersMax;
+	int 	   myPointersMax;
 
 	//garbage collector stuff
-	bool isVisited;
+	bool       isVisited;
 
 	//genCon
-	int myAge;
-    int	myGeneration;
+	int        myAge;
+    int	       myGeneration;
 
-    char *myName;
-    bool forwarded;
-
+    char      *myName;
+    bool       forwarded;
 };
 
 } 

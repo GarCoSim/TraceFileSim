@@ -4,7 +4,7 @@
  *  Created on: 2013-09-03
  *      Author: GarCoSim
  */
-
+#include<sys/time.h>
 #include "ObjectContainer.hpp"
 
 extern int gLineInTrace;
@@ -139,6 +139,7 @@ int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
 	objectMap.erase(objectID);
 	if (deleteFlag)
 		delete (object);
+
 	return 0;
 }
 
