@@ -423,8 +423,7 @@ void MemoryManager::addToContainers(Object* object) {
 	}
 }
 
-int MemoryManager::setPointer(int thread, int parentID, int parentSlot,
-		int childID) {
+int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int childID) {
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Set pointer from %d(%d) to %d\n", gLineInTrace,
 				parentID, parentSlot, childID);
