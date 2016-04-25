@@ -30,8 +30,6 @@ class Object {
 public:
 	
 	Object(int id, void *address, size_t size, int numberOfPointers, char *className);
-	// modified by mazder, constructor overloading with thread id	
-	Object(int tid, int id, void *address, size_t size, int numberOfPointers, char *className);
 	void setArgs(int id, size_t payloadSize, int maxPointers, char *className);
 	virtual ~Object();
 	void*   getAddress();
@@ -79,16 +77,9 @@ public:
 		forwarded = value;
 	}
 
-	size_t getRegion(size_t heap, size_t regionSize); //get the region where the object belongs to
-
-	// The following three fields are added
-	// to do escape analysis
-	// to find object longevity
-	// to see the thread realtionships 
-    // to calculate life time 
-    int myTid;
-    bool escaped; 
-	unsigned long born;
+	int getReferenceCount();
+	void increaseReferenceCount();
+	void decreaseReferenceCount();
 
 private:
 	RawObject *rawObject;
@@ -109,6 +100,8 @@ private:
 
     char      *myName;
     bool       forwarded;
+
+    int referenceCount;
 };
 
 } 

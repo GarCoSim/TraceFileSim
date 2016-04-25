@@ -15,16 +15,20 @@ extern string globalFilename;
 
 namespace traceFileSimulator {
 
-MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator) {
+MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier) {
 	_allocator = (allocatorEnum)allocator;
 	_collector = (collectorEnum)collector;
 	_traversal = (traversalEnum)traversal;
+	_writebarrier = (writebarriersEnum)writebarrier;
 
 	classTableLoaded = false;
 
+	initWritebarrier();
 	initAllocators(heapSize);
 	initContainers();
 	initGarbageCollectors(highWatermark);
+	if (myWritebarrier)
+		myWritebarrier->setEnvironment(myAllocators[0]);
 }
 
 bool MemoryManager::loadClassTable(string traceFilePath) {
@@ -106,6 +110,17 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 		}
 		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, _traversal);
 		myGarbageCollectors[i]->initializeHeap();
+	}
+}
+
+void MemoryManager::initWritebarrier() {
+	switch (_writebarrier) {
+		case disabled:
+			myWritebarrier = NULL;
+			break;
+		case recycler:
+			myWritebarrier = new Recycler(); 
+			break;
 	}
 }
 
@@ -217,6 +232,8 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 }
 
 int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {
+	if (id == 5918)
+		fprintf(stderr, "Adding object 5918 in MemoryManager\n");
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
@@ -234,9 +251,13 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 
 	object = new Object(id, address, size, refCount, getClassName(classID));
 
+
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread);
+
+	if (myWritebarrier)
+		myWritebarrier->process(NULL, NULL, object);
 	
 	if (DEBUG_MODE == 1) {	
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
@@ -256,6 +277,10 @@ int MemoryManager::requestRootDelete(int thread, int id){
 	for(i=0;i<GENERATIONS-1;i++){
 		myObjectContainers[i]->removeFromGenRoot(oldRoot);
 	}
+
+	if (myWritebarrier)
+		myWritebarrier->process(NULL, oldRoot, NULL);
+
 	return 0;
 }
 
@@ -460,6 +485,9 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
+
+	if (myWritebarrier)
+		myWritebarrier->process(parent, oldChild, child);
 
 	return 0;
 }

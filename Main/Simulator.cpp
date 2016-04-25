@@ -15,7 +15,7 @@ extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
-Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator) {
+Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier) {
 	myLastStepWorked = 1;
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
@@ -23,7 +23,7 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, in
 		exit(1);
 	}
 
-	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator);
+	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator, writebarrier);
 
 	if (!myMemManager->loadClassTable((string)traceFilePath)){
 		fprintf(stdout, "No class table found\n");
@@ -184,19 +184,32 @@ int Simulator::lastStepWorked(){
 
 
 void Simulator::allocateToRootset(TraceFileLine line){
+	//if (line.objectID == 5918)
+	//	fprintf(stderr, "Allocating 5918\n");
 	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
 }
 
 
 void Simulator::deleteRoot(TraceFileLine line){
+	//if (line.objectID == 5918)
+	//	fprintf(stderr, "Deleting root for 5918 for thread %i\n", line.threadID);
+
+	//if (line.objectID == 5814)
+	//	fprintf(stderr, "Deleting root for 5814 for thread %i\n", line.threadID);
+
+	//fprintf(stderr, "Deleting root for %i for thread %i\n", line.objectID, line.threadID);
 	myMemManager->requestRootDelete(line.threadID, line.objectID);
 }
 
 void Simulator::addToRoot(TraceFileLine line){
+	//if (line.objectID == 5918)
+	//	fprintf(stderr, "Adding 5918 to root %i\n", line.threadID);
 	myMemManager->requestRootAdd(line.threadID, line.objectID);
 }
 
 void Simulator::referenceOperation(TraceFileLine line){
+	//if (line.parentID == 5918)
+	//	fprintf(stderr, "Writing from 5918\n");
 	myMemManager->setPointer(line.threadID, line.parentID, line.parentSlot, line.objectID);
 }
 
@@ -209,6 +222,8 @@ void Simulator::referenceOperationClassField(TraceFileLine line){
 void Simulator::readOperation(TraceFileLine line){
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
 	bool offsetFlag = false; 	 // to decide either offest or index is given
+
+	//fprintf(stderr, "Reading %i\n", line.objectID);
 
 	if (line.classID != -1)
 		staticFlag = true;

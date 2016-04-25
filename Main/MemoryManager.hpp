@@ -17,6 +17,8 @@
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
+#include "../Writebarriers/Writebarrier.hpp"
+#include "../Writebarriers/Recycler.hpp"
 #include "../defines.hpp"
 #include <string>
 #include <vector>
@@ -31,7 +33,7 @@ namespace traceFileSimulator {
 
 class MemoryManager {
 public:
-	MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator);
+	MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier);
 	virtual ~MemoryManager();
 	//operations possible from trace file
 	int allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID);
@@ -66,6 +68,7 @@ private:
 	void initAllocators(size_t heapsize);
 	void initContainers();
 	void initGarbageCollectors(int highWatermark);
+	void initWritebarrier();
 	void *allocate(size_t size, int generation);
 	void addRootToContainers(Object* object, int thread);
 	void addToContainers(Object* object);
@@ -74,6 +77,7 @@ private:
 	allocatorEnum _allocator;
 	collectorEnum _collector;
 	traversalEnum _traversal;
+	writebarriersEnum _writebarrier;
 
 	bool classTableLoaded;
 	vector<string> classTable;
@@ -81,6 +85,7 @@ private:
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];
 	Collector* myGarbageCollectors[GENERATIONS];
+	Writebarrier* myWritebarrier;
 	int stats[GENERATIONS];
 	Object *parent,*child,*oldChild;
 };

@@ -60,10 +60,16 @@ enum gcReason {
 					reasonForced
 				};
 
+enum writebarriersEnum {
+					disabled = 0,
+					recycler
+				};
+
 // create some fancy strings for debug output
 #define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : (traversal == (int)depthFirst ? "depthFirst" : "hotness"))
 #define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : "copying"))
 #define ALLOCATOR_STRING (allocator == (int)realAlloc ? "real" : (allocator == (int)basicAlloc ? "basic" : "nextFit"))
+#define WRITEBARRIER_STRING (writebarrier == (int)recycler ? "recycler" : "disabled")
 
 #define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
 
