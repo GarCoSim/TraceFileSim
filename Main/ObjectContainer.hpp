@@ -54,7 +54,7 @@ private:
 	int getRemSetSlot();
 
 	vector<std::map<int, Object*> > rootset;
-  std::map<int, Object*> objectMap;
+    std::map<int, Object*> objectMap;
 	vector<Object*> remSet;
 	vector<std::map<int, Object*> > classReferences;
 

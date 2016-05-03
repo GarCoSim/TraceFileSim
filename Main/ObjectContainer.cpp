@@ -113,8 +113,10 @@ vector<Object*> ObjectContainer::getLiveObjectsInHeapOrder() {
 }
 
 Object* ObjectContainer::getByID(int id) {
+	fprintf(stderr, "Getting object %i by id. Dings = %li\n", id, (long)objectMap[id]);
 	if (objectMap.find(id) == objectMap.end())
 		fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n", gLineInTrace, id);
+	fflush(stdin);
 	return objectMap[id];
 }
 

@@ -100,6 +100,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)disabled;
 				if (!strcmp(argv[i + 1], "recycler"))
 					return (int)recycler;
+				if (!strcmp(argv[i + 1], "zombieRecycler"))
+					return (int)zombieRecycler;
 				return -1;
 			}
 		}

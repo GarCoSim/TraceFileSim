@@ -17,8 +17,9 @@
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
-#include "../Writebarriers/Writebarrier.hpp"
-#include "../Writebarriers/Recycler.hpp"
+#include "../WriteBarriers/WriteBarrier.hpp"
+#include "../WriteBarriers/RecyclerWriteBarrier.hpp"
+#include "../WriteBarriers/ZombieRecyclerWriteBarrier.hpp" 
 #include "../defines.hpp"
 #include <string>
 #include <vector>
@@ -85,7 +86,7 @@ private:
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];
 	Collector* myGarbageCollectors[GENERATIONS];
-	Writebarrier* myWritebarrier;
+	WriteBarrier* myWriteBarrier;
 	int stats[GENERATIONS];
 	Object *parent,*child,*oldChild;
 };

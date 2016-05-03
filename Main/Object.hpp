@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctime>
-#include<sys/time.h>
+#include <sys/time.h>
 #include <string.h> //added by Tristan; for memset in setArgs()
 
 using std::vector;
@@ -81,6 +81,9 @@ public:
 	void increaseReferenceCount();
 	void decreaseReferenceCount();
 
+	int getColor();
+	void setColor(int color);
+
 private:
 	RawObject *rawObject;
 	int 	   myId;
@@ -102,6 +105,7 @@ private:
     bool       forwarded;
 
     int referenceCount;
+    int color;
 };
 
 } 

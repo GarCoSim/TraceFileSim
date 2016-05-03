@@ -27,8 +27,6 @@ MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, 
 	initAllocators(heapSize);
 	initContainers();
 	initGarbageCollectors(highWatermark);
-	if (myWritebarrier)
-		myWritebarrier->setEnvironment(myAllocators[0]);
 }
 
 bool MemoryManager::loadClassTable(string traceFilePath) {
@@ -116,12 +114,17 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 void MemoryManager::initWritebarrier() {
 	switch (_writebarrier) {
 		case disabled:
-			myWritebarrier = NULL;
+			myWriteBarrier = NULL;
 			break;
 		case recycler:
-			myWritebarrier = new Recycler(); 
+			myWriteBarrier = new RecyclerWriteBarrier(); 
+			break;
+		case zombieRecycler:
+			myWriteBarrier = new ZombieRecyclerWriteBarrier(); 
 			break;
 	}
+	if (myWriteBarrier)
+		myWriteBarrier->setEnvironment((MemoryManager*) this);
 }
 
 void MemoryManager::statBeforeCompact(int myGeneration) {
@@ -232,8 +235,8 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 }
 
 int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {
-	if (id == 5918)
-		fprintf(stderr, "Adding object 5918 in MemoryManager\n");
+	//if (id == 5918)
+	//	fprintf(stderr, "Adding object 5918 in MemoryManager\n");
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
@@ -256,8 +259,8 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 	//add to Containers
 	addRootToContainers(object, thread);
 
-	if (myWritebarrier)
-		myWritebarrier->process(NULL, NULL, object);
+	if (myWriteBarrier)
+		myWriteBarrier->process(NULL, NULL, object);
 	
 	if (DEBUG_MODE == 1) {	
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
@@ -278,8 +281,8 @@ int MemoryManager::requestRootDelete(int thread, int id){
 		myObjectContainers[i]->removeFromGenRoot(oldRoot);
 	}
 
-	if (myWritebarrier)
-		myWritebarrier->process(NULL, oldRoot, NULL);
+	if (myWriteBarrier)
+		myWriteBarrier->process(NULL, oldRoot, NULL);
 
 	return 0;
 }
@@ -293,7 +296,11 @@ int MemoryManager::requestRootAdd(int thread, int id){
 		return -1;
 
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
-	myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread);
+	if (obj)
+		myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread);
+	else
+		printf("Unable to add Object %i to roots\n", id);
+
 	return 0;
 }
 
@@ -442,6 +449,8 @@ void MemoryManager::addToContainers(Object* object) {
 
 
 int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int childID) {
+	int parentGeneration;
+
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Set pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
 	}
@@ -451,12 +460,19 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 	int childGeneration = -1;
 	if(childID != 0) {
 		child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
-		childGeneration = child->getGeneration();
+		if (child)
+			childGeneration = child->getGeneration();
+		else
+			fprintf(stderr, "Child %i not existing in setPointer\n", childID);
 	}
-	int parentGeneration = parent->getGeneration();
+	if (parent)
+		parentGeneration = parent->getGeneration();
+	else
+		fprintf(stderr, "Parent %i not existing in setPointer\n", parentID);
 
 	//check old child, if it created remSet entries and delete them
-	oldChild = parent->getReferenceTo(parentSlot);
+	if (parent)
+		oldChild = parent->getReferenceTo(parentSlot);
 	if (oldChild && parentGeneration > oldChild->getGeneration()) {
 		int i;
 		for (i = oldChild->getGeneration(); i < parentGeneration; i++) {
@@ -470,12 +486,13 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 			}
 		}
 	}
-
-	parent->setPointer(parentSlot, child);
+	if (parent)
+		parent->setPointer(parentSlot, child);
 	if (parentGeneration > childGeneration && childID != 0) {
 		int i;
 		for (i = childGeneration; i < parentGeneration; i++) {
-			myObjectContainers[i]->addToGenRoot(child);
+			if (child)
+				myObjectContainers[i]->addToGenRoot(child);
 			if (WRITE_DETAILED_LOG == 1) {
 				fprintf(gDetLog,"(%d) Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
 			}
@@ -486,8 +503,8 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 
-	if (myWritebarrier)
-		myWritebarrier->process(parent, oldChild, child);
+	if (myWriteBarrier)
+		myWriteBarrier->process(parent, oldChild, child);
 
 	return 0;
 }

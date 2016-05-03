@@ -30,6 +30,7 @@ Object::Object(int id, void *address, size_t size, int maxPointers, char *classN
 	forwarded = false;
 
 	referenceCount = 0;
+	color = BLACK;
 }
 
 
@@ -117,6 +118,14 @@ void Object::decreaseReferenceCount() {
 
 	//if (referenceCount == 0)
 	//	fprintf(stderr, "RC dropped to zero\n");
+}
+
+int Object::getColor() {
+	return color;
+}
+
+void Object::setColor(int color) {
+	this->color = color;
 }
 
 Object::~Object() {}
