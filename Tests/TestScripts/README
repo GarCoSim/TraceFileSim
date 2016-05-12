@@ -1,0 +1,18 @@
+RUNNING TESTS
+Run the TestMain.sh script. The script will run all the trials indicated in the TestInputs.txt file
+For each trial, the script will run a series of tests on the simulator's output for that trial, and indicate success or failure.
+
+WRITING NEW TESTS
+Open the TestInputs.txt file
+On a new line, put the following values, separated by semicolons:
+1. Trial ID (does not necessarily have to be an integer)
+2. Normal command line input to run the simulator, including input file and options. Paths should be relative to TestMain.sh's directory
+3. Path to the log file that will be output by the simulator
+4-n. Expected output for all current tests. Further explanation in the TestInputs.txt file's comments.
+
+WRITING NEW CHECKS
+Create a new function in the TestMain.sh file. Follow the example of the other check funtions already in TestMain.sh
+Call your function along with the other check functions near the bottom of the file.
+Existing tests must be updated, preferably by putting a new semicolon-separated field after each test
+in the TestInputs.txt file.
+*TODO: ABILITY TO IGNORE NEW CHECKS FOR OLD TESTS BY SKIPPING CHECKS WITH VALUE 'NA'*
