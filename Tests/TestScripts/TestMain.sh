@@ -4,6 +4,13 @@
 TOLERANCE=0.10
 TEMPNAME=""
 
+if [ -z $1 ] || [ ! -f $1 ] 
+then
+	echo "Invalid input file."
+	exit 1
+fi
+
+
 #Arguments: (trialNum, logLocation, expectedVal)
 emptyLog (){
 	local NUMLINES=0
@@ -113,5 +120,5 @@ while IFS=';' read -ra LINE; do
 	numGC ${LINE[0]} ${LINE[2]} ${LINE[3]}
 	memUsed ${LINE[0]} ${LINE[2]} ${LINE[4]}
 	
-done < TestInputs.txt
+done < $1
 
