@@ -1,6 +1,6 @@
 RUNNING TESTS
-Run the TestMain.sh script. The script will run all the trials indicated in the TestInputs.txt file
-For each trial, the script will run a series of tests on the simulator's output for that trial, and indicate success or failure.
+Run the TestMain.sh script with an input file (currently TestInputs.txt). The script will run all the trials indicated in the file.
+For each trial, the script will run a series of tests on the simulator's output log file for that trial, and indicate success or failure.
 
 WRITING NEW TESTS
 Open the TestInputs.txt file
