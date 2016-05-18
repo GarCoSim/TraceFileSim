@@ -86,7 +86,6 @@ simCrashed(){
 	then
 		echo "$1 failed: Simulator crashed during execution."
 	fi
-	echo $lastLine >> something.txt
 }
 
 #Arguments: (Expected value, Experimental value)
