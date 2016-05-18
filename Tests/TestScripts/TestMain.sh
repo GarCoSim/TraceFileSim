@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 #For each line in TestInputs.txt file, execute simulator based on line's contents
 #And compare output log file to various expected outputs in line's contents.
+PRINT_FAILS_ONLY=1
 TOLERANCE=0.10
-TEMPNAME=""
 
 if [ -z $1 ] || [ ! -f $1 ] 
 then
 	echo "Invalid input file."
 	exit 1
 fi
-
 
 #Arguments: (trialNum, logLocation, expectedVal)
 emptyLog (){
@@ -41,27 +40,53 @@ numGC () {
 	local returnVal=$(compare $3 $NUMLINES)
 	if [ $returnVal -eq -1 ]
 	then
-		echo "Trial $1 failed: Number of GC's ($NUMLINES) too different from expected value ($3)"
+		echo "$1 failed: Number of GC's ($NUMLINES) too different from expected value ($3)"
 	else
-		echo "Trial $1 succeeded numGC test"
+		if [ $PRINT_FAILS_ONLY -eq 0 ]
+		then
+			echo "$1 success: Number of GC's"
+		fi
 	fi
 }
 
 memUsed (){
 	local finalFree
-	while read -ra OUTPUT_LINE; do
-		case ${OUTPUT_LINE} in 
-			[0-9]*)
-			finalFree=${OUTPUT_LINE[12]}
-		esac
-	done < $2
+	finalFree=$(removeNonDataLines $2 | sed -r 's/\s+//g' | awk -F'\\|' '{} END{print $6}')
+	
 	local returnVal=$(compare $3 $finalFree)
 	if [ $returnVal -eq -1 ]
 	then
-		echo "Trial $1 failed: Final Heap Used ($finalFree) too different from expected value ($3)"
+		echo "$1 failed: Final heap size ($finalFree) too different from expected value ($3)"
 	else
-		echo "Trial $1 succeeded free heap test"
+		if [ $PRINT_FAILS_ONLY -eq 0 ]
+		then
+			echo "$1 success: Final heap size"
+		fi
 	fi
+}
+
+lastCollectionReason(){
+	local reason
+	reason=$(removeNonDataLines $2 | sed -r 's/\s+//g' | awk -F'\\|' '{} END{print $2}')
+	if [ $reason == $3 ]
+	then
+		if [ $PRINT_FAILS_ONLY -eq 0 ]
+		then
+			echo "$1 success: Last collection reason"
+		fi
+	else
+		echo "$1 failed: Last collection reason ($reason) does not match expected reason ($3)"
+	fi
+}
+
+simCrashed(){
+	local lastLine
+	lastLine=$(tail -1 $2 | sed -r 's/\s+//g')
+	if [[ $lastLine =~ ^[0-9].* ]]
+	then
+		echo "$1 failed: Simulator crashed during execution."
+	fi
+	echo $lastLine >> something.txt
 }
 
 #Arguments: (Expected value, Experimental value)
@@ -82,6 +107,10 @@ compare(){
 	fi
 }
 
+function removeNonDataLines() {
+	sed '/^\W*[1-9]/!d' $1
+}
+
 
 
 #Elements of LINE: (trialNum, commandLine, logLocation, [various tests])
@@ -97,16 +126,16 @@ while IFS=';' read -ra LINE; do
 #No way to intercept log files during execution. Instead, check if log file exists, and if it is relatively new
 	if [ ! -e ${LINE[2]} ]
 	then
-		echo "Trial ${LINE[0]} failed: Log file not found."
+		echo "${LINE[0]} failed: Log file not found."
 		continue;
 	fi
 	
 #Since consecutive trials can have the same log file, we have to cut it close on "newness" testing.
 #However, since all runs of the simulator have a final "statistics" printout just before execution finish,
 #this test shouldn't give any false positives. It may happen, though.
-	if test `find ${LINE[2]} -mmin +0.0001` 
+	if test `find ${LINE[2]} -mmin +0.0005` 
 	then
-		echo "Trial ${LINE[0]} failed: Log file too old to have been created by this script."
+		echo "${LINE[0]} failed: Log file not created by this line, or simulator crashed during execution."
 		continue;
 	fi
 
@@ -114,11 +143,14 @@ while IFS=';' read -ra LINE; do
 	logTest=$(emptyLog ${LINE[2]})
 	if [ $logTest -eq 1 ]
 	then
-		echo "Trial ${LINE[0]} failed: Log file is empty. Simulator may have crashed early in execution."
+		echo "${LINE[0]} failed: Log file is empty. Simulator may have crashed early in execution."
 		continue
 	fi
-	numGC ${LINE[0]} ${LINE[2]} ${LINE[3]}
-	memUsed ${LINE[0]} ${LINE[2]} ${LINE[4]}
+	
+	numGC "${LINE[0]}" ${LINE[2]} ${LINE[3]}
+	memUsed "${LINE[0]}" ${LINE[2]} ${LINE[4]}
+	lastCollectionReason "${LINE[0]}" ${LINE[2]} ${LINE[5]}
+	simCrashed "${LINE[0]}" ${LINE[2]}
 	
 done < $1
 
