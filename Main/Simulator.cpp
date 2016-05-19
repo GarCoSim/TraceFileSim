@@ -15,8 +15,9 @@ extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
-Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier) {
+Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC) {
 	myLastStepWorked = 1;
+	myFinalGC = finalGC;
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
 		fprintf(stderr, "File open failed.\n");
@@ -160,7 +161,7 @@ int Simulator::doNextStep(){
 	}
 	else {
 		//Last line in traceFile reached
-		if (TRIGGER_GC_AFTER_LAST_LINE) {
+		if (myFinalGC) {
 			myMemManager->forceGC();
 		}
 	}

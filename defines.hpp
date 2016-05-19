@@ -22,7 +22,7 @@
 #define WRITE_DETAILED_LOG    	  0
 #define WRITE_HEAPMAP         	  0
 #define WRITE_ALLOCATION_INFO 	  0
-#define TRIGGER_GC_AFTER_LAST_LINE   0
+#define FINAL_GC   0 //Trigger a GC after the last line in the trace file
 
 //GENERATIONAL GC
 #define GENERATIONS        1
@@ -81,6 +81,7 @@ enum writebarriersEnum {
 #define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : (collector == (int)recyclerGC ? "recycler" : "copying")))
 #define ALLOCATOR_STRING (allocator == (int)realAlloc ? "real" : (allocator == (int)basicAlloc ? "basic" : "nextFit"))
 #define WRITEBARRIER_STRING (writebarrier == (int)recycler ? "recycler" : (writebarrier == (int)referenceCounting ? "referenceCounting" : "disabled"))
+#define FINALGC_STRING (finalGC == 1 ? "enabled" : "disabled")
 
 #define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
 
