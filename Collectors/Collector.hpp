@@ -10,6 +10,7 @@
 
 #include "../Allocators/Allocator.hpp"
 #include "../Main/ObjectContainer.hpp"
+#include "../WriteBarriers/WriteBarrier.hpp"
 #include <queue>
 #include <stack>
 #include <map>
@@ -38,6 +39,13 @@ public:
 	void addForwardingEntry(void *oldAddress, void *newAddress);
 	void clearForwardingEntries();
 	virtual void initializeHeap();
+	virtual void freeObject(Object *obj);
+
+	//Methods for the recycler
+	virtual void addCandidate(Object *obj);
+	virtual bool candidatesNotContainObj(Object *obj);
+	virtual bool candidatesContainObj(Object *obj);
+	virtual void removeObjectFromCandidates(Object *obj);
 
 protected:
 	void postCollect();
@@ -47,6 +55,8 @@ protected:
 	queue<Object *> myQueue;
 	stack<Object *> myStack;
 	map<void *, void *> forwardPointers;
+
+	WriteBarrier* myWriteBarrier;
 	
 	int statGcNumber;
 	int statFreedObjects;

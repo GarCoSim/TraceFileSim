@@ -13,14 +13,15 @@ namespace traceFileSimulator {
 
 
 WriteBarrier::WriteBarrier() {
+
 }
 
-void WriteBarrier::setEnvironment(MemoryManager* memoryManager) {
-	myMemoryManager = memoryManager;
+void WriteBarrier::setEnvironment(Collector* collector) {
+	myCollector = collector;
 }
 
 
-void WriteBarrier::process(Object *parent, Object *oldChild, Object *child) {
+void WriteBarrier::process(Object *oldChild, Object *child) {
 	
 }
 

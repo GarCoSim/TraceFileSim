@@ -113,10 +113,10 @@ vector<Object*> ObjectContainer::getLiveObjectsInHeapOrder() {
 }
 
 Object* ObjectContainer::getByID(int id) {
-	fprintf(stderr, "Getting object %i by id. Dings = %li\n", id, (long)objectMap[id]);
+	//fprintf(stderr, "Getting object %i by id. Dings = %li\n", id, (long)objectMap[id]);
 	if (objectMap.find(id) == objectMap.end())
 		fprintf(stderr, "ERROR(Line %d): object with this id (%d) was not found\n", gLineInTrace, id);
-	fflush(stdin);
+	//fflush(stdin);
 	return objectMap[id];
 }
 
@@ -162,14 +162,23 @@ void ObjectContainer::setStaticReference(int classID, int fieldOffset, int objec
 	if (classReferences.size() <= (unsigned int) classID)
 		classReferences.resize(classID + 1);
 
-	if (objectID)
+	if (objectID) {
 		classReferences[classID][fieldOffset] = getByID(objectID);
-	else
+	}
+	else {
 		classReferences[classID][fieldOffset] = NULL;
+	}
 }
 
 Object *ObjectContainer::getStaticReference(int classID, int fieldOffset) {
-	return classReferences[classID][fieldOffset];
+	if (classReferences.size() > (unsigned int) classID) {
+		return classReferences[classID][fieldOffset];
+	}
+	else {
+		return NULL;
+	}
+
+	return NULL;
 }
 
 vector<Object*> ObjectContainer::getAllStaticReferences() {

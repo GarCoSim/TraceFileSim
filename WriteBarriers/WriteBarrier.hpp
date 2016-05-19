@@ -10,24 +10,23 @@
 
 #include "../defines.hpp"
 #include "../Main/Object.hpp"
-//#include "../Main/MemoryManager.hpp"
+
+ #include <map>
 
 namespace traceFileSimulator {
 
-class MemoryManager;
+class Collector;
 
 class WriteBarrier {
 public:
 	WriteBarrier();
 	virtual ~WriteBarrier();
-	void setEnvironment(MemoryManager* memoryManager);
+	void setEnvironment(Collector* collector);
 
-	virtual void process(Object *parent, Object *oldChild, Object *child);
-
+	virtual void process(Object *oldChild, Object *child);
 
 protected:
-	MemoryManager* myMemoryManager;
-
+	Collector* myCollector;
 };
 
 } 

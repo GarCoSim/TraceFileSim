@@ -147,7 +147,7 @@ void Allocator::printMap() {
 	fprintf(heapMap, "\n");
 }
 
-inline bool Allocator::isBitSet(size_t heapIndex) {
+/*inline*/ bool Allocator::isBitSet(size_t heapIndex) {
 	size_t byteNR = heapIndex>>3;
 	size_t bit = 7 - heapIndex % 8;
 	return ((myHeapBitMap[byteNR] & (1 << bit))>0)?true:false;

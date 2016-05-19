@@ -78,6 +78,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)markSweepGC;
 				if (!strcmp(argv[i + 1], "traversal"))
 					return (int)traversalGC;
+				if (!strcmp(argv[i + 1], "recycler"))
+					return (int)recyclerGC;
 				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
@@ -100,8 +102,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)disabled;
 				if (!strcmp(argv[i + 1], "recycler"))
 					return (int)recycler;
-				if (!strcmp(argv[i + 1], "zombieRecycler"))
-					return (int)zombieRecycler;
+				if (!strcmp(argv[i + 1], "referenceCounting"))
+					return (int)referenceCounting;
 				return -1;
 			}
 		}
@@ -116,7 +118,7 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
+						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
 						"  --writebarrier x, -wb x   uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
@@ -129,6 +131,7 @@ int main(int argc, char *argv[]) {
 	if(WRITE_DETAILED_LOG) {
 		gDetLog = fopen("detailed.log","w+");
 	}
+
 
 	char *filename    = argv[1];
 	size_t heapSize      = setHeapSize(argc, argv, "--heapsize",  "-h");
