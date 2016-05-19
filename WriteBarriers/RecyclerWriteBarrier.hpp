@@ -9,8 +9,13 @@
 #define _RECYCLERWRITEBARRIER_HPP_
 
 #include "WriteBarrier.hpp"
+#include "../Main/Object.hpp"
+#include "../Collectors/Collector.hpp"
+
 
 namespace traceFileSimulator {
+
+class Collector;
 
 class RecyclerWriteBarrier : public WriteBarrier {
 public:
@@ -18,7 +23,10 @@ public:
 	virtual ~RecyclerWriteBarrier();
 	
 private:
-	void process(Object *parent, Object *oldChild, Object *child);
+	void process(Object *oldChild, Object *child);
+	void deleteReference(Object *obj);
+	void release(Object *obj);
+	void candidate(Object *obj);
 };
 
 } 

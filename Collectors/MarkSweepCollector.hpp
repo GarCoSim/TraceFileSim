@@ -31,6 +31,7 @@ public:
 	void checkWatermark();
 	void initializeHeap();
 	int promotionPhase();
+	void freeObject(Object *obj);
 
 private:
 	void mark();

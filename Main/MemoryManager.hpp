@@ -17,9 +17,10 @@
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
+#include "../Collectors/RecyclerCollector.hpp"
 #include "../WriteBarriers/WriteBarrier.hpp"
-#include "../WriteBarriers/RecyclerWriteBarrier.hpp"
-#include "../WriteBarriers/ZombieRecyclerWriteBarrier.hpp" 
+#include "../WriteBarriers/RecyclerWriteBarrier.hpp" 
+#include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp" 
 #include "../defines.hpp"
 #include <string>
 #include <vector>

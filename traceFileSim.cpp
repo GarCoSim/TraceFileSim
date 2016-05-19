@@ -78,6 +78,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)markSweepGC;
 				if (!strcmp(argv[i + 1], "traversal"))
 					return (int)traversalGC;
+				if (!strcmp(argv[i + 1], "recycler"))
+					return (int)recyclerGC;
 				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
@@ -100,8 +102,14 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)disabled;
 				if (!strcmp(argv[i + 1], "recycler"))
 					return (int)recycler;
-				if (!strcmp(argv[i + 1], "zombieRecycler"))
-					return (int)zombieRecycler;
+				if (!strcmp(argv[i + 1], "referenceCounting"))
+					return (int)referenceCounting;
+				return -1;
+			} else if (!strcmp(option, "--finalGC") || !strcmp(shortOption, "-fGC")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
 				return -1;
 			}
 		}
@@ -116,10 +124,11 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x       uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, default: traversal)\n" \
+						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
 						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst hotness, default: breadthFirst)\n" \
 						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
 						"  --writebarrier x, -wb x   uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
+						"  --finalGC x, -fGC x       uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
 						);
 		exit(1);
 	}
@@ -130,6 +139,7 @@ int main(int argc, char *argv[]) {
 		gDetLog = fopen("detailed.log","w+");
 	}
 
+
 	char *filename    = argv[1];
 	size_t heapSize      = setHeapSize(argc, argv, "--heapsize",  "-h");
 	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
@@ -137,6 +147,7 @@ int main(int argc, char *argv[]) {
 	int collector     = setArgs(argc, argv, "--collector", "-c");
 	int allocator     = setArgs(argc, argv, "--allocator", "-a");
 	int writebarrier = setArgs(argc, argv, "--writebarrier", "-wb");
+	int finalGC = setArgs(argc, argv, "--finalGC", "-fGC");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
 	if (highWatermark == -1)
@@ -149,6 +160,8 @@ int main(int argc, char *argv[]) {
 		allocator = (int)nextFitAlloc;
 	if (writebarrier == -1)
 		writebarrier = (int)disabled;
+	if (finalGC == -1)
+		finalGC = FINAL_GC;
 	if (heapSize == 0) {
 		if (collector != (int)traversalGC)
 			heapSize = 350000;
@@ -168,8 +181,8 @@ int main(int argc, char *argv[]) {
 
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
-	fprintf(gLogFile, "TraceFileSimulator v%lf\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWatermark: %d\n\n", 
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator v%lf\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n", 
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
@@ -179,13 +192,14 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
 	fprintf(stderr, "The writebarrier is '%s'\n", WRITEBARRIER_STRING);
+	fprintf(stderr, "The final GC is '%s'\n", FINALGC_STRING);
 	if (forceAGCAfterEveryStep)
 		fprintf(stderr, "Forcing a GC after every step\n");
 
 	//start measuring time
 	clock_t start = clock();
 
-	Simulator* simulator = new Simulator(filename, heapSize, highWatermark, collector, traversal, allocator, writebarrier);
+	Simulator* simulator = new Simulator(filename, heapSize, highWatermark, collector, traversal, allocator, writebarrier, finalGC);
 
 	while(simulator->lastStepWorked() == 1) {
 		simulator->doNextStep();

@@ -21,7 +21,6 @@ Collector::Collector() {
 	shortestGC = 999999999;
 	longestGC = 0;
 	allGCs = 0;
-
 }
 
 void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation, int traversal) {
@@ -155,6 +154,25 @@ void Collector::lastStats() {
 	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));   
 }
 
+void Collector::freeObject(Object *obj) {
+	
+}
+
+void Collector::addCandidate(Object *obj) {
+
+}
+
+bool Collector::candidatesNotContainObj(Object *obj) {
+	return false;
+}
+
+bool Collector::candidatesContainObj(Object *obj) {
+	return false;
+}
+
+void Collector::removeObjectFromCandidates(Object *obj) {
+	
+}
 
 Collector::~Collector() {
 }

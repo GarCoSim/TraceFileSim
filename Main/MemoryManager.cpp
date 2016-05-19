@@ -27,6 +27,9 @@ MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, 
 	initAllocators(heapSize);
 	initContainers();
 	initGarbageCollectors(highWatermark);
+
+	if (myWriteBarrier)
+		myWriteBarrier->setEnvironment(myGarbageCollectors[0]);
 }
 
 bool MemoryManager::loadClassTable(string traceFilePath) {
@@ -105,6 +108,9 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 			case traversalGC:
 				myGarbageCollectors[i] = new TraversalCollector();
 				break;
+			case recyclerGC:
+				myGarbageCollectors[i] = new RecyclerCollector();
+				break;
 		}
 		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, _traversal);
 		myGarbageCollectors[i]->initializeHeap();
@@ -119,12 +125,10 @@ void MemoryManager::initWritebarrier() {
 		case recycler:
 			myWriteBarrier = new RecyclerWriteBarrier(); 
 			break;
-		case zombieRecycler:
-			myWriteBarrier = new ZombieRecyclerWriteBarrier(); 
+		case referenceCounting:
+			myWriteBarrier = new ReferenceCountingWriteBarrier();
 			break;
 	}
-	if (myWriteBarrier)
-		myWriteBarrier->setEnvironment((MemoryManager*) this);
 }
 
 void MemoryManager::statBeforeCompact(int myGeneration) {
@@ -192,7 +196,9 @@ void *MemoryManager::allocate(size_t size, int generation) {
 		}
 
 		myGarbageCollectors[gen]->collect(reasonFailedAlloc);
+
 		result = myAllocators[generation]->gcAllocate(size);
+
 		gen++;
 	}
 	if (gen > generation) {
@@ -239,8 +245,9 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 	//	fprintf(stderr, "Adding object 5918 in MemoryManager\n");
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
+	void *address;
 
-    void* address = allocate(size, 0);   
+	address = allocate(size, 0);  
 
     if (address == NULL) {
 		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line %d.\n",size, gLineInTrace);
@@ -260,7 +267,8 @@ int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int r
 	addRootToContainers(object, thread);
 
 	if (myWriteBarrier)
-		myWriteBarrier->process(NULL, NULL, object);
+		myWriteBarrier->process(NULL, object);
+
 	
 	if (DEBUG_MODE == 1) {	
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
@@ -281,9 +289,12 @@ int MemoryManager::requestRootDelete(int thread, int id){
 		myObjectContainers[i]->removeFromGenRoot(oldRoot);
 	}
 
-	if (myWriteBarrier)
-		myWriteBarrier->process(NULL, oldRoot, NULL);
-
+	if (myWriteBarrier) {
+		myWriteBarrier->process(oldRoot, NULL);
+		if (ZOMBIE)
+			myGarbageCollectors[0]->collect(reasonFailedAlloc);
+	}
+	
 	return 0;
 }
 
@@ -300,6 +311,9 @@ int MemoryManager::requestRootAdd(int thread, int id){
 		myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread);
 	else
 		printf("Unable to add Object %i to roots\n", id);
+
+	if (myWriteBarrier)
+		myWriteBarrier->process(NULL, obj);
 
 	return 0;
 }
@@ -503,15 +517,31 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 
-	if (myWriteBarrier)
-		myWriteBarrier->process(parent, oldChild, child);
+	if (myWriteBarrier) {
+		myWriteBarrier->process(oldChild, child);
+		if (ZOMBIE)
+			myGarbageCollectors[0]->collect(reasonFailedAlloc);
+	}
 
 	return 0;
 }
 
 
 void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
+
+	Object* myChild; 
+	Object* myOldChild;
+
+	myOldChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
+
 	myObjectContainers[GENERATIONS - 1]->setStaticReference(classID, fieldOffset, objectID);
+
+	if (myWriteBarrier) {
+		myChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
+		myWriteBarrier->process(myOldChild, myChild);
+		if (ZOMBIE)
+			myGarbageCollectors[0]->collect(reasonFailedAlloc);
+	}
 }
 
 void MemoryManager::clearRemSets(){

@@ -38,7 +38,7 @@ typedef struct TraceFileLine {
 
 class Simulator {
 public:
-	Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier);
+	Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC);
 	virtual ~Simulator();
 	int lastStepWorked();
 	int doNextStep();
@@ -59,6 +59,7 @@ private:
 	ifstream myTraceFile;
 	
 	int myLastStepWorked;
+	int myFinalGC;
 	MemoryManager* myMemManager;
 	
 	//debug

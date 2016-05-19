@@ -15,8 +15,9 @@ extern int forceAGCAfterEveryStep;
 
 namespace traceFileSimulator {
 
-Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier) {
+Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC) {
 	myLastStepWorked = 1;
+	myFinalGC = finalGC;
 	myTraceFile.open(traceFilePath);
 	if(!myTraceFile.good()){
 		fprintf(stderr, "File open failed.\n");
@@ -141,8 +142,7 @@ int Simulator::doNextStep(){
 			case '-':
 				deleteRoot(line);
 				break;
-			case 'c': // for now we ignore the class option
-				// currently doesn't do anything
+			case 'c': 
 				referenceOperationClassField(line);
 				break;
 			case 'r': // for now we ignore the class option
@@ -158,6 +158,12 @@ int Simulator::doNextStep(){
 			break;
 		}
 
+	}
+	else {
+		//Last line in traceFile reached
+		if (myFinalGC) {
+			myMemManager->forceGC();
+		}
 	}
 	// commented by mazder
 	if (forceAGCAfterEveryStep) 
@@ -184,41 +190,26 @@ int Simulator::lastStepWorked(){
 
 
 void Simulator::allocateToRootset(TraceFileLine line){
-	//if (line.objectID == 5918)
-	//	fprintf(stderr, "Allocating 5918\n");
 	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
 }
 
 
 void Simulator::deleteRoot(TraceFileLine line){
-	//if (line.objectID == 5918)
-	//	fprintf(stderr, "Deleting root for 5918 for thread %i\n", line.threadID);
-
-	//if (line.objectID == 5814)
-	//	fprintf(stderr, "Deleting root for 5814 for thread %i\n", line.threadID);
-
-	//fprintf(stderr, "Deleting root for %i for thread %i\n", line.objectID, line.threadID);
 	myMemManager->requestRootDelete(line.threadID, line.objectID);
 }
 
 void Simulator::addToRoot(TraceFileLine line){
-	//if (line.objectID == 5918)
-	//	fprintf(stderr, "Adding 5918 to root %i\n", line.threadID);
 	myMemManager->requestRootAdd(line.threadID, line.objectID);
 }
 
 void Simulator::referenceOperation(TraceFileLine line){
-	//if (line.parentID == 5918)
-	//	fprintf(stderr, "Writing from 5918\n");
 	myMemManager->setPointer(line.threadID, line.parentID, line.parentSlot, line.objectID);
 }
 
-// Added by Mazder
-
 void Simulator::referenceOperationClassField(TraceFileLine line){
 	myMemManager->setStaticPointer(line.classID, line.fieldOffset, line.objectID);
-
 }
+
 void Simulator::readOperation(TraceFileLine line){
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
 	bool offsetFlag = false; 	 // to decide either offest or index is given

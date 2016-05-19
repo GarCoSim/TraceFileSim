@@ -24,6 +24,7 @@ MarkSweepCollector::MarkSweepCollector() {
  * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
  */
 void MarkSweepCollector::collect(int reason) {
+	postCollect();
 	statCollectionReason = reason;
 	preCollect();
 
@@ -75,7 +76,6 @@ void MarkSweepCollector::mark() {
 			}
 		}
 	}
-
 }
 
 void MarkSweepCollector::sweep() {
@@ -100,6 +100,14 @@ void MarkSweepCollector::sweep() {
 	}
 }
 
+void MarkSweepCollector::freeObject(Object *obj) {
+	if (obj) {
+		//fprintf(stderr, "Freeing %i in freeObject\n", obj->getID());
+		myMemManager->requestDelete(obj, 0);
+		statFreedObjects++;
+		statFreedDuringThisGC++;
+	}
+}
 
 void MarkSweepCollector::enqueueAllRoots() {
 	Object* currentObj;
