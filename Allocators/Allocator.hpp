@@ -14,6 +14,7 @@
 #include <climits>
 #include "../defines.hpp"
 #include <string>
+#include <math.h>
 
 namespace traceFileSimulator {
 
@@ -57,6 +58,7 @@ protected:
 	bool isBitSet(size_t heapIndex);
 	void setBitUsed(size_t heapIndex);
 	void setBitUnused(size_t heapIndex);
+	size_t getHeapIndex(Object *object);
 
     virtual void *allocate(size_t size, size_t lower, size_t upper);
    

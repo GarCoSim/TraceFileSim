@@ -23,57 +23,11 @@ bool RealAllocator::isRealAllocator() {
 	return true;
 }
 
-bool RealAllocator::isInNewSpace(Object *object) {
-	size_t heapIndex = getHeapIndex(object);
-	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
-}
-
-
-void RealAllocator::moveObject(Object *object) {
-	if (isInNewSpace(object))
-		return;
-
-	size_t size = object->getHeapSize();
-	size_t address = (size_t)allocateInNewSpace(size);
-
-	if (address == (size_t)-1) {
-		fprintf(stderr, "error moving object (size %zu) with id %d, old space %zu, new space %zu\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
-		exit(1);
-	}
-	memcpy((void *) address, (void *) object->getAddress(), size);
-
-	object->updateAddress((void *) address);
-	object->setForwarded(true);
-}
-
 void RealAllocator::initializeHeap(size_t heapSize) {
-	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ]; //modified by Tristan to use ceil() function
-
-	overallHeapSize = heapSize;
-	setHalfHeapSize(heapSize);
-	resetRememberedAllocationSearchPoint();
-
-	statLiveObjects = 0;
-	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
-		allocLog = fopen("alloc.log", "w+");
-	}
-	if (DEBUG_MODE && WRITE_HEAPMAP) {
-		heapMap = fopen("heapmap.log", "w+");
-	}
-	fprintf(stderr, "heap size %zd\n", overallHeapSize);
-
-	heap = (unsigned char*)malloc(heapSize * 8);
+	Allocator::initializeHeap(heapSize);
 
 	card1 = new CardTable(8,(long)heapSize);  //cardTable to represent 8-bits of the bitmap
 	card2 = new CardTable(64,(long)heapSize); //fixing some issues
-}
-
-void RealAllocator::freeAllSectors() {
-	size_t i;
-	for (i = 0; i < overallHeapSize; i++) {
-		setBitUnused(i);
-	}
-
 }
 
 void *RealAllocator::allocate(size_t size, size_t lower, size_t upper) {
@@ -127,10 +81,6 @@ void *RealAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	return NULL;
 }
 
-size_t RealAllocator::getHeapIndex(Object *object) {
-	// This conversion is only valid because the heap is an array of bytes.
-	return (size_t) ((char *) object->getAddress() - (char *) heap);
-}
 
 
 void RealAllocator::gcFree(Object* object) {
@@ -141,15 +91,13 @@ void RealAllocator::gcFree(Object* object) {
 
     card1->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
     card2->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
-
-	statLiveObjects--;
 }
 
 RealAllocator::~RealAllocator() {
 }
 
 void RealAllocator::freeOldSpace() {
-	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
+	Allocator::freeOldSpace();
 	card1->syncCards8(myHeapBitMap);
 	card2->syncCards64(myHeapBitMap);
 }

@@ -8,13 +8,13 @@ thou 2; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -
 thou 3; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a real; ../TraceFiles/thousand.log; 3; 1754; Statistics
 thou 4; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
 thou 5; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 6; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t hotness -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
+#thou 6; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t hotness -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
 thou 7; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
 thou 8; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 9; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t hotness -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
+#thou 9; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t hotness -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
 thou 10; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
 thou 11; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 12; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t hotness -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
+#thou 12; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t hotness -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
 
 #Not enough heap space
 thou smallHeap 1; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a basic; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
@@ -22,12 +22,12 @@ thou smallHeap 2; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c m
 thou smallHeap 3; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a real; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
 thou smallHeap 4; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
 thou smallHeap 5; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
-thou smallHeap 6; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t hotness -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
+#thou smallHeap 6; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t hotness -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
 thou smallHeap 7; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
 thou smallHeap 8; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
-thou smallHeap 9; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t hotness -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
+#thou smallHeap 9; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t hotness -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
 thou smallHeap 10; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
 thou smallHeap 11; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
-thou smallHeap 12; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t hotness -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
+#thou smallHeap 12; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t hotness -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
 
 #Do not delete this comment. Do not put any newlines past this comment.

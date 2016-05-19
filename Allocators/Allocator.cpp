@@ -56,7 +56,13 @@ void *Allocator::allocateInNewSpace(size_t size) {
 }
 
 bool Allocator::isInNewSpace(Object *object) {
-	return false;
+	size_t heapIndex = getHeapIndex(object);
+	return heapIndex >= newSpaceStartHeapIndex && heapIndex < newSpaceEndHeapIndex; 
+}
+
+size_t Allocator::getHeapIndex(Object *object) {
+	// This conversion is only valid because the heap is an array of bytes.
+	return (size_t) ((char *) object->getAddress() - (char *) heap);
 }
 
 void Allocator::swapHeaps() {
@@ -95,11 +101,37 @@ size_t Allocator::getUsedSpace(bool newSpace) {
 }
 
 void Allocator::moveObject(Object *object) {
-	return;
+	if (isInNewSpace(object))
+		return;
+
+	size_t size = object->getHeapSize();
+	size_t address = (size_t)allocateInNewSpace(size);
+
+	if (address == (size_t)-1) {
+		fprintf(stderr, "error moving object (size %zu) with id %d, old space %zu, new space %zu\n", size, object->getID(), getUsedSpace(false), getUsedSpace(true));
+		exit(1);
+	}
+	memcpy((void *) address, (void *) object->getAddress(), size);
+
+	object->updateAddress((void *) address);
+	object->setForwarded(true);
 }
 
 
 void Allocator::initializeHeap(size_t heapSize) {
+	overallHeapSize = heapSize;
+	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ];
+	heap = (unsigned char*)malloc(heapSize * 8);
+	statLiveObjects = 0;
+	resetRememberedAllocationSearchPoint();
+
+	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
+		allocLog = fopen("alloc.log", "w+");
+	}
+	if (DEBUG_MODE && WRITE_HEAPMAP) {
+		heapMap = fopen("heapmap.log", "w+");
+	}
+	fprintf(stderr, "heap size %zd\n", overallHeapSize);
 }
 
 void Allocator::setAllocated(size_t heapIndex, size_t size) {
@@ -200,9 +232,18 @@ bool Allocator::isRealAllocator() {
 }
 
 void Allocator::freeAllSectors() {
+	size_t i;
+	for (i = 0; i < overallHeapSize; i++) {
+		setBitUnused(i);
+	}
 }
 
 void Allocator::gcFree(Object* object) {
+	size_t size = object->getHeapSize();
+	size_t heapIndex = getHeapIndex(object);
+
+	setFree(heapIndex, size);
+	statLiveObjects--;
 }
 
 void *Allocator::allocate(size_t size, size_t lower, size_t upper) {
