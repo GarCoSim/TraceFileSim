@@ -28,7 +28,6 @@ public:
 	MarkSweepCollector();
 	virtual ~MarkSweepCollector();
 	void collect(int reason);
-	void checkWatermark();
 	void initializeHeap();
 	int promotionPhase();
 	void freeObject(Object *obj);

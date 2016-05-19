@@ -47,7 +47,12 @@ void Collector::collect(int reason) {
 }
 
 void Collector::checkWatermark() {
-
+	size_t size = myAllocator->getRegionSize();
+	size_t free = myAllocator->getFreeSize();
+	size_t ratio = 100 - (100 * free / size);
+	if (ratio > myWatermark) {
+		collect((int)reasonHighWatermark);
+	}
 }
 
 void Collector::printStats() {

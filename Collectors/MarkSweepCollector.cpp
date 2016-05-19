@@ -40,15 +40,6 @@ void MarkSweepCollector::collect(int reason) {
 	postCollect();
 }
 
-void MarkSweepCollector::checkWatermark() {
-	size_t size = myAllocator->getRegionSize();
-	size_t free = myAllocator->getFreeSize();
-	size_t ratio = 100 - (100 * free / size);
-	if (ratio > myWatermark) {
-		collect((int)reasonHighWatermark);
-	}
-}
-
 void MarkSweepCollector::initializeHeap() {
 	myAllocator->setHalfHeapSize(false);
 }
@@ -149,8 +140,9 @@ void MarkSweepCollector::initializeMarkPhase() {
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
 	for (i = 0; i < (int)objects.size(); i++) {
 		currentObj = objects[i];
-		if (currentObj)
+		if (currentObj) {
 			currentObj->setVisited(false);
+		}
 	}
 }
 

@@ -30,7 +30,6 @@ public:
 	TraversalCollector();
 	virtual ~TraversalCollector();
 	void collect(int reason);
-	void checkWatermark();
 	int promotionPhase();
 	void initializeHeap();
 
@@ -43,7 +42,6 @@ private:
 	void reallocateAllLiveObjects();
 	void breadthFirstCopying();
 	void depthFirstCopying();
-	void hotnessCopying();
 	void getAllRoots();
 	void emptyHelpers();
 	void swap();

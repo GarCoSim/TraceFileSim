@@ -76,15 +76,6 @@ void TraversalCollector::swap() {
 	myAllocator->swapHeaps();
 }
 
-void TraversalCollector::checkWatermark() {
-	size_t size = myAllocator->getRegionSize();
-	size_t free = myAllocator->getFreeSize();
-	size_t ratio = 100 - (100 * free / size);
-	if (ratio > myWatermark) {
-		collect((int)reasonHighWatermark);
-	}
-}
-
 void TraversalCollector::initializeHeap() {
 	myAllocator->setHalfHeapSize(true); //false for region-based; Tristan
 }
@@ -111,9 +102,6 @@ void TraversalCollector::copy() {
 		case depthFirst:
 			depthFirstCopying();
 			break;
-		case hotness:
-			hotnessCopying();
-			break;
 		default:
 			break;
 	}
@@ -122,8 +110,6 @@ void TraversalCollector::copy() {
 void TraversalCollector::getAllRoots() {
 	Object* currentObj;
 	int i, j;
-
-	// enqueue all roots
 	if (myGeneration == GENERATIONS - 1) {
 		//we are performing a glolab GC and can use it to fix possible rem set problems
 		//we clear all rem sets and fill them again while performing the marking
@@ -136,13 +122,20 @@ void TraversalCollector::getAllRoots() {
 				currentObj = roots[j];
 				if (currentObj && !currentObj->getVisited()) {
 					currentObj->setVisited(true);
-					//currentObj->setAge(currentObj->getAge() + 1);
 					//add to rem set if the root is in a younger generation.
 					if (currentObj->getGeneration() < myGeneration) {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
-					myQueue.push(currentObj);
-					myStack.push(currentObj);
+					switch(order) {
+						case breadthFirst:
+							myQueue.push(currentObj);
+							break;
+						case depthFirst:
+							myStack.push(currentObj);
+							break;
+						default:
+						break;
+					}
 				}
 			}
 		}
@@ -151,7 +144,6 @@ void TraversalCollector::getAllRoots() {
 			currentObj = myObjectContainer->getGenRoot(j);
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
-				//currentObj->setAge(currentObj->getAge() + 1);
 				myQueue.push(currentObj);
 				myStack.push(currentObj);
 			}
@@ -221,10 +213,6 @@ void TraversalCollector::depthFirstCopying() {
 	}
 }
 
-void TraversalCollector::hotnessCopying() {
-	//TODO
-}
-
 void TraversalCollector::initializeMarkPhase() {
 	Object* currentObj;
 	int i;
@@ -232,10 +220,6 @@ void TraversalCollector::initializeMarkPhase() {
 	for (i = 0; i < (int)objects.size(); i++) {
 		currentObj = objects[i];
 		if (currentObj) {
-			if (WRITE_DETAILED_LOG == 1) {
-				//fprintf(gDetLog, "(%d) MARK: %ld\n", gLineInTrace,
-						//(long) currentObj);
-			}
 			currentObj->setVisited(false);
 		}
 	}
