@@ -2,6 +2,13 @@
 #For each line in TestInputs.txt file, execute simulator based on line's contents
 #And compare output log file to various expected outputs in line's contents.
 PRINT_FAILS_ONLY=1
+if [ -n $2 ] 
+then
+	if [ "-all" == "$2" ]
+	then
+		PRINT_FAILS_ONLY=0
+	fi
+fi
 TOLERANCE=0.10
 
 if [ -z $1 ] || [ ! -f $1 ] 

@@ -1,6 +1,7 @@
 RUNNING TESTS
 Run the TestMain.sh script with an input file (suggest SyntheticInput.txt to start). The script will run all the trials indicated in the file.
 For each trial, the script will run a series of tests on the simulator's output log file for that trial, and indicate success or failure.
+By default, the script only prints failures to the console. Write option "-all" after the input file name on the command line to print all test results.
 
 WRITING NEW TRIALS
 Open the TestInputs.txt file
