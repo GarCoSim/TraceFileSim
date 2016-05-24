@@ -121,7 +121,7 @@ void Allocator::moveObject(Object *object) {
 void Allocator::initializeHeap(size_t heapSize) {
 	overallHeapSize = heapSize;
 	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ];
-	heap = (unsigned char*)malloc(heapSize * 8);
+	heap = (unsigned char*)malloc(heapSize);
 	statLiveObjects = 0;
 	resetRememberedAllocationSearchPoint();
 

@@ -40,7 +40,7 @@ void RecyclerCollector::collect(int reason) {
 
 	collectCandidates();
 
-	//postCollect();
+	postCollect();
 }
 
 void RecyclerCollector::initializeHeap() {

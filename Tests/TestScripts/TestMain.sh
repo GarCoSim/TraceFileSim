@@ -111,7 +111,6 @@ function removeNonDataLines() {
 }
 
 
-
 #Elements of LINE: (trialNum, commandLine, logLocation, [various tests])
 while IFS=';' read -ra LINE; do
 	case "${LINE[0]}" in 
@@ -128,7 +127,6 @@ while IFS=';' read -ra LINE; do
 		echo "${LINE[0]} failed: Log file not found."
 		continue;
 	fi
-	
 #Since consecutive trials can have the same log file, we have to cut it close on "newness" testing.
 #However, since all runs of the simulator have a final "statistics" printout just before execution finish,
 #this test shouldn't give any false positives. It may happen, though.
@@ -145,11 +143,9 @@ while IFS=';' read -ra LINE; do
 		echo "${LINE[0]} failed: Log file is empty. Simulator may have crashed early in execution."
 		continue
 	fi
-	
 	numGC "${LINE[0]}" ${LINE[2]} ${LINE[3]}
 	memUsed "${LINE[0]}" ${LINE[2]} ${LINE[4]}
 	lastCollectionReason "${LINE[0]}" ${LINE[2]} ${LINE[5]}
 	simCrashed "${LINE[0]}" ${LINE[2]}
-	
 done < $1
 

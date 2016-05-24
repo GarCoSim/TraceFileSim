@@ -3,25 +3,46 @@
 #[Trial name]; [command line input]; [log file location]; [Number of GC's]; [Final heap size]; [Final Collection Reason]
 
 #Expected to finish uneventfully
-thou 1; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a basic; ../TraceFiles/thousand.log; 3; 1754; Statistics
-thou 2; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a nextFit; ../TraceFiles/thousand.log; 3; 1754; Statistics
-thou 3; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a real; ../TraceFiles/thousand.log; 3; 1754; Statistics
-thou 4; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 5; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 7; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 8; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 10; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
-thou 11; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
+1 thou mb; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a basic; ../TraceFiles/thousand.log; 5; 1754; Statistics
+2 thou mn; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a nextFit; ../TraceFiles/thousand.log; 5; 1754; Statistics
+3 thou mr; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c markSweep -a real; ../TraceFiles/thousand.log; 5; 1754; Statistics
+4 thou tbb; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
+5 thou tbd; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 4; 1754; Statistics
+6 thou tnb; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
+7 thou tnd; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a nextFit; ../TraceFiles/thousand.log; 4; 1754; Statistics
+8 thou trb; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t breadthFirst -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
+9 thou trd; ./../../traceFileSim ../TraceFiles/thousand.trace -h 4000 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 4; 1754; Statistics
+#Recycler not working? Or perhaps trace file contains no cycles. Can't make heap size such that collection happens, and doesn't crash.
 
 #Not enough heap space
-thou smallHeap 1; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a basic; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
-thou smallHeap 2; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a nextFit; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
-thou smallHeap 3; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a real; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
-thou smallHeap 4; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
-thou smallHeap 5; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
-thou smallHeap 7; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
-thou smallHeap 8; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
-thou smallHeap 10; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
-thou smallHeap 11; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
+1 thou mb smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a basic; ../TraceFiles/thousand.log; 10; 1185; FailedAlloc
+2 thou mn smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a nextFit; ../TraceFiles/thousand.log; 10; 1185; FailedAlloc
+3 thou mr smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a real; ../TraceFiles/thousand.log; 10; 1185; FailedAlloc
+4 thou tbb smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
+5 thou tbd smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
+6 thou tnb smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
+7 thou tnd smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a nextFit; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
+8 thou trb smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
+9 thou trd smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
+
+#Reference counting tests
+#1 tenthou rb; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 12000 -c recycler -a basic -wb recycler; ../TraceFiles/tenthousand.log; 3; 9826; Statistics
+#2 tenthou rn; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 14000 -c recycler -a nextFit -wb recycler; ../TraceFiles/tenthousand.log; 3; 9826; Statistics
+#3 tenthou rr; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 12000 -c recycler -a real -wb recycler; ../TraceFiles/tenthousand.log; 3; 9826; Statistics
+
+#Check if objects fit properly into heap
+1 double equal mb; ./../../traceFileSim ../TraceFiles/double.trace -h 128 -c markSweep -a basic; ../TraceFiles/double.log; 1; 128; Statistics
+2 double equal mn; ./../../traceFileSim ../TraceFiles/double.trace -h 128 -c markSweep -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
+3 double equal mr; ./../../traceFileSim ../TraceFiles/double.trace -h 128 -c markSweep -a real; ../TraceFiles/double.log; 1; 128; Statistics
+1 double equal tb; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a basic; ../TraceFiles/double.log; 1; 128; Statistics
+2 double equal tn; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
+3 double equal tr; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a real; ../TraceFiles/double.log; 1; 128; Statistics
+
+1 double small mb; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a basic; ../TraceFiles/double.log; 2; 64; FailedAlloc
+2 double small mn; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a nextFit; ../TraceFiles/double.log; 2; 64; FailedAlloc
+3 double small mr; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a real; ../TraceFiles/double.log; 2; 64; FailedAlloc
+1 double small tb; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
+2 double small tn; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
+3 double small tr; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
 
 #Do not delete this comment. Do not put any newlines past this comment.
