@@ -38,14 +38,17 @@ void *NextFitAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			contiguous = 1;
 		}
 
+		bool bitSet = false;
 		if (isBitSet(potentialStart))
 			continue;
 
 		for (contiguous=1; contiguous<size; contiguous++) {
-			if (potentialStart+contiguous > upper || isBitSet(potentialStart+contiguous))
+			if (potentialStart+contiguous > upper || isBitSet(potentialStart+contiguous)){
+				bitSet = true;
 				break;
+			}
 		}
-		if (contiguous == size) { // found a free slot big enough
+		if (contiguous == size && bitSet == false) { // found a free slot big enough
 			oldSpaceRememberedHeapIndex = potentialStart;
 			setAllocated(potentialStart, size);
 			return &heap[potentialStart];

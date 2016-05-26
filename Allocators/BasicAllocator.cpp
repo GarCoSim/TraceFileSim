@@ -23,19 +23,21 @@ bool BasicAllocator::isRealAllocator() {
 }
 
 void *BasicAllocator::allocate(size_t size, size_t lower, size_t upper) {
-	if (size <= 0 || size > upper){
+	if (size <= 0){
 		return NULL;
 	}
 
 	size_t potentialStart, contiguous;
 	for (potentialStart=lower; potentialStart <= upper-size; potentialStart++) {
 
+		bool bitSet = false;
 		for (contiguous=0; contiguous<size; contiguous++) {
 			if (isBitSet(potentialStart+contiguous)){
+				bitSet = true;
 				break;
 			}
 		}
-		if (contiguous == size) { // found a free slot big enough
+		if (contiguous == size && bitSet == false) { // found a free slot big enough
 			setAllocated(potentialStart, size);
 			return &heap[potentialStart];
 		}

@@ -24,7 +24,7 @@ MarkSweepCollector::MarkSweepCollector() {
  * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
  */
 void MarkSweepCollector::collect(int reason) {
-	postCollect();
+	//postCollect();
 	statCollectionReason = reason;
 	preCollect();
 

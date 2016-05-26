@@ -1,0 +1,38 @@
+#
+# Record format:
+#[Trial name]; [command line input]; [log file location]; [Number of GC's]; [Final heap size]; [Final Collection Reason]
+
+#Check if multiple objects fit properly into heap
+1 double equal MB; ./../../traceFileSim ../TraceFiles/double.trace -h 128 -c markSweep -a basic; ../TraceFiles/double.log; 1; 128; Statistics
+2 double equal MN; ./../../traceFileSim ../TraceFiles/double.trace -h 128 -c markSweep -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
+3 double equal MR; ./../../traceFileSim ../TraceFiles/double.trace -h 128 -c markSweep -a real; ../TraceFiles/double.log; 1; 128; Statistics
+1 double equal TB; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a basic; ../TraceFiles/double.log; 1; 128; Statistics
+2 double equal TN; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
+3 double equal TR; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a real; ../TraceFiles/double.log; 1; 128; Statistics
+
+1 double small MB; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
+2 double small MN; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
+3 double small MR; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
+1 double small TB; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
+2 double small TN; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
+3 double small TR; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
+
+#Collection tests. Check each collector on Aaron's toy trace files
+1 chained MB; ./../../traceFileSim ../TraceFiles/chained.trace -h 1024 -c markSweep -a basic -fGC enabled; ../TraceFiles/chained.log; 2; 0; Statistics
+2 chained TB; ./../../traceFileSim ../TraceFiles/chained.trace -h 1024 -c traversal -a basic -fGC enabled; ../TraceFiles/chained.log; 2; 0; Statistics
+3 chained RecB; ./../../traceFileSim ../TraceFiles/chained.trace -h 1024 -c recycler -wb recycler -a basic -fGC enabled; ../TraceFiles/chained.log; 2; 0; Statistics
+4 chained RefB; ./../../traceFileSim ../TraceFiles/chained.trace -h 1024 -c recycler -wb referenceCounting -a basic -fGC enabled; ../TraceFiles/chained.log; 2; 0; Statistics
+1 cycle MB; ./../../traceFileSim ../TraceFiles/cycle.trace -h 1024 -c markSweep -a basic -fGC enabled; ../TraceFiles/cycle.log; 2; 0; Statistics
+2 cycle TB; ./../../traceFileSim ../TraceFiles/cycle.trace -h 1024 -c traversal -a basic -fGC enabled; ../TraceFiles/cycle.log; 2; 0; Statistics
+3 cycle RecB; ./../../traceFileSim ../TraceFiles/cycle.trace -h 1024 -c recycler -wb recycler -a basic -fGC enabled; ../TraceFiles/cycle.log; 2; 0; Statistics
+4 cycle RefB; ./../../traceFileSim ../TraceFiles/cycle.trace -h 1024 -c recycler -wb referenceCounting -a basic -fGC enabled; ../TraceFiles/cycle.log; 2; 256; Statistics
+1 direct MB; ./../../traceFileSim ../TraceFiles/direct.trace -h 1024 -c markSweep -a basic -fGC enabled; ../TraceFiles/direct.log; 2; 0; Statistics
+2 direct TB; ./../../traceFileSim ../TraceFiles/direct.trace -h 1024 -c traversal -a basic -fGC enabled; ../TraceFiles/direct.log; 2; 0; Statistics
+3 direct RecB; ./../../traceFileSim ../TraceFiles/direct.trace -h 1024 -c recycler -wb recycler -a basic -fGC enabled; ../TraceFiles/direct.log; 2; 0; Statistics
+4 direct RefB; ./../../traceFileSim ../TraceFiles/direct.trace -h 1024 -c recycler -wb referenceCounting -a basic -fGC enabled; ../TraceFiles/direct.log; 2; 0; Statistics
+1 indirect MB; ./../../traceFileSim ../TraceFiles/indirect.trace -h 1024 -c markSweep -a basic -fGC enabled; ../TraceFiles/indirect.log; 2; 256; Statistics
+2 indirect TB; ./../../traceFileSim ../TraceFiles/indirect.trace -h 1024 -c traversal -a basic -fGC enabled; ../TraceFiles/indirect.log; 2; 256; Statistics
+3 indirect RecB; ./../../traceFileSim ../TraceFiles/indirect.trace -h 1024 -c recycler -wb recycler -a basic -fGC enabled; ../TraceFiles/indirect.log; 2; 256; Statistics
+4 indirect RefB; ./../../traceFileSim ../TraceFiles/indirect.trace -h 1024 -c recycler -wb referenceCounting -a basic -fGC enabled; ../TraceFiles/indirect.log; 2; 256; Statistics
+
+#last line
