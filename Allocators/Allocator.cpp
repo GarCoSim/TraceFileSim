@@ -6,6 +6,11 @@
  */
 
 #include "Allocator.hpp"
+#include "../Main/Object.hpp"
+#include <stdio.h>
+#include <stdlib.h>
+#include "../defines.hpp"
+#include <math.h>
 
 extern int gLineInTrace;
 

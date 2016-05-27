@@ -6,6 +6,8 @@
  */
 
 #include "RealAllocator.hpp"
+#include "../Main/CardTable.hpp" 
+#include "../Main/Object.hpp"
 
 extern int gLineInTrace;
 

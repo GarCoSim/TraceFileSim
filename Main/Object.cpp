@@ -7,6 +7,7 @@
 
 #include "../defines.hpp"
 #include "Object.hpp"
+#include <stdio.h>
 
 extern int gLineInTrace; //added by Tristan
 

@@ -6,6 +6,9 @@
  */
 
 #include "CardTable.hpp"
+#include <stdlib.h>
+#include "../defines.hpp"
+#include <math.h>
 
 using namespace std;
 

@@ -8,30 +8,19 @@
 #ifndef MEMORYMANAGER_HPP_
 #define MEMORYMANAGER_HPP_
 
-#include "Object.hpp"
-#include "ObjectContainer.hpp"
-#include "../Allocators/Allocator.hpp"
-#include "../Allocators/RealAllocator.hpp"
-#include "../Allocators/BasicAllocator.hpp"
-#include "../Allocators/NextFitAllocator.hpp"
-#include "../Collectors/Collector.hpp"
-#include "../Collectors/MarkSweepCollector.hpp"
-#include "../Collectors/TraversalCollector.hpp"
-#include "../Collectors/RecyclerCollector.hpp"
-#include "../WriteBarriers/WriteBarrier.hpp"
-#include "../WriteBarriers/RecyclerWriteBarrier.hpp" 
-#include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp" 
+
 #include "../defines.hpp"
-#include <string>
 #include <vector>
-#include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <string>
 
 using namespace std;
 
 namespace traceFileSimulator {
+class Object;
+class Allocator;
+class Collector;
+class ObjectContainer;
+class WriteBarrier;
 
 class MemoryManager {
 public:

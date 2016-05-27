@@ -5,7 +5,11 @@
  *      Author: Johannes
  */
 
+#include "Collector.hpp"
 #include "RecyclerCollector.hpp"
+#include "../Allocators/Allocator.hpp"
+#include "../Main/ObjectContainer.hpp"
+#include "../Main/MemoryManager.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -18,7 +22,6 @@ extern clock_t start, stop;
 namespace traceFileSimulator {
 
 RecyclerCollector::RecyclerCollector() {
-
 }
 
 /**
@@ -45,12 +48,6 @@ void RecyclerCollector::collect(int reason) {
 
 void RecyclerCollector::initializeHeap() {
 	myAllocator->setHalfHeapSize(false);
-}
-
-void RecyclerCollector::preCollect() {
-	start = clock();
-	statFreedDuringThisGC = 0;
-	statGcNumber++;
 }
 
 void RecyclerCollector::addCandidate(Object *obj) {
@@ -174,13 +171,6 @@ void RecyclerCollector::collectWhite(Object *obj) {
 	}
 }
 
-void RecyclerCollector::freeObject(Object *obj) {
-	if (obj) {
-		myMemManager->requestDelete(obj, 0);
-		statFreedObjects++;
-		statFreedDuringThisGC++;
-	}
-}
 
 RecyclerCollector::~RecyclerCollector() {
 }

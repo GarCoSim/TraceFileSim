@@ -8,22 +8,20 @@
 #ifndef COLLECTOR_HPP_
 #define COLLECTOR_HPP_
 
-#include "../Allocators/Allocator.hpp"
-#include "../Main/ObjectContainer.hpp"
-#include "../WriteBarriers/WriteBarrier.hpp"
 #include <queue>
 #include <stack>
 #include <map>
-#include <string>
-#include <ctime>
 #include "../defines.hpp"
-#include <stdio.h>
 
 using namespace std;
 
 namespace traceFileSimulator {
 
 class MemoryManager;
+class Allocator;
+class ObjectContainer;
+class Object;
+class WriteBarrier;
 
 class Collector {
 public:
@@ -49,6 +47,11 @@ public:
 
 protected:
 	void postCollect();
+	void preCollect();
+	void compact();
+	void initializeMarkPhase();
+	void freeAllLiveObjects();
+	void reallocateAllLiveObjects();
 
 	Allocator* myAllocator;
 	ObjectContainer* myObjectContainer;

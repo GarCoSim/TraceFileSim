@@ -9,18 +9,10 @@
 #define _REALALLOCATOR_HPP_
 
 #include "Allocator.hpp"
-#include "../Main/Object.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <memory.h>
-#include <string>
-//added by Tristan 
-#include <sys/time.h> 
-#include "../Main/CardTable.hpp" 
  
 namespace traceFileSimulator {
+	
+class Object;
 
 class RealAllocator : public Allocator {
 public:

@@ -9,10 +9,6 @@
 #define OBJECT_HPP_
 
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctime>
-#include <sys/time.h>
 #include <string.h> //added by Tristan; for memset in setArgs()
 
 using std::vector;

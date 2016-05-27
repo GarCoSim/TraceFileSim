@@ -5,7 +5,11 @@
  *      Author: GarCoSim
  */
 
+#include "Collector.hpp"
 #include "MarkSweepCollector.hpp"
+#include "../Allocators/Allocator.hpp"
+#include "../Main/ObjectContainer.hpp"
+#include "../Main/MemoryManager.hpp"
 
 extern int gLineInTrace;
 extern FILE* gLogFile;
@@ -24,8 +28,10 @@ MarkSweepCollector::MarkSweepCollector() {
  * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
  */
 void MarkSweepCollector::collect(int reason) {
-	//postCollect();
 	statCollectionReason = reason;
+	stop = clock();
+	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
 	preCollect();
 
 	mark();
@@ -38,6 +44,10 @@ void MarkSweepCollector::collect(int reason) {
 	*/
 
 	postCollect();
+	
+	stop = clock();
+	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
 }
 
 void MarkSweepCollector::initializeHeap() {
@@ -91,14 +101,6 @@ void MarkSweepCollector::sweep() {
 	}
 }
 
-void MarkSweepCollector::freeObject(Object *obj) {
-	if (obj) {
-		//fprintf(stderr, "Freeing %i in freeObject\n", obj->getID());
-		myMemManager->requestDelete(obj, 0);
-		statFreedObjects++;
-		statFreedDuringThisGC++;
-	}
-}
 
 void MarkSweepCollector::enqueueAllRoots() {
 	Object* currentObj;
@@ -134,103 +136,13 @@ void MarkSweepCollector::enqueueAllRoots() {
 	}
 }
 
-void MarkSweepCollector::initializeMarkPhase() {
-	Object* currentObj;
-	int i;
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (i = 0; i < (int)objects.size(); i++) {
-		currentObj = objects[i];
-		if (currentObj) {
-			currentObj->setVisited(false);
-		}
-	}
-}
 
-void MarkSweepCollector::preCollect() {
-	start = clock();
-	statFreedDuringThisGC = 0;
-	statGcNumber++;
-	fprintf(stderr, "starting markSweep collection (%d)...\n", statGcNumber);
-}
 
-void MarkSweepCollector::compact() {
-	/*only alive objects are left in the container. If I traverse
-	 through the live list, I get all elements*/
-	//free everything.
-	myMemManager->statBeforeCompact(myGeneration);
-	freeAllLiveObjects();
 
-	//allocate everything back.
-	myMemManager->requestResetAllocationPointer(myGeneration);
-	reallocateAllLiveObjects();
-	myMemManager->statAfterCompact(myGeneration);
-}
 
-void MarkSweepCollector::freeAllLiveObjects() {
-	int i;
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (i = 0; i < (int)objects.size(); i++) {
-		Object* currentObj = objects[i];
-		if (currentObj) {
-			myMemManager->requestFree(currentObj);
-		}
-	}
-}
 
-int MarkSweepCollector::promotionPhase() {
-	if (gcsSinceLastPromotionPhase == 0) {
-		//nothing to do here
-		return 0;
-	}
-	int g, oldi;
-	//in case the next generation is too full, a flag to wait
-	int noSpaceUpstairs = 0;
-	oldi = -1;
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (g = 0; g < (int)objects.size(); g++) {
-		Object* currentObj = objects[g];
-		if (g < oldi) {
-			printf("oO\n");
-		}
-		//if object exists and is not in the oldest generation already
-		if (currentObj && currentObj->getGeneration() < (GENERATIONS - 1)) {
-			int age = currentObj->getAge();
-			if (age
-					>= PROMOTIONAGE + PROMOTIONAGE * myGeneration
-							/*+ currentObj->getGeneration() * PROMOTIONAGEFACTOR*/) {
-				//fprintf(stderr, "(%d) promoting object of age %d\n",gLineInTrace, age);
-				if (currentObj->getGeneration() < GENERATIONS - 1) {
-					noSpaceUpstairs = myMemManager->requestPromotion(
-							currentObj);
-					// end the promotion phase because of an "out of memory"
-					// exception in the higher generation. It is not the best
-					// solution
-					if (noSpaceUpstairs == 1) {
-						return -1;
-					}
-				}
-			}
-		}
-		oldi = g;
-	}
-	return 0;
-}
 
-void MarkSweepCollector::reallocateAllLiveObjects() {
-	int i;
-	void *addressBefore, *addressAfter;
-	// the ordering ensures that we don't overwrite an object we have yet to visit
-	vector<Object*> objects = myObjectContainer->getLiveObjectsInHeapOrder();
-	for (i = 0; i < (int)objects.size(); i++) {
-		Object* currentObj = objects[i];
-		if (currentObj) {
-			addressBefore = currentObj->getAddress();
-			myMemManager->requestReallocate(currentObj);
-			addressAfter = currentObj->getAddress();
-			addForwardingEntry(addressBefore, addressAfter);
-		}
-	}
-}
+
 
 MarkSweepCollector::~MarkSweepCollector() {
 }

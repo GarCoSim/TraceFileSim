@@ -5,8 +5,26 @@
  *      Author: GarCoSim
  */
 
-#include "MemoryManager.hpp"
 
+#include "Object.hpp"
+#include "ObjectContainer.hpp"
+#include "../Allocators/Allocator.hpp"
+#include "../Allocators/RealAllocator.hpp"
+#include "../Allocators/BasicAllocator.hpp"
+#include "../Allocators/NextFitAllocator.hpp"
+#include "../Collectors/Collector.hpp"
+#include "../Collectors/MarkSweepCollector.hpp"
+#include "../Collectors/TraversalCollector.hpp"
+#include "../Collectors/RecyclerCollector.hpp"
+#include "../WriteBarriers/WriteBarrier.hpp"
+#include "../WriteBarriers/RecyclerWriteBarrier.hpp" 
+#include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp" 
+
+
+#include <stdlib.h>
+#include <math.h>
+#include <fstream>
+#include "MemoryManager.hpp"
 
 extern FILE* gLogFile;
 extern FILE* gDetLog;

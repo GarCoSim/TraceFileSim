@@ -8,18 +8,15 @@
 #ifndef SIMULATOR_HPP_
 #define SIMULATOR_HPP_
  
-#include <stdio.h>
 #include <fstream>
-#include <ctime>
-#include "MemoryManager.hpp"
-#include <string>
-#include <stdlib.h>
 
 #define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
 
 using namespace std;
 
 namespace traceFileSimulator {
+
+class MemoryManager;
 
 typedef struct TraceFileLine {
 	char type;

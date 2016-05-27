@@ -7,6 +7,10 @@
 #include<sys/time.h>
 #include "ObjectContainer.hpp"
 
+#include <stdio.h>
+#include "../defines.hpp"
+#include <algorithm>
+
 extern int gLineInTrace;
 
 namespace traceFileSimulator {

@@ -7,16 +7,11 @@
 
 #ifndef _ALLOCATOR_HPP_
 #define _ALLOCATOR_HPP_
-
-#include "../Main/Object.hpp"
 #include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <string>
-#include <math.h>
 
 namespace traceFileSimulator {
+
+class Object;
 
 class Allocator {
 public:

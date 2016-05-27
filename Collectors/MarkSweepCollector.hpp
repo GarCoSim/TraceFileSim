@@ -8,14 +8,8 @@
 #ifndef MARKSWEEPCOLLECTOR_HPP_
 #define MARKSWEEPCOLLECTOR_HPP_
 
-#include "../Allocators/Allocator.hpp"
-#include "Collector.hpp"
-#include "../Main/ObjectContainer.hpp"
-#include <queue>
-#include "../Main/MemoryManager.hpp"
-#include <stdio.h>
-#include <ctime>
-#include "../defines.hpp"
+
+
 
 using namespace std;
 
@@ -29,18 +23,13 @@ public:
 	virtual ~MarkSweepCollector();
 	void collect(int reason);
 	void initializeHeap();
-	int promotionPhase();
-	void freeObject(Object *obj);
 
 private:
 	void mark();
 	void sweep();
-	void compact();
 	void enqueueAllRoots();
-	void initializeMarkPhase();
-	void preCollect();
-	void freeAllLiveObjects();
-	void reallocateAllLiveObjects();
+
+	
 };
 
 } 

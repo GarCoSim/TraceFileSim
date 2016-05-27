@@ -11,14 +11,6 @@
 #define _NEXTFITALLOCATOR_HPP_
 
 #include "Allocator.hpp"
-#include "../Main/Object.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <memory.h>
-#include <string>
-#include <sys/time.h> 
  
 namespace traceFileSimulator {
 

@@ -8,15 +8,7 @@
 #ifndef _CARDTABLE_HPP_
 #define _CARDTABLE_HPP_
 
-#include "../Main/Object.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <climits>
-#include "../defines.hpp"
-#include <memory.h>
-#include <string>
-#include <sys/time.h> 
-#include <math.h>
+
 
 namespace traceFileSimulator {
 

@@ -8,13 +8,9 @@
 #ifndef OBJECTCONTAINER_HPP_
 #define OBJECTCONTAINER_HPP_
 
-#include <map>
-#include <vector>
 #include "Object.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include "../defines.hpp"
-#include <algorithm>
+#include <vector>
+#include <map>
  
 namespace traceFileSimulator {
 

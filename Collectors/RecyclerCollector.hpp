@@ -8,15 +8,8 @@
 #ifndef RECYCLERCOLLECTOR_HPP_
 #define RECYCLERCOLLECTOR_HPP_
 
-#include "../Allocators/Allocator.hpp"
-#include "Collector.hpp"
-#include "../Main/ObjectContainer.hpp"
-#include <queue>
-#include "../Main/MemoryManager.hpp"
-#include <stdio.h>
-#include <ctime>
+
 #include <set> 
-#include "../defines.hpp"
 
 using namespace std;
 
@@ -30,7 +23,6 @@ public:
 	virtual ~RecyclerCollector();
 	void collect(int reason);
 	void initializeHeap();
-	void freeObject(Object *obj);
 	void addCandidate(Object *obj);
 	bool candidatesNotContainObj(Object *obj);
 	bool candidatesContainObj(Object *obj);
@@ -40,7 +32,6 @@ public:
 private:
 	std::set<Object*> myCandidates;
 
-	void preCollect();
 	void markCandidates();
 	void markGrey(Object *obj);
 	void scan(Object *obj);

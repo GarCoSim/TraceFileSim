@@ -6,6 +6,9 @@
  */
 
 #include "Simulator.hpp"
+#include "MemoryManager.hpp"
+#include <string>
+#include <stdlib.h>
 
 using namespace std;
 
