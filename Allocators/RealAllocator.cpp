@@ -86,11 +86,10 @@ void *RealAllocator::allocate(size_t size, size_t lower, size_t upper) {
 
 
 void RealAllocator::gcFree(Object* object) {
+	Allocator::gcFree(object);
+
 	size_t size = object->getHeapSize();
 	size_t heapIndex = getHeapIndex(object);
-
-	setFree(heapIndex, size);
-
     card1->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
     card2->unmarkCards(heapIndex,size,myHeapBitMap); //added by Tristan
 }
