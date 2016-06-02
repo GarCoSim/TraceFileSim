@@ -65,6 +65,20 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 	return 0;
 }
 
+string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
+	int i;
+	
+	for (i = 1; i < argc; i++){
+		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
+			if (!strcmp(option, "--logLocation") || !strcmp(shortOption, "-l")) {
+				string arg = (string)argv[i + 1];
+				return arg;
+			}
+		}
+	}
+	return "";
+}
+
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 
@@ -120,13 +134,14 @@ int main(int argc, char *argv[]) {
 	if(argc < 2) {
 		fprintf(stderr, "Usage: TraceFileSimulator traceFile [OPTIONS]\n" \
 						"Options:\n" \
-						"  --watermark x, -w x       uses x percent as the high watermark (default: 90)\n" \
-						"  --heapsize x,  -h x       uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
-						"  --collector x, -c x       uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
-						"  --traversal x, -t x       uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
-						"  --allocator x, -a x       uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
-						"  --writebarrier x, -wb x   uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
-						"  --finalGC x, -fGC x       uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
+						"  --watermark x, -w x		uses x percent as the high watermark (default: 90)\n" \
+						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
+						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
+						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
+						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
+						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
+						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
+						"  --logLocation x, -l x	uses x as the location and filename to print the log file (default: trace file's location and name)"
 						);
 		exit(1);
 	}
@@ -138,14 +153,15 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	char *filename    = argv[1];
-	size_t heapSize      = setHeapSize(argc, argv, "--heapsize",  "-h");
-	int highWatermark = setArgs(argc, argv, "--watermark", "-w");
-	int traversal     = setArgs(argc, argv, "--traversal", "-t");
-	int collector     = setArgs(argc, argv, "--collector", "-c");
-	int allocator     = setArgs(argc, argv, "--allocator", "-a");
-	int writebarrier = setArgs(argc, argv, "--writebarrier", "-wb");
-	int finalGC = setArgs(argc, argv, "--finalGC", "-fGC");
+	char *filename		= argv[1];
+	size_t heapSize		= setHeapSize(argc, argv, "--heapsize",  "-h");
+	int highWatermark	= setArgs(argc, argv, "--watermark", "-w");
+	int traversal		= setArgs(argc, argv, "--traversal", "-t");
+	int collector		= setArgs(argc, argv, "--collector", "-c");
+	int allocator		= setArgs(argc, argv, "--allocator", "-a");
+	int writebarrier	= setArgs(argc, argv, "--writebarrier", "-wb");
+	int finalGC			= setArgs(argc, argv, "--finalGC", "-fGC");
+	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
 	if (highWatermark == -1)
@@ -168,11 +184,14 @@ int main(int argc, char *argv[]) {
 	}
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
-
+	
 	CREATE_GLOBAL_FILENAME((string)filename);
-
+	
 	string logFileName;
-	if (forceAGCAfterEveryStep)
+	char *customLogChar = &customLog[0u];
+	if(strcmp(customLogChar, ""))
+		logFileName = customLog + ".log";
+	else if (forceAGCAfterEveryStep)
 		logFileName = globalFilename + "Forced.log";
 	else
 		logFileName = globalFilename + ".log";

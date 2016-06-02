@@ -9,6 +9,7 @@
 #include "MemoryManager.hpp"
 #include <string>
 #include <stdlib.h>
+#include <fstream>
 
 using namespace std;
 

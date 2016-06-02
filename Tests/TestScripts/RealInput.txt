@@ -1,0 +1,14 @@
+#
+# Record format:
+#[Trial name]; [command line input]; [log file location]; [Number of GC's]; [Final heap size]; [Final Collection Reason]
+
+### HELLOWORLD TESTS ###
+#Allocation tests
+HelloWorld basic; ./../../traceFileSim /team/Andrii/HelloWorld.trace -h 500000 -c markSweep -a basic -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
+HelloWorld nextFit; ./../../traceFileSim /team/Andrii/HelloWorld.trace -h 500000 -c markSweep -a nextFit -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 4; 330816; Statistics
+HelloWorld real; ./../../traceFileSim /team/Andrii/HelloWorld.trace -h 500000 -c markSweep -a real -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
+#Collector tests
+HelloWorld traversal; ./../../traceFileSim /team/Andrii/HelloWorld.trace -h 1000000 -c traversal -a nextFit -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
+HelloWorld recycler; ./../../traceFileSim /team/Andrii/HelloWorld.trace -h 500000 -c recycler -wb recycler -a nextFit -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
+
+#Last line, do not delete
