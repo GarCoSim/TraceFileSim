@@ -73,6 +73,8 @@ public:
 		forwarded = value;
 	}
 
+
+
 	int getReferenceCount();
 	void increaseReferenceCount();
 	void decreaseReferenceCount();

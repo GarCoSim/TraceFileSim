@@ -141,6 +141,7 @@ void Collector::updatePointers() {
 			if (pointerAddress != NULL && forwardPointers.find(pointerAddress) != forwardPointers.end())
 				currentObj->setRawPointerAddress(j, forwardPointers[pointerAddress]);
 		}
+		currentObj->setForwarded(false);
 	}
 
 	clearForwardingEntries();

@@ -108,7 +108,7 @@ size_t Allocator::getUsedSpace(bool newSpace) {
 void Allocator::moveObject(Object *object) {
 	if (isInNewSpace(object))
 		return;
-
+	
 	size_t size = object->getHeapSize();
 	size_t address = (size_t)allocateInNewSpace(size);
 

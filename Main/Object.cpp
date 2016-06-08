@@ -34,7 +34,6 @@ Object::Object(int id, void *address, size_t size, int maxPointers, char *classN
 	color = BLACK;
 }
 
-
 void Object::setGeneration(int generation){
 	myGeneration = generation;
 }
