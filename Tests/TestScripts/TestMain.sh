@@ -9,7 +9,7 @@ then
 		PRINT_FAILS_ONLY=0
 	fi
 fi
-TOLERANCE=0.10
+TOLERANCE=0
 
 if [ -z $1 ] || [ ! -f $1 ] 
 then
