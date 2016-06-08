@@ -8,7 +8,7 @@
 #include "Collector.hpp"
 #include "RecyclerCollector.hpp"
 #include "../Allocators/Allocator.hpp"
-#include "../Main/ObjectContainer.hpp"
+#include "../Main/Object.hpp"
 #include "../Main/MemoryManager.hpp"
 
 extern int gLineInTrace;
