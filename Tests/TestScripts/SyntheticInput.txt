@@ -16,7 +16,7 @@
 
 #Not enough heap space
 1 thou MB smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a basic; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
-2 thou MN smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a nextFit; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
+2 thou MN smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a nextFit; ../TraceFiles/thousand.log; 4; 1185; FailedAlloc
 3 thou MR smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 1500 -c markSweep -a real; ../TraceFiles/thousand.log; 5; 1185; FailedAlloc
 4 thou TBB smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t breadthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
 5 thou TBD smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a basic; ../TraceFiles/thousand.log; 6; 1185; FailedAlloc
@@ -26,9 +26,10 @@
 9 thou TRD smallHeap; ./../../traceFileSim ../TraceFiles/thousand.trace -h 2500 -c traversal -t depthFirst -a real; ../TraceFiles/thousand.log; 7; 1185; FailedAlloc
 
 #Reference counting tests. Thousand.trace does not contain enough cycles, so we use tenthousand.trace.
-1 tenthou rb; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 12000 -c recycler -a basic -wb recycler; ../TraceFiles/tenthousand.log; 3; 9826; Statistics
-2 tenthou rn; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 14000 -c recycler -a nextFit -wb recycler; ../TraceFiles/tenthousand.log; 3; 9826; Statistics
-3 tenthou rr; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 12000 -c recycler -a real -wb recycler; ../TraceFiles/tenthousand.log; 3; 9826; Statistics
+tenthou MB; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 14000 -c markSweep -a basic -fGC enabled; ../TraceFiles/tenthousand.log; 5; 9718; Statistics
+1 tenthou rb; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 14000 -c recycler -a basic -wb recycler -fGC enabled; ../TraceFiles/tenthousand.log; 3; 9718; Statistics
+2 tenthou rn; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 14000 -c recycler -a nextFit -wb recycler -fGC enabled; ../TraceFiles/tenthousand.log; 3; 9718; Statistics
+3 tenthou rr; ./../../traceFileSim ../TraceFiles/tenthousand.trace -h 14000 -c recycler -a real -wb recycler -fGC enabled; ../TraceFiles/tenthousand.log; 3; 9718; Statistics
 
 
 #Do not delete this comment. Do not put any newlines past this comment.

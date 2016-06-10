@@ -29,30 +29,43 @@ void *NextFitAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	if ((size_t) oldSpaceRememberedHeapIndex < lower || (size_t) oldSpaceRememberedHeapIndex > upper)
 		oldSpaceRememberedHeapIndex = lower; // essentially fall back to first fit
 
-	size_t potentialStart, contiguous = 1;
+	size_t potentialStart, contiguous = 0;
 	bool hasWrappedAround = false;
-	for (potentialStart=oldSpaceRememberedHeapIndex+1; !hasWrappedAround || potentialStart<=(size_t)oldSpaceRememberedHeapIndex; potentialStart+=contiguous) {
+	size_t tempStart = 0;
+	if(oldSpaceRememberedHeapIndex==oldSpaceStartHeapIndex){
+		tempStart = oldSpaceStartHeapIndex;
+	}
+	else if(oldSpaceRememberedHeapIndex==newSpaceStartHeapIndex){
+		tempStart = newSpaceStartHeapIndex;
+	}
+	else{
+		tempStart = oldSpaceRememberedHeapIndex+1;
+	}
+	
+	for (potentialStart = tempStart; !hasWrappedAround || potentialStart<=(size_t)oldSpaceRememberedHeapIndex; potentialStart++) {
 		if (potentialStart > upper) {
 			hasWrappedAround = true;
 			potentialStart = lower;
-			contiguous = 1;
+			contiguous = 0;
 		}
 
 		bool bitSet = false;
-		if (isBitSet(potentialStart))
+		if (isBitSet(potentialStart)){
 			continue;
+		}
 
-		for (contiguous=1; contiguous<size; contiguous++) {
+		for (contiguous=0; contiguous<size; contiguous++) {
 			if (potentialStart+contiguous > upper || isBitSet(potentialStart+contiguous)){
 				bitSet = true;
 				break;
 			}
 		}
-		if (contiguous == size && bitSet == false) { // found a free slot big enough
+		if (contiguous == size && bitSet == false && potentialStart+contiguous<=upper) { // found a free slot big enough
 			oldSpaceRememberedHeapIndex = potentialStart;
 			setAllocated(potentialStart, size);
 			return &heap[potentialStart];
 		}
+		
 	}
 
 	return NULL;
