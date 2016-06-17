@@ -52,6 +52,24 @@ unsigned char *Allocator::getHeap () {
 	return heap;
 }
 
+size_t Allocator::getSpaceToNextObject(size_t start){
+	for(int i=start; i<getRegionSize(); i++){
+		if(isBitSet(i)){
+			return i-start;
+		}
+	}
+	return NULL;
+}
+
+unsigned char *Allocator::getNextObjectAddress(size_t start){
+	for(int i=start; i<getRegionSize(); i++){
+		if(isBitSet(i)){
+			return &heap[i];
+		}
+	}
+	return NULL;
+}
+
 void *Allocator::gcAllocate(size_t size) {
 	return allocate(size, oldSpaceStartHeapIndex, oldSpaceEndHeapIndex);
 }

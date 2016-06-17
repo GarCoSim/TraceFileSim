@@ -53,20 +53,33 @@ void TraversalCollector::swap() {
 	 * if we use a real allocator we do not delete the object, we just remove it from the object list
 	 * it will then by overwritten afterwards. the real allocator just removes it from the object list
 	 */
-	int i;
+	size_t heapPosition= 0;
 	Object *currentObj;
-
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (i = 0; i < (int)objects.size(); i++) {
-		currentObj = objects[i];
-		if (currentObj) {
-			if (!myAllocator->isInNewSpace(currentObj)) {
-				if (!currentObj->isForwarded()) {
-					statFreedObjects++;
-					statFreedDuringThisGC++;
+	RawObject* raw;
+	while(heapPosition<myAllocator->getHeapSize()){
+		
+		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
+		
+		if(raw!=NULL){
+			currentObj = (Object *)raw->associatedObject;
+			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
+			heapPosition += currentObj->getHeapSize();
+			if (currentObj) {
+				if(!myAllocator->isInNewSpace(currentObj)){
+					if(!currentObj->isForwarded()){
+						statFreedObjects++;
+						statFreedDuringThisGC++;
+					}
+					myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
+					//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
 				}
-				myMemManager->requestDelete(currentObj, myGeneration == (GENERATIONS - 1) ? 1 : 0);
 			}
+			else{
+				heapPosition=myAllocator->getHeapSize();
+			}
+		}
+		else{
+			heapPosition=myAllocator->getHeapSize();
 		}
 	}
 

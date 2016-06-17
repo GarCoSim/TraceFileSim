@@ -33,7 +33,6 @@ void MarkSweepCollector::collect(int reason) {
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
 	preCollect();
-
 	mark();
 	sweep();
 	/* Uncomment this to enable compaction
@@ -81,22 +80,37 @@ void MarkSweepCollector::mark() {
 
 void MarkSweepCollector::sweep() {
 	Object* currentObj;
-	int i, gGC;
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (i = 0; i < (int)objects.size(); i++) {
-		currentObj = objects[i];
-		if (currentObj) {
-			//int id = currentObj->getID();
+	int gGC;
+	size_t heapPosition= 0;
+	RawObject* raw;
+	
+	while(heapPosition<myAllocator->getHeapSize()){
+		
+		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
+		
+		if(raw!=NULL){
+			currentObj = (Object *)raw->associatedObject;
+			//currentObj = *(Object **)(objAddress+sizeof(Object *));
+			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
+			heapPosition += currentObj->getHeapSize();
+			
 			if(myGeneration == GENERATIONS -1){
 				gGC = 1;
 			} else {
 				gGC = 0;
 			}
 			if (currentObj && !currentObj->getVisited()) {
+				
 				myMemManager->requestDelete(currentObj, gGC);
 				statFreedObjects++;
 				statFreedDuringThisGC++;
 			}
+			if(!currentObj){
+				heapPosition=myAllocator->getHeapSize();
+			}
+		}
+		else{
+			heapPosition=myAllocator->getHeapSize();
 		}
 	}
 }
