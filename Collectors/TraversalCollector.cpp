@@ -75,11 +75,11 @@ void TraversalCollector::swap() {
 				}
 			}
 			else{
-				heapPosition=myAllocator->getHeapSize();
+				break;
 			}
 		}
 		else{
-			heapPosition=myAllocator->getHeapSize();
+			break;
 		}
 	}
 
