@@ -27,6 +27,8 @@ public:
 	int getRegionSize();
 	void resetRememberedAllocationSearchPoint();
 	unsigned char *getHeap();
+	size_t getSpaceToNextObject(size_t start);
+	unsigned char *getNextObjectAddress(size_t start);
 
 	//stats
 	void printMap();
