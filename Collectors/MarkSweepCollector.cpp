@@ -106,11 +106,11 @@ void MarkSweepCollector::sweep() {
 				statFreedDuringThisGC++;
 			}
 			if(!currentObj){
-				heapPosition=myAllocator->getHeapSize();
+				break;
 			}
 		}
 		else{
-			heapPosition=myAllocator->getHeapSize();
+			break;
 		}
 	}
 }
