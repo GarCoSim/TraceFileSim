@@ -56,7 +56,8 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		isSplitHeap = false;
 	}
 	else if (value == 0) {
-		//determine numberOfRegions and regionSize based on overallHeapSize
+		//determine numberOfRegions based on overallHeapSize
+		// Determine regionSize based on maximumHeapSize
 		unsigned int i, currentNumberOfRegions;
 		size_t currentRegionSize;
 		currentRegionSize = 0;
@@ -73,7 +74,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 				stop = true;
 		}
 
-		numberOfRegions = currentNumberOfRegions;
+		numberOfRegions = overallHeapSize/currentRegionSize;
 		regionSize = currentRegionSize;
 		maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
 
@@ -82,7 +83,7 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		size_t currentAddress = 0;
 
 		for (i = 0; i < numberOfRegions; i++) {
-			balancedRegion = new Region ((void*)currentAddress, regionSize, (size_t)&heap[0]);
+			balancedRegion = new Region ((void*)currentAddress, regionSize, heap);
 
 			balancedRegions.push_back(balancedRegion);
 			freeRegions.push_back(i);
@@ -230,9 +231,41 @@ void Allocator::initializeHeap(size_t heapSize) {
 	fprintf(stderr, "heap size %zd\n", overallHeapSize);
 }
 
+void Allocator::initializeHeap(size_t heapSize, size_t maxHeapSize) {
+}
+
+int Allocator::addRegions(){
+	return -1;
+}
+
 void Allocator::setAllocated(size_t heapIndex, size_t size) {
 	size_t i;
 	size_t toMark = heapIndex;
+
+	for (i = 0; i < size; i++) {
+		setBitUsed(toMark);
+		toMark++;
+	}
+}
+
+// For multiple heaps
+void Allocator::setAllocated(unsigned char *heapStart, size_t heapIndex, size_t size) {
+	size_t i;
+	size_t toMark;
+	unsigned int j, k;
+	size_t offset = 0;
+
+	// Calculate size of older regions
+	for (j=0; j<allHeaps.size(); j+=2){
+		if(heapStart >= &allHeaps.at(j)[0] && heapStart < &allHeaps.at(j+1)[0]){
+			for(k=0; k<j; k+=2){
+				offset += ((size_t)&allHeaps.at(k+1)[0] - (size_t)&allHeaps.at(k)[0]);
+			}
+			break;
+		}
+	}
+
+	toMark = heapIndex + offset;
 
 	for (i = 0; i < size; i++) {
 		setBitUsed(toMark);
@@ -278,12 +311,43 @@ std::vector<unsigned int> Allocator::getFreeRegions() {
 	return freeRegions;
 }
 
+// Updated for multiple heaps
 unsigned int Allocator::getObjectRegion(Object* object) {
-	return (unsigned int)(((size_t)object->getAddress()-(size_t)&heap[0])/regionSize);
+	void *objectAddress = object->getAddress();
+	unsigned int i, j;
+	size_t offset = 0;
+
+	//return (unsigned int)((objectAddress-(size_t)allHeaps.at(0))/regionSize);
+
+	for(i=0; i<allHeaps.size(); i+=2){
+		if(objectAddress >= &allHeaps.at(i)[0] && objectAddress < &allHeaps.at(i+1)[0]){ //Find which heap the object is in
+			for(j=0; j<i; j+=2){
+				offset += (((size_t)&allHeaps.at(j+1)[0] - (size_t)&allHeaps.at(j)[0])/regionSize); //Calculate how many regions are in older heaps
+			}
+			return (unsigned int)(((size_t)objectAddress - (size_t)allHeaps.at(i))/regionSize + offset);
+		}
+	}
+	printf("getObjectRegion error\n");
+	return 2048;
 }
 
+// Updated for multiple heaps
 unsigned int Allocator::getObjectRegionByRawObject(void* object) {
-	return (unsigned int)(((size_t)object-(size_t)&heap[0])/regionSize);
+	unsigned int i, j;
+	size_t offset = 0;
+
+	//return (unsigned int)(((size_t)object-(size_t)allHeaps.at(0))/regionSize);
+
+	for(i=0; i<allHeaps.size(); i+=2){
+		if(object >= &allHeaps.at(i)[0] && object < &allHeaps.at(i+1)[0]){//Find which heap the object is in
+			for(j=0; j<i; j+=2){
+				offset += (((size_t)&allHeaps.at(j+1)[0] - (size_t)&allHeaps.at(j)[0])/regionSize); //Calculate how many regions are in older heaps
+			}
+			return (unsigned int)(((size_t)object - (size_t)allHeaps.at(i))/regionSize + offset);
+		}
+	}
+	printf("getObjectRegionByRawObject error\n");
+	return 2048;
 }
 
 void Allocator::addNewFreeRegion(unsigned int regionID){

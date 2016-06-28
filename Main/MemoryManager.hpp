@@ -24,7 +24,7 @@ class WriteBarrier;
 
 class MemoryManager {
 public:
-	MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier);
+	MemoryManager(size_t heapSize, size_t maxHeapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier);
 	virtual ~MemoryManager();
 	//operations possible from trace file
 	int allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID);
@@ -56,7 +56,7 @@ public:
 private:
 	bool isAlreadyRoot(int thread, int id);
 	size_t* computeHeapsizes(size_t heapSize);
-	void initAllocators(size_t heapsize);
+	void initAllocators(size_t heapsize, size_t maxheapsize);
 	void initContainers();
 	void initGarbageCollectors(int highWatermark);
 	void initWritebarrier();
@@ -64,7 +64,7 @@ private:
 	void addRootToContainers(Object* object, int thread);
 	void addToContainers(Object* object);
 	void *shift(size_t size);
-	
+
 	allocatorEnum _allocator;
 	collectorEnum _collector;
 	traversalEnum _traversal;
@@ -78,8 +78,8 @@ private:
 	Collector* myGarbageCollectors[GENERATIONS];
 	WriteBarrier* myWriteBarrier;
 	int stats[GENERATIONS];
-	
+
 };
 
-} 
+}
 #endif /* MEMORYMANAGER_HPP_ */

@@ -62,6 +62,37 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 				}
 			}
 		}
+		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
+			if (!strcmp(option, "--maxheapsize") || !strcmp(shortOption, "-m")) {
+
+				char suffix;
+				char *arg = argv[i + 1];
+
+				// if we have no suffix we can skip this check
+				if (isdigit(arg[strlen(arg) - 1]))
+					return (size_t)strtoul (arg, NULL, 0);
+
+				suffix = arg[strlen(arg) - 1];
+
+				// get rid of a trailing b/B
+				if (suffix == 'B' || suffix == 'b')
+					suffix = arg[strlen(arg) - 2];
+
+				switch(suffix) {
+					case 'K':
+					case 'k':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION;
+					case 'M':
+					case 'm':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION;
+					case 'G':
+					case 'g':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION;
+					default:
+						return (size_t)strtoul (arg, NULL, 0);
+				}
+			}
+		}
 	}
 
 	return 0;
@@ -152,6 +183,7 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x		uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
+						"  --maxheapsize x, -m x     uses x bytes for the maximum heap size (default: heapsize)\n"\
 						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
 						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
 						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
@@ -170,6 +202,7 @@ int main(int argc, char *argv[]) {
 
 	char *filename		= argv[1];
 	size_t heapSize		= setHeapSize(argc, argv, "--heapsize",  "-h");
+	size_t maxHeapSize = setHeapSize(argc, argv, "--maxheapsize", "-m");
 	int highWatermark	= setArgs(argc, argv, "--watermark", "-w");
 	int traversal		= setArgs(argc, argv, "--traversal", "-t");
 	int collector		= setArgs(argc, argv, "--collector", "-c");
@@ -202,6 +235,8 @@ int main(int argc, char *argv[]) {
 		else
 			heapSize = 600000;
 	}
+	if (maxHeapSize == 0)
+		maxHeapSize = heapSize;
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
 
@@ -242,10 +277,10 @@ int main(int argc, char *argv[]) {
 	}
 	balancedLogFile = fopen(balancedLogFileName.c_str(), "w+");
 
-	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zuWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 
-	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
+	fprintf(gLogFile, "%8s | %14s | %10s | %14s | %15s"
 			"| %13s | %10s | %10s | %10s | %7s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed", "Objs freed during GC", "Objs Copied", "Objs Copied during GC",
 			"Live Objects", "Heap Used", "Free Heap", "Generation", "GC Time");
@@ -261,7 +296,7 @@ int main(int argc, char *argv[]) {
 	//start measuring time
 	clock_t start = clock();
 
-	Simulator* simulator = new Simulator(filename, heapSize, highWatermark, collector, traversal, allocator, writebarrier, finalGC);
+	Simulator* simulator = new Simulator(filename, heapSize, maxHeapSize, highWatermark, collector, traversal, allocator, writebarrier, finalGC);
 
 	while(simulator->lastStepWorked() == 1) {
 		simulator->doNextStep();

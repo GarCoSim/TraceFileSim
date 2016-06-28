@@ -21,7 +21,7 @@ namespace traceFileSimulator {
 
 void (Simulator::*operationReference)(TraceFileLine) = NULL;
 
-Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC) {
+Simulator::Simulator(char* traceFilePath, size_t heapSize, size_t maxHeapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC) {
 	myLastStepWorked = 1;
 	myFinalGC = finalGC;
 	myTraceFile.open(traceFilePath);
@@ -30,7 +30,7 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, int highWatermark, in
 		exit(1);
 	}
 
-	myMemManager = new MemoryManager(heapSize, highWatermark, garbageCollector, traversal, allocator, writebarrier);
+	myMemManager = new MemoryManager(heapSize, maxHeapSize, highWatermark, garbageCollector, traversal, allocator, writebarrier);
 
 	if (!myMemManager->loadClassTable((string)traceFilePath)){
 		fprintf(stdout, "No class table found\n");

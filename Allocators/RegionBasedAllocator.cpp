@@ -23,8 +23,9 @@ bool RegionBasedAllocator::isRealAllocator() {
 
 }
 
-void RegionBasedAllocator::initializeHeap(size_t heapSize) {
+void RegionBasedAllocator::initializeHeap(size_t heapSize, size_t maxHeapSize) {
 	overallHeapSize = heapSize;
+	maximumHeapSize = maxHeapSize;
 	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0)];
 	heap = (unsigned char*)malloc(heapSize); // * 8
 	statLiveObjects = 0;
@@ -37,6 +38,8 @@ void RegionBasedAllocator::initializeHeap(size_t heapSize) {
 		heapMap = fopen("heapmap.log", "w+");
 	}
 	fprintf(stderr, "heap size %zd\n", overallHeapSize);
+	allHeaps.push_back(heap);
+	allHeaps.push_back(heap + overallHeapSize);
 }
 
 void RegionBasedAllocator::freeAllSectors() {
@@ -54,6 +57,7 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	unsigned int i, currentNumberEdenRegions, edenRegionID;
 	size_t currentFreeSpace;
 	void *currentFreeAddress;
+	unsigned char *currentHeap;
 	
 	currentNumberEdenRegions = edenRegions.size();
 	
@@ -62,17 +66,18 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 		currentFreeSpace = balancedRegions[edenRegionID]->getCurrFree();
 		
 		if (size <= currentFreeSpace) {
+			currentHeap = balancedRegions[edenRegionID]->getHeapAddress();
 			currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();	
 			balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
 			//fprintf(balancedLogFile, "Bla: %zu\n", currentFreeSpace-size);
 			balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
 			balancedRegions[edenRegionID]->incrementObjectCount();
 			
-			setAllocated((long)currentFreeAddress, size);
+			setAllocated(currentHeap, (long)currentFreeAddress, size); 
 			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld. currentFreeSpace = %zu \n", size, edenRegionID, (long)currentFreeAddress, currentFreeSpace);
 			//fprintf(balancedLogFile, "Allocated to: %i. ", edenRegionID);
 
-			return &heap[(long)currentFreeAddress];
+			return &currentHeap[(long)currentFreeAddress];
 		}
 	}
 	
@@ -82,7 +87,8 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			edenRegionID = freeRegions.front();
 			currentFreeSpace = balancedRegions[edenRegionID]->getCurrFree();
 			
-			if (size <= currentFreeSpace) {
+			if (size <= currentFreeSpace) {	
+				currentHeap = balancedRegions[edenRegionID]->getHeapAddress();
 				currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();
 				balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
 				balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
@@ -91,10 +97,10 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 				freeRegions.erase(freeRegions.begin());
 				edenRegions.push_back(edenRegionID);
 				
-				setAllocated((long)currentFreeAddress, size);
+				setAllocated(currentHeap, (long)currentFreeAddress, size); 
 				//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
 				//fprintf(balancedLogFile, "Allocated to: %i\n", edenRegionID);
-				return &heap[(long)currentFreeAddress];
+				return &currentHeap[(long)currentFreeAddress];
 			}
 			else if (size > currentFreeSpace) {
 				fprintf(stderr, "Allocation for arraylets not yet implemented!\n");
@@ -106,9 +112,91 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 }
 
 
-size_t RegionBasedAllocator::getHeapIndex(Object *object) {
+// Attempt to add more regions when no more free regions exist
+int RegionBasedAllocator::addRegions(){
+	size_t newHeapSize;
+	unsigned int i, newNumberOfRegions;
+	unsigned char *newHeap;
+	Region* balancedRegion;
+	size_t currentAddress = 0;
+	char* newHeapBitMap; 
+
+	if(numberOfRegions >= MAXREGIONS){
+		return -1; //can't add more regions, at maximum
+	}
+
+	fprintf(stdout, "Adding more regions\n");
+
+	// Calculate new number of regions to create
+	newNumberOfRegions = numberOfRegions; 
+	if((newNumberOfRegions + numberOfRegions) > MAXREGIONS){ //check if surpassing maximum number of regions
+		newNumberOfRegions = MAXREGIONS - numberOfRegions;
+	}
+	newHeapSize = newNumberOfRegions * regionSize;
+	if((newHeapSize + overallHeapSize) > maximumHeapSize){ //check if surpassing maximum heap size
+		newHeapSize = maximumHeapSize - overallHeapSize;
+		newNumberOfRegions = newHeapSize / regionSize; 
+	}
+
+	newHeap = (unsigned char*)malloc(newHeapSize); //create new heap
+	if(newHeap == NULL){
+		fprintf(stderr, "Out of memory\n");
+		return -1;
+	}
+
+	allHeaps.push_back(newHeap);
+	allHeaps.push_back(newHeap + newHeapSize);
+
+	// Initialize new regions
+	for (i = numberOfRegions; i < (newNumberOfRegions + numberOfRegions); i++) {
+		balancedRegion = new Region ((void*)currentAddress, regionSize, newHeap);
+
+		balancedRegions.push_back(balancedRegion);
+		freeRegions.push_back(i);
+			
+		currentAddress = currentAddress + regionSize;
+	}
+
+	// Increase bitmap
+	newHeapBitMap = new char[(size_t)ceil((overallHeapSize + newHeapSize)/8.0)];
+	for(i = 0; i < ceil(overallHeapSize/8.0); i++){
+		newHeapBitMap[i] = myHeapBitMap[i];
+	}
+	myHeapBitMap = newHeapBitMap;
+	
+	// Update statistics
+	overallHeapSize += newHeapSize;
+	numberOfRegions += newNumberOfRegions;
+	maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
+
+	fprintf(stdout, "New heap size: %zd\n", overallHeapSize);	
+	fprintf(balancedLogFile, "\nNew Region Statistics:\n\n");
+	fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
+	fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
+	fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
+	fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
+
+	return 0;
+}
+
+// Updated for multiple heaps
+size_t RegionBasedAllocator::getHeapIndex(Object *object) { 
 	// This conversion is only valid because the heap is an array of bytes.
-	return (size_t) ((char *) object->getAddress() - (char *) heap);
+	void *objectAddress = object->getAddress();
+	unsigned int i, j;
+	char *offset; 
+
+	for(i=0; i<allHeaps.size(); i+=2){
+		if(objectAddress >= &allHeaps.at(i)[0] && objectAddress < &allHeaps.at(i+1)[0]){
+			for(j=0; j<i; j+=2){
+				offset += ((char *)&allHeaps.at(j+1)[0] - (char *)&allHeaps.at(j)[0]);
+			}
+			return (size_t)((char *)objectAddress - (char *)allHeaps.at(i) + offset);
+		}
+	}
+	printf("getHeapIndex\n");
+	return -1;
+	//return (size_t) ((char *) object->getAddress() - (char *) allHeaps.at(0));
 }
 
 
@@ -116,7 +204,7 @@ void RegionBasedAllocator::gcFree(Object* object) {
 	size_t size = object->getHeapSize();
 	size_t heapIndex = getHeapIndex(object);
 
-	setFree(heapIndex, size);
+	setFree(heapIndex, size); 
 	statLiveObjects--;
 }
 

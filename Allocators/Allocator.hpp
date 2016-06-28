@@ -22,7 +22,8 @@ public:
 	virtual void gcFree(Object* object);
 
 	void setAllocated(size_t heapIndex, size_t size);
-
+	void setAllocated(unsigned char *heapStart, size_t heapIndex, size_t size);
+	
 	//used mainly by garbage collector
 	size_t getFreeSize();
 	size_t getHeapSize();
@@ -56,11 +57,12 @@ public:
 	virtual bool isInNewSpace(Object *object);
 
 	virtual void initializeHeap(size_t heapSize);
+	virtual void initializeHeap(size_t heapSize, size_t maxHeapSize);
 
 	virtual bool isRealAllocator();
 	virtual void printStats(long trigReason);
 
-
+	virtual int addRegions();
 
 protected:
 	size_t getUsedSpace(bool newSpace);
@@ -86,6 +88,7 @@ protected:
 	unsigned int maxNumberOfEdenRegions;
 
 	size_t overallHeapSize;
+	size_t maximumHeapSize;
 	size_t newSpaceStartHeapIndex;
 	size_t oldSpaceStartHeapIndex;
 	size_t oldSpaceEndHeapIndex;
@@ -94,6 +97,7 @@ protected:
 	size_t oldSpaceRememberedHeapIndex;
 
 	unsigned char *heap;
+	std::vector<unsigned char*> allHeaps; //vector containing start and end pointers for all heaps (region-based)
 
 	int statLiveObjects;
 	FILE* allocLog;

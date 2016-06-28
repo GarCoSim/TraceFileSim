@@ -14,7 +14,7 @@ extern FILE* balancedLogFile;
 namespace traceFileSimulator {
 
 
-Region::Region(void *address,size_t size, size_t heapAddress) {
+Region::Region(void *address,size_t size, unsigned char* heapAddress) {
 	myAddress = address;
 	myHeapAddress = heapAddress;
 	mySize    = size;
@@ -30,6 +30,10 @@ void Region::setAddress(void* address) {
 
 void* Region::getAddress() {
 	return myAddress;
+}
+
+unsigned char* Region::getHeapAddress(){
+	return myHeapAddress;
 }
 
 void Region::setSize(size_t size) {
@@ -114,7 +118,7 @@ void Region::eraseObjectReference(void *address) {
         for (k=0; k<numChild; k++) {
             child = obj->getReferenceTo(k);
             if (child) {
-				childRegion = (unsigned int)(((size_t)child->getAddress()-myHeapAddress)/mySize); //need this!
+				childRegion = (unsigned int)(((size_t)child->getAddress()-(size_t)&myHeapAddress[0])/mySize); //need this!
 				
                 if (thisRegion == childRegion) //if a child points to this region, then don't erase from remset
                     return; 

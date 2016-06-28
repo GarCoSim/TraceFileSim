@@ -252,13 +252,13 @@ void BalancedCollector::copyObjectsInQueues() {
 
 
 		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
-		//fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());
+		fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());//
 
 		for (i = 0; i < children; i++) {
 
 			child = currentObj->getReferenceTo(i);
 			if (child && !child->getVisited()) {
-				//fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());
+				fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());//
 				childRegion =  myAllocator->getObjectRegion(child);
 				if (myCollectionSet[childRegion] == 1) {
 
@@ -326,9 +326,10 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 	unsigned int i, currentCopyToRegionID, objRegionID;
 	size_t currentFreeSpace, objectSize;
 	void *currentFreeAddress, *addressAfter;
-	int objRegionAge;
+	int objRegionAge, returnVal;
+	void *addressBefore;
 
-
+	addressBefore = (void *)obj->getAddress();
 	objRegionID  = myAllocator->getObjectRegion(obj);
 	objRegionAge = allRegions[objRegionID]->getAge();
 	objectSize = obj->getHeapSize();
@@ -343,11 +344,11 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			allRegions[currentCopyToRegionID]->setCurrFree(currentFreeSpace-objectSize);
 			allRegions[currentCopyToRegionID]->incrementObjectCount();
 
-			myAllocator->setAllocated((long)currentFreeAddress, objectSize);
-
 			void * addressHeap;
-			unsigned char *heap = myAllocator->getHeap();
+			unsigned char *heap = allRegions[currentCopyToRegionID]->getHeapAddress();
 			addressHeap = &heap[(long)currentFreeAddress];
+
+			myAllocator->setAllocated(heap, (long)currentFreeAddress, objectSize);
 
 			memcpy((void *) addressHeap, (void *) obj->getAddress(), objectSize);
 
@@ -357,10 +358,19 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			obj->setForwardedPointer(addressAfter);
 			statCopiedDuringThisGC++;
 			statCopiedObjects++;
-			//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+			fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);//
 
 			return 0;
 		}
+	}
+
+	// Add more regions if no free regions exist
+	if(myAllocator->getFreeRegions().size() == 0){
+		returnVal = myAllocator->addRegions();
+		if(returnVal != 0){
+			return returnVal;
+		}
+		allRegions = myAllocator->getRegions();
 	}
 
 	//No copyToRegion found, so add a new one
@@ -378,12 +388,11 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 				allRegions[currentCopyToRegionID]->setCurrFree(currentFreeSpace-objectSize);
 				allRegions[currentCopyToRegionID]->incrementObjectCount();
 
-
-				myAllocator->setAllocated((long)currentFreeAddress, objectSize);
-
 				void * addressHeap;
-				unsigned char *heap = myAllocator->getHeap();
+				unsigned char *heap = allRegions[currentCopyToRegionID]->getHeapAddress();
 				addressHeap = &heap[(long)currentFreeAddress];
+
+				myAllocator->setAllocated(heap, (long)currentFreeAddress, objectSize);
 
 				memcpy((void *) addressHeap, (void *) obj->getAddress(), objectSize);
 

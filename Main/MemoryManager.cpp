@@ -34,7 +34,7 @@ extern string globalFilename;
 
 namespace traceFileSimulator {
 
-MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier) {
+MemoryManager::MemoryManager(size_t heapSize, size_t maxHeapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier) {
 	_allocator = (allocatorEnum)allocator;
 	_collector = (collectorEnum)collector;
 	_traversal = (traversalEnum)traversal;
@@ -43,7 +43,7 @@ MemoryManager::MemoryManager(size_t heapSize, int highWatermark, int collector, 
 	classTableLoaded = false;
 
 	initWritebarrier();
-	initAllocators(heapSize);
+	initAllocators(heapSize, maxHeapSize);
 	initContainers();
 	initGarbageCollectors(highWatermark);
 
@@ -91,22 +91,29 @@ bool MemoryManager::hasClassTable() {
 	return classTableLoaded;
 }
 
-void MemoryManager::initAllocators(size_t heapsize) {
+void MemoryManager::initAllocators(size_t heapsize, size_t maxheapsize) {
 	int i;
 	size_t* genSizes = computeHeapsizes(heapsize);
 	for (i = 0; i < GENERATIONS; i++) {
 		switch (_allocator) {
 			case realAlloc:
 				myAllocators[i] = new RealAllocator();
+				myAllocators[i]->initializeHeap(genSizes[i]);
 				break;
 			case basicAlloc:
 				myAllocators[i] = new BasicAllocator();
+				myAllocators[i]->initializeHeap(genSizes[i]);
 				break;
 			case nextFitAlloc:
 				myAllocators[i] = new NextFitAllocator();
+				myAllocators[i]->initializeHeap(genSizes[i]);
+				break;
+			case regionBased:
+				myAllocators[i] = new RegionBasedAllocator();
+				myAllocators[i]->initializeHeap(genSizes[i], maxheapsize);
 				break;
 		}
-		myAllocators[i]->initializeHeap(genSizes[i]);
+
 	}
 	free(genSizes);
 }

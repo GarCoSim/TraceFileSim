@@ -30,8 +30,9 @@ public:
 	bool isRealAllocator();
 	void freeAllSectors();
 	void gcFree(Object* object);
-	void initializeHeap(size_t heapSize);
+	void initializeHeap(size_t heapSize, size_t maxHeapSize);
 	void freeOldSpace();
+	int addRegions();
 
 private:
 	void *allocate(size_t size, size_t lower, size_t upper);

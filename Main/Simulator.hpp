@@ -7,7 +7,7 @@
 
 #ifndef SIMULATOR_HPP_
 #define SIMULATOR_HPP_
- 
+
 #include <fstream>
 
 #define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
@@ -35,7 +35,7 @@ typedef struct TraceFileLine {
 
 class Simulator {
 public:
-	Simulator(char* traceFilePath, size_t heapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC);
+    Simulator(char* traceFilePath, size_t heapSize, size_t maxHeapSize, int highWatermark, int garbageCollector, int traversal, int allocator, int writebarrier, int finalGC);
 	virtual ~Simulator();
 	int lastStepWorked();
 	int doNextStep();
@@ -54,16 +54,16 @@ private:
 	void storeOperation(TraceFileLine line);
 
 	ifstream myTraceFile;
-	
+
 	int myLastStepWorked;
 	int myFinalGC;
 	MemoryManager* myMemManager;
-	
+
 	//debug
 	int counter;
 	clock_t start;
 	int seconds;
 };
 
-} 
+}
 #endif /* SIMULATOR_HPP_ */
