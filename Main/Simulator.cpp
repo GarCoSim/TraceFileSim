@@ -285,7 +285,7 @@ void Simulator::printStats(){
 }
 
 Simulator::~Simulator() {
-
+	delete(myMemManager);
 }
-
+	
 }

@@ -107,6 +107,7 @@ void MemoryManager::initAllocators(size_t heapsize) {
 		}
 		myAllocators[i]->initializeHeap(genSizes[i]);
 	}
+	free(genSizes);
 }
 
 void MemoryManager::initContainers() {
@@ -627,6 +628,13 @@ void MemoryManager::dumpHeap() {
 
 
 MemoryManager::~MemoryManager() {
+	for (int i = 0; i < GENERATIONS; i++) {
+		delete(myGarbageCollectors[i]);
+		delete(myObjectContainers[i]);
+		delete(myAllocators[i]);
+	}
+	classTable.clear();
+	//delete(classTable);
 }
 
 }

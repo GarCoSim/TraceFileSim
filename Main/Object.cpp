@@ -128,6 +128,8 @@ void Object::setColor(int color) {
 	this->color = color;
 }
 
-Object::~Object() {}
-
+Object::~Object() {
+	
+}
+	
 }

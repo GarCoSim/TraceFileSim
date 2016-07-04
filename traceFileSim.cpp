@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
 	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
 
 	fclose(gLogFile);
-
+	delete(simulator);
 	return EXIT_SUCCESS;
 }
 

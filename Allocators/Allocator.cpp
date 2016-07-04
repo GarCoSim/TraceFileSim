@@ -145,6 +145,7 @@ void Allocator::initializeHeap(size_t heapSize) {
 	overallHeapSize = heapSize;
 	myHeapBitMap = new char[(size_t)ceil(heapSize/8.0) ];
 	heap = (unsigned char*)malloc(heapSize);
+	
 	statLiveObjects = 0;
 	resetRememberedAllocationSearchPoint();
 
@@ -277,6 +278,7 @@ void Allocator::printStats(long trigReason) {
 }
 
 Allocator::~Allocator() {
+	delete[] myHeapBitMap;
 }
 
 }

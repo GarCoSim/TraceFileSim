@@ -259,6 +259,13 @@ void ObjectContainer::dumpHeap() {
 }
 
 ObjectContainer::~ObjectContainer() {
+	
+	/*std::map<int, Object*>::iterator it = objectMap.begin();
+	while(it != objectMap.end()){
+		objectMap.erase(it);
+	}*/
+	objectMap.clear();
+	remSet.clear();
 }
 
 } 
