@@ -278,7 +278,7 @@ void Allocator::printStats(long trigReason) {
 }
 
 Allocator::~Allocator() {
-	delete[] myHeapBitMap;
+	//delete[] myHeapBitMap;
 }
 
 }
