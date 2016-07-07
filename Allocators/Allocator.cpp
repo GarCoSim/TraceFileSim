@@ -75,8 +75,21 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		}
 
 		numberOfRegions = overallHeapSize/currentRegionSize;
+		if(numberOfRegions < 1){
+			numberOfRegions = 1;
+		}
 		regionSize = currentRegionSize;
 		maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
+
+		// Create heap
+		heap = (unsigned char*)malloc(overallHeapSize);
+		currentHeap.heapStart = heap;
+		currentHeap.heapEnd = heap+overallHeapSize;
+		currentHeap.firstRegion = 0;
+		allHeaps.push_back(currentHeap);
+
+		// Create the bitmap
+		myHeapBitMap = new char[(size_t)ceil(overallHeapSize/8.0)];
 
 		//initialize regions
 		Region* balancedRegion;
@@ -251,21 +264,16 @@ void Allocator::setAllocated(size_t heapIndex, size_t size) {
 // For multiple heaps
 void Allocator::setAllocated(unsigned char *heapStart, size_t heapIndex, size_t size) {
 	size_t i;
-	size_t toMark;
-	unsigned int j, k;
-	size_t offset = 0;
+	size_t toMark = 0;
+	std::vector<heapStats>::iterator it;
+	heapStats currentHeap;
 
-	// Calculate size of older regions
-	for (j=0; j<allHeaps.size(); j+=2){
-		if(heapStart >= &allHeaps.at(j)[0] && heapStart < &allHeaps.at(j+1)[0]){
-			for(k=0; k<j; k+=2){
-				offset += ((size_t)&allHeaps.at(k+1)[0] - (size_t)&allHeaps.at(k)[0]);
-			}
-			break;
+	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
+		currentHeap = *it;
+		if(heapStart == currentHeap.heapStart){
+			toMark = heapIndex + (currentHeap.firstRegion * regionSize);
 		}
 	}
-
-	toMark = heapIndex + offset;
 
 	for (i = 0; i < size; i++) {
 		setBitUsed(toMark);

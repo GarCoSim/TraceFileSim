@@ -252,13 +252,13 @@ void BalancedCollector::copyObjectsInQueues() {
 
 
 		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
-		fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());//
+		//fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());
 
 		for (i = 0; i < children; i++) {
 
 			child = currentObj->getReferenceTo(i);
 			if (child && !child->getVisited()) {
-				fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());//
+				//fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());
 				childRegion =  myAllocator->getObjectRegion(child);
 				if (myCollectionSet[childRegion] == 1) {
 
@@ -332,6 +332,9 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 	addressBefore = (void *)obj->getAddress();
 	objRegionID  = myAllocator->getObjectRegion(obj);
 	objRegionAge = allRegions[objRegionID]->getAge();
+	if(objRegionAge >= MAXREGIONAGE){ //If object is at maximum age, copy it into a region of the same age
+		objRegionAge = 24;
+	}
 	objectSize = obj->getHeapSize();
 
 	//Find a region to copy to
@@ -358,7 +361,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			obj->setForwardedPointer(addressAfter);
 			statCopiedDuringThisGC++;
 			statCopiedObjects++;
-			fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);//
+			//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
 
 			return 0;
 		}
@@ -444,7 +447,6 @@ void BalancedCollector::updateRemsetPointers() {
 			    	//This one is not working!
 			    	objectRegion = myAllocator->getObjectRegionByRawObject(forwardPointer);
 			    	//fprintf(balancedLogFile, "objectRegion = %u\n", objectRegion);
-
 			    	if (myCollectionSet[objectRegion] == 1) { //pointing to region from collection set? -> Delete pointer
 			    		allRegions[i]->eraseObjectReferenceWithoutCheck(remsetPointer);
 			    	}

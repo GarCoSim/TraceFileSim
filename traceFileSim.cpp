@@ -235,11 +235,10 @@ int main(int argc, char *argv[]) {
 		else
 			heapSize = 600000;
 	}
-	if (maxHeapSize == 0)
+	if (maxHeapSize == 0) //TODO || maxheapsize<heapsize
 		maxHeapSize = heapSize;
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
-
 
 	CREATE_GLOBAL_FILENAME((string)filename);
 
