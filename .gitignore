@@ -3,4 +3,5 @@
 **.trace
 **.cls
 **.td
+**.cachelog
 Debug/*
