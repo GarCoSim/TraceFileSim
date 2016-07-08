@@ -72,8 +72,10 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			balancedRegions[edenRegionID]->incrementObjectCount();
 
 			setAllocated(currentHeap, (long)currentFreeAddress, size);
+
 			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld. currentFreeSpace = %zu \n", size, edenRegionID, (long)currentFreeAddress, currentFreeSpace);
 			//fprintf(balancedLogFile, "Allocated to: %i. ", edenRegionID);
+
 
 			return &currentHeap[(long)currentFreeAddress];
 		}
@@ -96,8 +98,11 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 				edenRegions.push_back(edenRegionID);
 
 				setAllocated(currentHeap, (long)currentFreeAddress, size);
+
 				//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
 				//fprintf(balancedLogFile, "Allocated to: %i\n", edenRegionID);
+
+
 				return &currentHeap[(long)currentFreeAddress];
 			}
 			else if (size > currentFreeSpace) {

@@ -59,7 +59,7 @@
 #define MINREGIONS		1024
 #define MAXREGIONS		2047
 #define EDENREGIONS     25 //% of the whole heap
-#define MAXREGIONAGE	25
+#define MAXREGIONAGE	23
 
 enum traversalEnum {
 					breadthFirst = 0,

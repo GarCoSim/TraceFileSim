@@ -6,7 +6,6 @@
  */
 
 #include "BalancedCollector.hpp"
-#define MAXAGE 23 //The biggest age that will be considered
 #define MAXAGEP 10 //Probability of MAXAGE to be chosen in %
 #define COLLECTIONSETSIZE 0.5 //Absolute maximum size of collection set. default is 0.5 which means 50% of all regions
 
@@ -36,51 +35,43 @@ void BalancedCollector::collect(int reason) {
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, "GC #%d at %0.3fs\n", statGcNumber + 1, elapsed_secs);
-
-
-	allRegions = myAllocator->getRegions();
+	fprintf(balancedLogFile, "Starting GC #%d at %0.3fs\n", statGcNumber + 1, elapsed_secs);
 	emptyHelpers();
 	preCollect();
 
-
+	allRegions = myAllocator->getRegions();
 	buildCollectionSet();
+
 	returnVal = copy();
 	if (returnVal == -1) {
 		//No more regions for copying available, end simulation
-		//statFreedDuringThisGC = totalObjectsInCollectionSet - statCopiedDuringThisGC;
-		//statFreedObjects += statFreedDuringThisGC;
-		//postCollect();
-		//printStats();
 		fprintf(balancedLogFile, "No more free Regions available to copy Objects!\n");
 		stop = clock();
 		elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-		fprintf(stderr, " took %0.3fs\n", elapsed_secs);
+		fprintf(stderr, " took %0.3fs\n. Copying Objects was unsuccessful! Stopping simulation.\n", elapsed_secs);
+		fflush(balancedLogFile);
+		fflush(stderr);
+		exit(1);
 		return;
 	}
 
 
 	updateRemsetPointers();
 	myPrintStatsQueue = myUpdatePointerQueue;
-
-	//fprintf(balancedLogFile, "\nObjects before updatePointers: \n");
-	//printObjects();
 	updatePointers();
-	//fprintf(balancedLogFile, "\nObjects after updatePointers: \n");
-	//printObjects();
-
-
-
 	reOrganizeRegions();
 
+
+	//Finish up
 	statFreedDuringThisGC = totalObjectsInCollectionSet - statCopiedDuringThisGC;
 	statFreedObjects += statFreedDuringThisGC;
-	//fprintf(stderr, "totalObjectsInCollectionSet: %i\n", totalObjectsInCollectionSet);
 
 	postCollect();
-	printStats();
+	printFinalStats();
 	stop = clock();
 	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
+	fflush(balancedLogFile);
 }
 
 
@@ -108,7 +99,7 @@ void BalancedCollector::preCollect() {
 
 
 void BalancedCollector::buildCollectionSet() {
-	fprintf(balancedLogFile, "\n\nBuilding collection set:\n");
+	//fprintf(balancedLogFile, "\n\nBuilding collection set\n");
 	Region* currentRegion;
 	int setSize = (int)(COLLECTIONSETSIZE*allRegions.size());
 	int regionAge;
@@ -122,7 +113,7 @@ void BalancedCollector::buildCollectionSet() {
 	std::vector<unsigned int> edenRegions = myAllocator->getEdenRegions();
 	unsigned int i, j;
 
-	//For now: Add all and only the Eden Regions
+	//Add all Eden Regions first
 	for (i = 0; i < allRegions.size(); i++) {
 		for (j = 0; j < edenRegions.size(); j++) {
 			if (i == edenRegions[j]) {
@@ -135,14 +126,15 @@ void BalancedCollector::buildCollectionSet() {
 		}
 	}
 
-	//linear function passing two points (0,1) (age 0 always selected) and (MAXAGE, MAXAGEP)
+	//Add more regions with age > 0
+	//linear function passing two points (0,1) (age 0 always selected) and (MAXREGIONAGE, MAXAGEP)
 	//there is maximum age which can also be picked with some non-0 probability
 	for (i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
 		if (myCollectionSet[i]==0) {
 			currentRegion = allRegions[i];
 			if (currentRegion->getNumObj() > 0) {
 				regionAge = currentRegion->getAge();
-				probability = (100-MAXAGEP)/(0-MAXAGE)*regionAge+100;
+				probability = (100-MAXAGEP)/(0-MAXREGIONAGE)*regionAge+100;
 				dice = rand()%100+1;
 				if (dice<=probability) {
 					myCollectionSet[i] = 1;
@@ -154,6 +146,7 @@ void BalancedCollector::buildCollectionSet() {
 			}
 		}
 	}
+	//fprintf(balancedLogFile, "Building collection set done\n");
 }
 
 
@@ -164,19 +157,19 @@ int BalancedCollector::copy() {
 	getRootObjects();
 	returnVal = copyObjectsInQueues();
 	if (returnVal == -1) {
-		//No more regions for copying available
+		fprintf(balancedLogFile, "Copying  root objects was unsuccessful!\n");
 		return -1;
 	}
 
 	getRemsetObjects();
 	returnVal = copyObjectsInQueues();
 	if (returnVal == -1) {
-		//No more regions for copying available
+		fprintf(balancedLogFile, "Copying  remset objects was unsuccessful!\n");
 		return -1;
 	}
 
+	fprintf(balancedLogFile, "Copying successfully done\n");
 	return 0;
-	fprintf(balancedLogFile, "Copying done\n");
 }
 
 
@@ -208,11 +201,58 @@ void BalancedCollector::getRootObjects() {
 		}
 	}
 	myUpdatePointerQueue = myQueue;
-	fprintf(balancedLogFile, "Getting Root Objects done. Added %zu objects to the queue.\n\n", myQueue.size());
+	fprintf(balancedLogFile, "Getting Root Objects done. Added %zu objects to the queue.\n", myQueue.size());
 }
 
-void BalancedCollector::copyObjectsInQueues() {
-	fprintf(balancedLogFile, "Copy Objects in queue\n\n");
+void BalancedCollector::getRemsetObjects() {
+	fprintf(balancedLogFile, "Get Remset Objects\n");
+
+	Object* currentObj;
+	std::set<void*> currentRemset;
+	std::set<void*>::iterator remsetIterator;
+	int j;
+	int children;
+	unsigned int parentRegion, childRegion, i;
+	Object* child;
+	void* remsetPointer;
+
+	for (i = 0; i < myCollectionSet.size(); i++) {
+		if (myCollectionSet[i] == 1) {
+			currentRemset = allRegions[i]->getRemset();
+			for (remsetIterator = currentRemset.begin(); remsetIterator != currentRemset.end(); ++remsetIterator) {
+
+				remsetPointer = *remsetIterator;
+				RawObject *rawObject = (RawObject *) remsetPointer;
+				currentObj = rawObject->associatedObject;
+				myUpdatePointerQueue.push(currentObj);
+
+					parentRegion =  myAllocator->getObjectRegion(currentObj);
+					if (myCollectionSet[parentRegion] == 0) {
+						children = currentObj->getPointersMax();
+						for (j = 0; j < children; j++) {
+							child = currentObj->getReferenceTo(j);
+							if (child && !child->getVisited()) {
+								childRegion =  myAllocator->getObjectRegion(child);
+
+								if (myCollectionSet[childRegion] == 1) {
+									child->setVisited(true);
+									myQueue.push(child);
+									myUpdatePointerQueue.push(child);
+
+								}
+							}
+						}
+					}
+			}
+		}
+	}
+	fprintf(balancedLogFile, "Getting Remset Objects done. Added %zu objects to the queue.\n", myQueue.size());
+	//fprintf(balancedLogFile, "%zu pointers to be modified.\n", myUpdatePointerQueue.size());
+}
+
+
+int BalancedCollector::copyObjectsInQueues() {
+	fprintf(balancedLogFile, "Copy Objects in queue\n");
 
 	int i;
 	int returnVal;
@@ -227,7 +267,7 @@ void BalancedCollector::copyObjectsInQueues() {
 		int children = currentObj->getPointersMax();
 
 		//fprintf(balancedLogFile, "Copying object:\n");
-		//printStuff(currentObj);
+		//printObjectInfo(currentObj);
 
 		returnVal = copyAndForwardObject(currentObj);
 		if (returnVal != 0) {
@@ -235,7 +275,7 @@ void BalancedCollector::copyObjectsInQueues() {
 				fprintf(stderr, "Return -2: Allocation for arraylets not yet implemented!\n");
 			}
 			else if (returnVal == -1) {
-				fprintf(stderr, "No more Regions for copying available: %zu\n", myAllocator->getFreeRegions().size());
+				fprintf(stderr, "No more Regions for copying available. Amount of available free regions: %zu\n", myAllocator->getFreeRegions().size());
 				myQueue.push(currentObj);
 
 				fprintf(stderr, "Stopping Copying..\n");
@@ -243,22 +283,21 @@ void BalancedCollector::copyObjectsInQueues() {
 			}
 		}
 
-
-
 		//fprintf(balancedLogFile, "After Copying object:\n");
-		//printStuff(currentObj);
+		//printObjectInfo(currentObj);
 		//fprintf(balancedLogFile, "\n");
-
-
 
 		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
 		//fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());
+
 
 		for (i = 0; i < children; i++) {
 
 			child = currentObj->getReferenceTo(i);
 			if (child && !child->getVisited()) {
+
 				//fprintf(balancedLogFile, "Found child: %i. Address: %ld\n", child->getID(), (long)child->getAddress());
+
 				childRegion =  myAllocator->getObjectRegion(child);
 				if (myCollectionSet[childRegion] == 1) {
 
@@ -333,7 +372,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 	objRegionID  = myAllocator->getObjectRegion(obj);
 	objRegionAge = allRegions[objRegionID]->getAge();
 	if(objRegionAge >= MAXREGIONAGE){ //If object is at maximum age, copy it into a region of the same age
-		objRegionAge = 24;
+		objRegionAge = MAXREGIONAGE - 1;
 	}
 	objectSize = obj->getHeapSize();
 
@@ -361,13 +400,17 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			obj->setForwardedPointer(addressAfter);
 			statCopiedDuringThisGC++;
 			statCopiedObjects++;
+
 			//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
+
 
 			return 0;
 		}
 	}
 
+	/*
 	// Add more regions if no free regions exist
+
 	if(myAllocator->getFreeRegions().size() == 0){
 		returnVal = myAllocator->addRegions();
 		if(returnVal != 0){
@@ -375,14 +418,21 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 		}
 		allRegions = myAllocator->getRegions();
 	}
-
+	*/
 	//No copyToRegion found, so add a new one
 	if ( myAllocator->getFreeRegions().size() > 0) {
 			currentCopyToRegionID = myAllocator->getNextFreeRegionID();
 			currentFreeSpace = allRegions[currentCopyToRegionID]->getCurrFree();
-
 			copyToRegions[objRegionAge].push_back(currentCopyToRegionID);
-			allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
+
+			/* MAXAGE Solution by Johannes
+			//Regionage already at MAXREGIONAGE? ->Don't increment age!
+			if (objRegionAge < MAXREGIONAGE)
+				allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
+			else
+				allRegions[currentCopyToRegionID]->setAge(objRegionAge);
+			*/
+
 
 			if (objectSize <= currentFreeSpace) {
 				//fprintf(balancedLogFile, "\nGetting new copyToRegion with id: %u\n", currentCopyToRegionID);
@@ -412,6 +462,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			else if (objectSize > currentFreeSpace) {
 				fprintf(stderr, "objectSize = %zu, currentFreeSpace = %zu\n", objectSize, currentFreeSpace);
 				fprintf(stderr, "myAllocator->getFreeRegions().size(): %zu\n", myAllocator->getFreeRegions().size());
+				throw;
 				return -2;
 			}
 		}
@@ -432,9 +483,9 @@ void BalancedCollector::updateRemsetPointers() {
 	for (i = 0; i < allRegions.size(); i++) {
 		if (myCollectionSet[i] == 0) { //Not from collection set
 			currentRemset = allRegions[i]->getRemset();
+
 			//fprintf(balancedLogFile, "Region = %u. Remset size = %zu\n", i, currentRemset.size());
 			for (remsetIterator = currentRemset.begin(); remsetIterator != currentRemset.end(); ++remsetIterator) {
-
 				remsetPointer = *remsetIterator;
 				//fprintf(balancedLogFile, "remsetPointer = %ld\n", (long)remsetPointer);
 
@@ -443,6 +494,7 @@ void BalancedCollector::updateRemsetPointers() {
 
 			    if (obj) {
 			    	forwardPointer = obj->getForwardedPointer();
+
 					//fprintf(balancedLogFile, "forwardPointer for object %i = %zu\n", obj->getID(), (size_t)forwardPointer);
 			    	//This one is not working!
 			    	objectRegion = myAllocator->getObjectRegionByRawObject(forwardPointer);
@@ -507,7 +559,7 @@ void BalancedCollector::reOrganizeRegions(){
 	unsigned int i;
 	Region* currentRegion;
 
-	//Clean up region, free regions, and eden regions
+	//Clean up regions, free regions, and eden regions
 	for (i = 0; i < myCollectionSet.size(); i++) {
 		if (myCollectionSet[i] == 1) {
 			currentRegion = allRegions[i];
@@ -521,16 +573,15 @@ void BalancedCollector::reOrganizeRegions(){
 
 void BalancedCollector::printObjects(){
 	Object* currentObj;
-	queue<Object *> myPrintStatsQueueSave = myPrintStatsQueue; //Do this to keep elements in the myPrintStatsQueue for next call
-	while(!myPrintStatsQueue.empty()) {
-		currentObj = myPrintStatsQueue.front();
-		myPrintStatsQueue.pop();
-		printStuff(currentObj);
+	queue<Object *> myPrintStatsQueueCopie = myPrintStatsQueue; //Do not manipulate the myPrintStatsQueue here!
+	while(!myPrintStatsQueueCopie.empty()) {
+		currentObj = myPrintStatsQueueCopie.front();
+		myPrintStatsQueueCopie.pop();
+		printObjectInfo(currentObj);
 	}
-	myPrintStatsQueue = myPrintStatsQueueSave;
 }
 
-void BalancedCollector::printStuff(Object* obj){
+void BalancedCollector::printObjectInfo(Object* obj){
 	int k;
 	Object* child;
 	void* rawChildAddress;
@@ -546,9 +597,9 @@ void BalancedCollector::printStuff(Object* obj){
 	fprintf(balancedLogFile, "\n");
 }
 
-void BalancedCollector::printStats() {
-	fprintf(balancedLogFile, "Garbage Collection done!\n");
-	fprintf(balancedLogFile, "Amount of free regions: %zu. Amount of eden regions: %zu \n\n", myAllocator->getFreeRegions().size(), myAllocator->getEdenRegions().size());
+void BalancedCollector::printFinalStats() {
+	fprintf(balancedLogFile, "Garbage Collection #%d done!\n", statGcNumber);
+	fprintf(balancedLogFile, "Amount of free regions: %zu. Amount of eden regions: %zu \n\n****************************************************************\n\n", myAllocator->getFreeRegions().size(), myAllocator->getEdenRegions().size());
 }
 
 BalancedCollector::~BalancedCollector() {

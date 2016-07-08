@@ -108,7 +108,8 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
 		fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
 		fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
-		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
+		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n\n", maxNumberOfEdenRegions);
+		fflush(balancedLogFile);
 	}
 }
 
@@ -322,41 +323,45 @@ std::vector<unsigned int> Allocator::getFreeRegions() {
 // Updated for multiple heaps
 unsigned int Allocator::getObjectRegion(Object* object) {
 	void *objectAddress = object->getAddress();
-	unsigned int i, j;
-	size_t offset = 0;
 
-	//return (unsigned int)((objectAddress-(size_t)allHeaps.at(0))/regionSize);
+	std::vector<heapStats>::iterator it;
+	heapStats currentHeap;
 
-	for(i=0; i<allHeaps.size(); i+=2){
-		if(objectAddress >= &allHeaps.at(i)[0] && objectAddress < &allHeaps.at(i+1)[0]){ //Find which heap the object is in
-			for(j=0; j<i; j+=2){
-				offset += (((size_t)&allHeaps.at(j+1)[0] - (size_t)&allHeaps.at(j)[0])/regionSize); //Calculate how many regions are in older heaps
-			}
-			return (unsigned int)(((size_t)objectAddress - (size_t)allHeaps.at(i))/regionSize + offset);
+	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
+		currentHeap = *it;
+		if(objectAddress >= currentHeap.heapStart && objectAddress < currentHeap.heapEnd){
+			return (unsigned int)(((size_t)objectAddress - (size_t)currentHeap.heapStart)/regionSize + currentHeap.firstRegion);
 		}
 	}
-	printf("getObjectRegion error\n");
-	return 2048;
+
+	fprintf(balancedLogFile, "Unable to getOBjectRegion for address: %p. Simulation is aborting\n", objectAddress);
+	fflush(balancedLogFile);
+	fprintf(stderr, "ERROR! Unable to getOBjectRegion. Aborting Simulation...\n");
+	fflush(stderr);
+	//exit(1);
+	throw; //With throw instead of exit: Stack is available for debugging!
 }
 
 // Updated for multiple heaps
-unsigned int Allocator::getObjectRegionByRawObject(void* object) {
-	unsigned int i, j;
-	size_t offset = 0;
+unsigned int Allocator::getObjectRegionByRawObject(void* objectAddress) {
+	std::vector<heapStats>::iterator it;
+	heapStats currentHeap;
 
-	//return (unsigned int)(((size_t)object-(size_t)allHeaps.at(0))/regionSize);
-
-	for(i=0; i<allHeaps.size(); i+=2){
-		if(object >= &allHeaps.at(i)[0] && object < &allHeaps.at(i+1)[0]){//Find which heap the object is in
-			for(j=0; j<i; j+=2){
-				offset += (((size_t)&allHeaps.at(j+1)[0] - (size_t)&allHeaps.at(j)[0])/regionSize); //Calculate how many regions are in older heaps
-			}
-			return (unsigned int)(((size_t)object - (size_t)allHeaps.at(i))/regionSize + offset);
+	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
+		currentHeap = *it;
+		if(objectAddress >= currentHeap.heapStart && objectAddress < currentHeap.heapEnd){
+			return (unsigned int)(((size_t)objectAddress - (size_t)currentHeap.heapStart)/regionSize + currentHeap.firstRegion);
 		}
 	}
-	printf("getObjectRegionByRawObject error\n");
-	return 2048;
+
+	fprintf(balancedLogFile, "Unable to getOBjectRegion for address: %p. Simulation is aborting\n", objectAddress);
+	fflush(balancedLogFile);
+	fprintf(stderr, "ERROR! Unable to getOBjectRegion. Aborting Simulation...\n");
+	fflush(stderr);
+	//exit(1);
+	throw; //With throw instead of exit: Stack is available for debugging!
 }
+
 
 void Allocator::addNewFreeRegion(unsigned int regionID){
 	freeRegions.push_back(regionID);
@@ -398,7 +403,8 @@ void Allocator::setBitUsed(size_t heapIndex) {
 		fprintf(stderr,
 				"ERROR(Line %d): setBitUsed request to illegal slot %zu\n",
 				gLineInTrace, heapIndex);
-		exit(1);
+		//exit(1);
+		throw; //With throw instead of exit: Stack is available for debugging!
 	}
 
 	size_t byte = heapIndex / 8;
