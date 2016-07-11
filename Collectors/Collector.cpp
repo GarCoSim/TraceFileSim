@@ -100,10 +100,10 @@ void Collector::printStats() {
 	allGCs += longestGC;
 
 	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8d | %14s | %10d | %14d | %20d | %12d | %21d "
-			"| %13d | %10zu | %10d | %10d | %4.3f\n", gLineInTrace,
-			statCollectionReasonString, statGcNumber, statFreedObjects, statFreedDuringThisGC, statCopiedObjects, statCopiedDuringThisGC,
-			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs);
+	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
+			"| %13d | %10zu | %10d | %10d | %4.3f | %20d | %12d | %21d\n", gLineInTrace,
+			statCollectionReasonString, statGcNumber, statFreedObjects, 
+			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs, statFreedDuringThisGC, statCopiedObjects, statCopiedDuringThisGC);
 	fflush(gLogFile);
 	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
 		myAllocator->printStats();

@@ -373,6 +373,7 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 
 int MemoryManager::requestRootDelete(int thread, int id){
 	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread, id);
+	int temp = GENERATIONS;
 	myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, id);
 	//remove the root from rem sets.
 	int i;

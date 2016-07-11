@@ -278,11 +278,10 @@ int main(int argc, char *argv[]) {
 
 	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zuWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
-
-	fprintf(gLogFile, "%8s | %14s | %10s | %14s | %15s"
-			"| %13s | %10s | %10s | %10s | %7s\n",
-			"Line", "GC Reason", "Total GCs", "Objects Freed", "Objs freed during GC", "Objs Copied", "Objs Copied during GC",
-			"Live Objects", "Heap Used", "Free Heap", "Generation", "GC Time");
+	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
+			"| %13s | %10s | %10s | %10s | %7s | %15s | %12s | %21s\n",
+			"Line", "GC Reason", "Total GCs", "Objects Freed",
+			"Live Objects", "Heap Used", "Free Heap", "Generation", "GC Time", "Objs freed during GC", "Objs Copied", "Objs Copied during GC");
 
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %zu bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
