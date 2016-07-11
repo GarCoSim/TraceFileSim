@@ -306,16 +306,10 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
-
-	void* address;
-
-	if (size > 32000) { //bigger than region with heap size of 32m
-		address = allocate(32000, 0);
-		return postAllocateObjectToRootset(thread,id,32000,refCount,classID,address);
-	}
-	else {
-		address = allocate(size, 0);
-		return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+		
+	void *address;
+	if (size > 32000 && _collector==balanced) { //bigger than region with heap size of 32m
+		size = 32000;
 	}
 
 	address = allocate(size, 0);

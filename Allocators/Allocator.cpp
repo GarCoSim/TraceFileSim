@@ -139,7 +139,7 @@ size_t Allocator::getOldSpaceEndHeapIndex(){
 }
 
 size_t Allocator::getSpaceToNextObject(size_t start){
-	for(size_t i=start; i<oldSpaceEndHeapIndex; i++){
+	for(size_t i=start; i<getRegionSize(); i++){
 		if(isBitSet(i)){
 			return i-start;
 		}
@@ -149,7 +149,7 @@ size_t Allocator::getSpaceToNextObject(size_t start){
 }
 
 unsigned char *Allocator::getNextObjectAddress(size_t start){
-	for(size_t i=start; i<oldSpaceEndHeapIndex; i++){
+	for(size_t i=start; i<getRegionSize(); i++){
 		if(isBitSet(i)){
 			return &heap[i];
 		}
@@ -296,7 +296,7 @@ size_t Allocator::getHeapSize() {
 	return overallHeapSize;
 }
 
-int Allocator::getRegionSize() {
+size_t Allocator::getRegionSize() {
 	// this method can be generalized/overridden to support an arbitrary number of regions.
 	return regionSize;
 	//return isSplitHeap ? overallHeapSize / 2 : overallHeapSize;

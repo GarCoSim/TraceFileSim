@@ -27,7 +27,7 @@ public:
 	//used mainly by garbage collector
 	size_t getFreeSize();
 	size_t getHeapSize();
-	int getRegionSize();
+	size_t getRegionSize();
 	void resetRememberedAllocationSearchPoint();
 	void setNumberOfRegionsHeap(int value);
 	std::vector<Region*> getRegions();
