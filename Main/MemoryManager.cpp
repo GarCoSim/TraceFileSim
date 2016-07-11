@@ -373,7 +373,6 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 
 int MemoryManager::requestRootDelete(int thread, int id){
 	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread, id);
-	int temp = GENERATIONS;
 	myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, id);
 	//remove the root from rem sets.
 	int i;
@@ -686,6 +685,22 @@ int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int
 	}
 
 	return 0;
+}
+
+void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
+	Object* myChild;
+	Object* myOldChild;
+
+	myOldChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
+
+	myObjectContainers[GENERATIONS - 1]->setStaticReference(classID, fieldOffset, objectID);
+
+	if (myWriteBarrier) {
+		myChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
+		myWriteBarrier->process(myOldChild, myChild);
+		if (ZOMBIE)
+			myGarbageCollectors[0]->collect(reasonFailedAlloc);
+	}
 }
 
 void MemoryManager::clearRemSets(){
