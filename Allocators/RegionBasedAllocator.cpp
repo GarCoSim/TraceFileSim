@@ -151,7 +151,8 @@ int RegionBasedAllocator::addRegions(){
 	allHeaps.push_back(newHeap + newHeapSize);
 
 	// Initialize new regions
-	for (i = numberOfRegions; i < (newNumberOfRegions + numberOfRegions); i++) {
+	newNumberOfRegions += numberOfRegions;
+	for (i = numberOfRegions; i < newNumberOfRegions; i++) {
 		balancedRegion = new Region ((void*)currentAddress, regionSize, newHeap);
 
 		balancedRegions.push_back(balancedRegion);
@@ -162,15 +163,14 @@ int RegionBasedAllocator::addRegions(){
 
 	// Increase bitmap
 	newHeapBitMap = new char[(size_t)ceil((overallHeapSize + newHeapSize)/8.0)];
-	for(i = 0; i < ceil(overallHeapSize/8.0); i++){
-		newHeapBitMap[i] = myHeapBitMap[i];
-	}
+	memcpy(newHeapBitMap, myHeapBitMap, ceil(overallHeapSize/8.0));
+	delete(myHeapBitMap);
 	myHeapBitMap = newHeapBitMap;
 
 	// Update statistics
 	overallHeapSize += newHeapSize;
-	numberOfRegions += newNumberOfRegions;
-	maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
+	numberOfRegions = newNumberOfRegions;
+	maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
 
 	fprintf(stdout, "New heap size: %zd\n", overallHeapSize);
 	fprintf(balancedLogFile, "\nNew Region Statistics:\n\n");

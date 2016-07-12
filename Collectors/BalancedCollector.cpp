@@ -408,9 +408,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 		}
 	}
 
-	/*
-	// Add more regions if no free regions exist
-
+	// Add more regions if no free regions exist 
 	if(myAllocator->getFreeRegions().size() == 0){
 		returnVal = myAllocator->addRegions();
 		if(returnVal != 0){
@@ -418,7 +416,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 		}
 		allRegions = myAllocator->getRegions();
 	}
-	*/
+
 	//No copyToRegion found, so add a new one
 	if ( myAllocator->getFreeRegions().size() > 0) {
 			currentCopyToRegionID = myAllocator->getNextFreeRegionID();

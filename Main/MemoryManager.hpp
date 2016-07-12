@@ -28,6 +28,7 @@ public:
 	virtual ~MemoryManager();
 	//operations possible from trace file
 	int allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID);
+	inline int postAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID,void *address);
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
 	int setPointer(int thread, int parentID, int parentSlot, int childID);

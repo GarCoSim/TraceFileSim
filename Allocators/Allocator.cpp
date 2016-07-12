@@ -79,7 +79,8 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 			numberOfRegions = 1;
 		}
 		regionSize = currentRegionSize;
-		maxNumberOfEdenRegions = (int)(floor(EDENREGIONS * numberOfRegions)/100);
+		overallHeapSize = numberOfRegions * regionSize;
+		maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
 
 		// Create heap
 		heap = (unsigned char*)malloc(overallHeapSize);

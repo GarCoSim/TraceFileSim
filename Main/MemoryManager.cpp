@@ -303,26 +303,18 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 	}
 }
 
-int MemoryManager::allocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {
+int MemoryManager::allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID) {
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
-		
+
 	void *address;
-	if (size > 32000 && _collector==balanced) { //bigger than region with heap size of 32m
-		size = 32000;
+	if (size > myAllocators[GENERATIONS-1]->getRegionSize() && _collector==balanced) { //TODO: arraylets
+		fprintf(stderr, "Object is larger than region!\nTry increasing maxheapsize\n");
+		exit(1);
+		size = myAllocators[GENERATIONS-1]->getRegionSize();
 	}
 
 	address = allocate(size, 0);
-
-    return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
-}
-
-int MemoryManager::regionAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID) {//if region-based; by Tristan
-
-	if (WRITE_DETAILED_LOG == 1)
-		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
-
-    void* address = allocate(size, 0,thread);
 
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
 }

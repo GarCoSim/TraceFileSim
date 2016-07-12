@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 		else
 			heapSize = 600000;
 	}
-	if (maxHeapSize == 0) //TODO || maxheapsize<heapsize
+	if (maxHeapSize == 0 || maxHeapSize < heapSize)
 		maxHeapSize = heapSize;
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
