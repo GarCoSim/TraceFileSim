@@ -51,7 +51,7 @@ void BalancedCollector::collect(int reason) {
 		fprintf(stderr, " took %0.3fs\n. Copying Objects was unsuccessful! Stopping simulation.\n", elapsed_secs);
 		fflush(balancedLogFile);
 		fflush(stderr);
-		exit(1);
+		//exit(1);
 		return;
 	}
 
@@ -286,13 +286,9 @@ int BalancedCollector::copyObjectsInQueues() {
 		//fprintf(balancedLogFile, "After Copying object:\n");
 		//printObjectInfo(currentObj);
 		//fprintf(balancedLogFile, "\n");
-
-		//currentObj->setAge(currentObj->getAge() + 1); //Delete this?!
 		//fprintf(balancedLogFile, "Getting children for object: %i\n", currentObj->getID());
 
-
 		for (i = 0; i < children; i++) {
-
 			child = currentObj->getReferenceTo(i);
 			if (child && !child->getVisited()) {
 
@@ -408,7 +404,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 		}
 	}
 
-	// Add more regions if no free regions exist 
+	// Add more regions if no free regions exist
 	if(myAllocator->getFreeRegions().size() == 0){
 		returnVal = myAllocator->addRegions();
 		if(returnVal != 0){
@@ -422,14 +418,6 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			currentCopyToRegionID = myAllocator->getNextFreeRegionID();
 			currentFreeSpace = allRegions[currentCopyToRegionID]->getCurrFree();
 			copyToRegions[objRegionAge].push_back(currentCopyToRegionID);
-
-			/* MAXAGE Solution by Johannes
-			//Regionage already at MAXREGIONAGE? ->Don't increment age!
-			if (objRegionAge < MAXREGIONAGE)
-				allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
-			else
-				allRegions[currentCopyToRegionID]->setAge(objRegionAge);
-			*/
 
 
 			if (objectSize <= currentFreeSpace) {

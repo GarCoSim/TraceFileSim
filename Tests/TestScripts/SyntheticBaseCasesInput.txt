@@ -45,4 +45,13 @@
 3 indirect RecB; ./../../traceFileSim ../TraceFiles/indirect.trace -h 1024 -c recycler -wb recycler -a basic -fGC enabled; ../TraceFiles/indirect.log; 2; 256; Statistics
 4 indirect RefB; ./../../traceFileSim ../TraceFiles/indirect.trace -h 1024 -c recycler -wb referenceCounting -a basic -fGC enabled; ../TraceFiles/indirect.log; 2; 256; Statistics
 
+#Region based tests
+1 reuse BRb; ./../../traceFileSim ../TraceFiles/regionreuse.trace -h 16384 -c balanced -a regionBased; ../TraceFiles/regionreuse.log; 5; 16384; Statistics 
+2 reuse BRb; ./../../traceFileSim ../TraceFiles/regionreuse.trace -h 8192 -m 16384 -c balanced -a regionBased; ../TraceFiles/regionreuse.log; 6; 16384; Statistics 
+1 child BRb; ./../../traceFileSim ../TraceFiles/child.trace -h 2048 -c balanced -a regionBased; ../TraceFiles/child.log; 2; 2048; Statistics 
+2 child BRb; ./../../traceFileSim ../TraceFiles/child.trace -h 1024 -m 2048 -c balanced -a regionBased; ../TraceFiles/child.log; 2; 2048; Statistics
+1 small BRb; ./../../traceFileSim ../TraceFiles/largeobjects.trace -h 6144 -c balanced -a regionBased; ../TraceFiles/largeobjects.log; 1; 4096; FailedAlloc 
+2 small BRb; ./../../traceFileSim ../TraceFiles/largeobjects.trace -h 2048 -m 6144 -c balanced -a regionBased; ../TraceFiles/largeobjects.log; 1; 4096; FailedAlloc
+1 merge BRb; ./../../traceFileSim ../TraceFiles/merging.trace -h 4096 -m 8MB -c balanced -a regionBased; ../TraceFiles/merging.log; 4; 14336; Statistics
+2 merge BRb; ./../../traceFileSim ../TraceFiles/merging.trace -h 4096 -m 4MB -c balanced -a regionBased; ../TraceFiles/merging.log; 2; 8192; FailedAlloc
 #last line

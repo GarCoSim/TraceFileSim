@@ -308,10 +308,14 @@ int MemoryManager::allocateObjectToRootset(int thread, int id, size_t size, int 
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
 	void *address;
-	if (size > myAllocators[GENERATIONS-1]->getRegionSize() && _collector==balanced) { //TODO: arraylets
-		fprintf(stderr, "Object is larger than region!\nTry increasing maxheapsize\n");
-		exit(1);
-		size = myAllocators[GENERATIONS-1]->getRegionSize();
+	while (size > myAllocators[GENERATIONS-1]->getRegionSize() && _collector==balanced) { //TODO: arraylets
+		//fprintf(stderr, "Object is %zu, region is %zu!\nTry increasing maxheapsize\n", size, myAllocators[GENERATIONS-1]->getRegionSize());
+		int returnVal = myAllocators[0]->mergeRegions();
+		if(returnVal == -1){
+			return postAllocateObjectToRootset(thread,id,size,refCount,classID,NULL);
+			//exit(1);
+		}
+//		size = myAllocators[GENERATIONS-1]->getRegionSize();
 	}
 
 	address = allocate(size, 0);

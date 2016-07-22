@@ -60,6 +60,10 @@ int Region::getNumObj() {
     return numObj;
 }
 
+void Region::setNumObj(int objects){
+	numObj = objects;
+}
+
 void Region::setCurrFreeAddr(void* addr) {
     currFreeAddr = addr;
 } 

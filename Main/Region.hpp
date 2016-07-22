@@ -39,6 +39,7 @@ public:
 
     void incrementObjectCount(); 
     int  getNumObj(); 
+	void setNumObj(int objects);
 
     void  setCurrFreeAddr(void* addr); 
     void* getCurrFreeAddr(); 

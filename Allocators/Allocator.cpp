@@ -56,29 +56,44 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		isSplitHeap = false;
 	}
 	else if (value == 0) {
-		//determine numberOfRegions based on overallHeapSize
-		// Determine regionSize based on maximumHeapSize
-		unsigned int i, currentNumberOfRegions;
-		size_t currentRegionSize;
+		// Determine numberOfRegions and regionSize based on overallHeapSize
+		unsigned int i, currentNumberOfRegions, currentMaximumRegions;
+		size_t currentRegionSize, maximumRegionSize;
 		currentRegionSize = 0;
 		currentNumberOfRegions = 0;
-		bool stop = false;
+		bool initialStop = false;
+		bool maxStop = false;
+		heapStats currentHeap;
 
-		for (i = REGIONEXPONENT; !stop; i++) {
+		for (i = REGIONEXPONENT; !(initialStop && maxStop); i++) {
 			currentRegionSize = (size_t)pow((float)2,(float)i) * MAGNITUDE_CONVERSION; //KB to Byte
 			currentNumberOfRegions = overallHeapSize/currentRegionSize;
+			currentMaximumRegions = maximumHeapSize/currentRegionSize;
 
-			if (currentNumberOfRegions <= MAXREGIONS)
-				stop = true;
-			if (i >= 24) //2^24 = 16.8GB, should be more than enough space per region
-				stop = true;
+			if (currentNumberOfRegions <= MAXREGIONS && !initialStop){
+				regionSize = currentRegionSize;
+				initialStop = true;
+			}
+			if (currentMaximumRegions <= MAXREGIONS && !maxStop){
+				maximumRegionSize = currentRegionSize;
+				maxStop = true;
+			}
+			if (i >= 24){ //2^24 = 16.8GB, should be more than enough space per region
+				initialStop = true;
+				maxStop = true;
+			}
 		}
 
-		numberOfRegions = overallHeapSize/currentRegionSize;
+		// Calculate initial number of regions
+		numberOfRegions = overallHeapSize/regionSize;
 		if(numberOfRegions < 1){
 			numberOfRegions = 1;
 		}
-		regionSize = currentRegionSize;
+
+		// Calculate maximum region merges
+		maximumMerges = log2(maximumRegionSize/regionSize);
+		numberOfRegions += numberOfRegions%(int)pow(2, maximumMerges);
+
 		overallHeapSize = numberOfRegions * regionSize;
 		maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
 
@@ -109,7 +124,8 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 		fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
 		fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
 		fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
-		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n\n", maxNumberOfEdenRegions);
+		fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n", maxNumberOfEdenRegions);
+		fprintf(balancedLogFile, "Maximum number of Merges = %i \n\n\n", maximumMerges);
 		fflush(balancedLogFile);
 	}
 }
@@ -250,6 +266,10 @@ void Allocator::initializeHeap(size_t heapSize, size_t maxHeapSize) {
 }
 
 int Allocator::addRegions(){
+	return -1;
+}
+
+int Allocator::mergeRegions(){
 	return -1;
 }
 

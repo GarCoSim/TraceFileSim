@@ -40,13 +40,6 @@ void RegionBasedAllocator::initializeHeap(size_t heapSize, size_t maxHeapSize) {
 	allHeaps.push_back(heap + overallHeapSize);
 }
 
-void RegionBasedAllocator::freeAllSectors() {
-	unsigned int i;
-	for (i = 0; i < overallHeapSize; i++) {
-		setBitUnused(i);
-	}
-}
-
 void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 
 	if (size <= 0)
@@ -124,11 +117,9 @@ int RegionBasedAllocator::addRegions(){
 	size_t currentAddress = 0;
 	char* newHeapBitMap;
 
-	if(numberOfRegions >= MAXREGIONS){
+	if(numberOfRegions >= MAXREGIONS || overallHeapSize == maximumHeapSize){
 		return -1; //can't add more regions, at maximum
 	}
-
-	fprintf(stdout, "Adding more regions\n");
 
 	// Calculate new number of regions to create
 	newNumberOfRegions = numberOfRegions;
@@ -137,9 +128,15 @@ int RegionBasedAllocator::addRegions(){
 	}
 	newHeapSize = newNumberOfRegions * regionSize;
 	if((newHeapSize + overallHeapSize) > maximumHeapSize){ //check if surpassing maximum heap size
-		newHeapSize = maximumHeapSize - overallHeapSize;
-		newNumberOfRegions = newHeapSize / regionSize;
+		newNumberOfRegions = (maximumHeapSize - overallHeapSize) / regionSize;
+		newHeapSize = newNumberOfRegions * regionSize;
 	}
+
+	if(newHeapSize == 0){
+		return -1; // Can't add more regions, not enough space for a region
+	}
+
+	fprintf(stdout, "Adding more regions\n");
 
 	newHeap = (unsigned char*)malloc(newHeapSize); //create new heap
 	if(newHeap == NULL){
@@ -173,12 +170,100 @@ int RegionBasedAllocator::addRegions(){
 	maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
 
 	fprintf(stdout, "New heap size: %zd\n", overallHeapSize);
-	fprintf(balancedLogFile, "\nNew Region Statistics:\n\n");
+	fprintf(balancedLogFile, "\nStatistics After Adding Regions:\n\n");
 	fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
 	fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
 	fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
 	fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
 
+	return 0;
+}
+
+// Merge adjacent regions
+int RegionBasedAllocator::mergeRegions(){
+	std::vector<heapStats>::iterator it;
+	heapStats currentHeap;
+	unsigned int i;
+	std::set<void*> currentRemset;
+	void* currentAddress;
+
+	if(!maximumMerges){
+		fprintf(stderr, "Already merged maximum times\n");
+		return -1;
+	}
+	// Check if any heaps have an odd number of regions
+	// TODO replace with check for surpassing max allowable merges (calculated during Allocator::setNumberOfRegionsHeap)
+	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
+		currentHeap = *it;
+		if(((currentHeap.heapEnd - currentHeap.heapStart)/regionSize)%2){
+			fprintf(stderr, "Odd number of regions\n");
+			return -1;
+		}
+	}
+
+	printf("Merging regions\n");
+
+	// Update ID of first region in each heap
+	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
+		(*it).firstRegion = (*it).firstRegion/2;
+	}
+
+	// Update statistics
+	numberOfRegions = numberOfRegions/2;
+	maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
+	regionSize = regionSize * 2;
+	printf("New region size: %zu\n", regionSize);
+
+	// Empty free regions and eden regions vectors
+	freeRegions.clear();
+	edenRegions.clear();
+
+	// Merge regions and update statistics
+	for(i = 0; i < balancedRegions.size(); i++){
+		balancedRegions[i]->setSize(regionSize);
+		balancedRegions[i]->setNumObj(balancedRegions[i]->getNumObj() + balancedRegions[i+1]->getNumObj());
+		balancedRegions[i]->setCurrFree(balancedRegions[i]->getCurrFree() + balancedRegions[i+1]->getCurrFree());
+		if(balancedRegions[i+1]->getNumObj() != 0){
+			balancedRegions[i]->setCurrFreeAddr(balancedRegions[i+1]->getCurrFreeAddr());
+			balancedRegions[i]->setCurrFree(balancedRegions[i+1]->getCurrFree());
+			balancedRegions[i]->setAge((balancedRegions[i]->getAge() < balancedRegions[i+1]->getAge())?balancedRegions[i]->getAge():balancedRegions[i+1]->getAge());//setAge to min of either region
+		}
+
+		// Combine remsets, remove and references between merged regions
+		std::set<void*>::iterator it;
+		currentRemset = balancedRegions[i]->getRemset();
+		for(it = currentRemset.begin(); it != currentRemset.end(); ++it){
+			currentAddress = *it;
+			if(currentAddress > balancedRegions[i]->getAddress() && currentAddress < (void*)((char*)balancedRegions[i]->getAddress() + regionSize)){
+				balancedRegions[i]->eraseObjectReferenceWithoutCheck(currentAddress);
+			}
+		}
+		currentRemset = balancedRegions[i+1]->getRemset();
+		for(it = currentRemset.begin(); it != currentRemset.end(); ++it){
+			currentAddress = *it;
+			if(currentAddress < balancedRegions[i]->getAddress() || currentAddress > (void*)((char*)balancedRegions[i]->getAddress() + regionSize)){
+				balancedRegions[i]->insertObjectReference(currentAddress);
+			}
+		}
+
+		// Add to edenRegions or freeRegions, as necessary
+		if(balancedRegions[i]->getAge() == 0 && balancedRegions[i]->getNumObj() != 0){ //if the merged region has objects of age 0, add to list of eden regions
+			edenRegions.push_back(i);
+		}
+		if(balancedRegions[i]->getNumObj() == 0){ //if the merged region has no objects, add to list of free regions
+			freeRegions.push_back(i);
+		}
+
+		balancedRegions.erase(balancedRegions.begin()+i+1); //remove second region from list of all regions
+	}
+
+	fprintf(balancedLogFile, "\nStatistics After Merging:\n\n");
+	fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
+	fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
+	fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
+	fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
+
+	maximumMerges--;
 	return 0;
 }
 
@@ -214,8 +299,5 @@ void RegionBasedAllocator::gcFree(Object* object) {
 RegionBasedAllocator::~RegionBasedAllocator() {
 }
 
-void RegionBasedAllocator::freeOldSpace() {
-	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
-}
 
 }

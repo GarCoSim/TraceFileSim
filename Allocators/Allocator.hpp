@@ -23,7 +23,7 @@ public:
 
 	void setAllocated(size_t heapIndex, size_t size);
 	void setAllocated(unsigned char *heapStart, size_t heapIndex, size_t size);
-	
+
 	//used mainly by garbage collector
 	size_t getFreeSize();
 	size_t getHeapSize();
@@ -63,6 +63,7 @@ public:
 	virtual void printStats(long trigReason);
 
 	virtual int addRegions();
+	virtual int mergeRegions();
 
 protected:
 	size_t getUsedSpace(bool newSpace);
@@ -86,7 +87,8 @@ protected:
 	unsigned int numberOfRegions;
 	size_t regionSize;
 	unsigned int maxNumberOfEdenRegions;
-
+	unsigned int maximumMerges;
+	
 	size_t overallHeapSize;
 	size_t maximumHeapSize;
 	size_t newSpaceStartHeapIndex;

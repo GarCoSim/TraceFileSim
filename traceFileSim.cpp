@@ -183,10 +183,10 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x		uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
-						"  --maxheapsize x, -m x     uses x bytes for the maximum heap size (default: heapsize)\n"\
-						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
+						"  --maxheapsize x, -m x    uses x bytes for the maximum heap size (default: heapsize)\n"\
+						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, balanced, default: traversal)\n" \
 						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
-						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
+						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit, regionBased, default: nextFit)\n" \
 						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
 						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
 						"  --logLocation x, -l x	uses x as the location and filename to print the log file (default: trace file's location and name)"
