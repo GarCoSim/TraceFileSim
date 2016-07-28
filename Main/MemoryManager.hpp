@@ -66,6 +66,9 @@ private:
 	void addToContainers(Object* object);
 	void *shift(size_t size);
 
+	int preAllocateObjectDefault(int thread, int id, size_t size, int refCount, int classID);
+	int preAllocateObjectThreadBased(int thread, int id, size_t size, int refCount, int classID);
+
 	allocatorEnum _allocator;
 	collectorEnum _collector;
 	traversalEnum _traversal;

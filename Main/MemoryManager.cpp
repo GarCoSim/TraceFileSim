@@ -34,6 +34,9 @@ extern string globalFilename;
 
 namespace traceFileSimulator {
 
+int (MemoryManager::*preAllocateObject)(int,int,size_t,int,int) = NULL;
+int chunkID = 2147483647; //used as objects ID for new objects created by breaking up large objects into several smaller objects
+
 MemoryManager::MemoryManager(size_t heapSize, size_t maxHeapSize, int highWatermark, int collector, int traversal, int allocator, int writebarrier) {
 	_allocator = (allocatorEnum)allocator;
 	_collector = (collectorEnum)collector;
@@ -49,6 +52,11 @@ MemoryManager::MemoryManager(size_t heapSize, size_t maxHeapSize, int highWaterm
 
 	if (myWriteBarrier)
 		myWriteBarrier->setEnvironment(myGarbageCollectors[0]);
+
+	if (_allocator == threadBased)
+		preAllocateObject = &MemoryManager::preAllocateObjectThreadBased;
+	else
+		preAllocateObject = &MemoryManager::preAllocateObjectDefault;
 }
 
 bool MemoryManager::loadClassTable(string traceFilePath) {
@@ -109,6 +117,7 @@ void MemoryManager::initAllocators(size_t heapsize, size_t maxheapsize) {
 				myAllocators[i]->initializeHeap(genSizes[i]);
 				break;
 			case regionBased:
+			case threadBased:
 				myAllocators[i] = new RegionBasedAllocator();
 				myAllocators[i]->initializeHeap(genSizes[i], maxheapsize);
 				break;
@@ -137,6 +146,10 @@ void MemoryManager::initGarbageCollectors(int highWatermark) {
 				break;
 			case recyclerGC:
 				myGarbageCollectors[i] = new RecyclerCollector();
+				break;
+			case balanced:
+			case markSweepTB:
+				myGarbageCollectors[i] = new BalancedCollector();
 				break;
 		}
 		myGarbageCollectors[i]->setEnvironment(myAllocators[i],	myObjectContainers[i], (MemoryManager*) this, highWatermark, i, _traversal);
@@ -303,24 +316,92 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 	}
 }
 
-int MemoryManager::allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID) {
+int MemoryManager::preAllocateObjectDefault(int thread, int id, size_t size, int refCount, int classID) {
 	if (WRITE_DETAILED_LOG == 1)
 		fprintf(gDetLog, "(%d) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 
 	void *address;
-	while (size > myAllocators[GENERATIONS-1]->getRegionSize() && _collector==balanced) { //TODO: arraylets
+
+	while (size > myAllocators[GENERATIONS-1]->getRegionSize() && _collector == balanced) { //TODO: arraylets
 		//fprintf(stderr, "Object is %zu, region is %zu!\nTry increasing maxheapsize\n", size, myAllocators[GENERATIONS-1]->getRegionSize());
 		int returnVal = myAllocators[0]->mergeRegions();
-		if(returnVal == -1){
+		if(returnVal == -1) {
 			return postAllocateObjectToRootset(thread,id,size,refCount,classID,NULL);
 			//exit(1);
 		}
-//		size = myAllocators[GENERATIONS-1]->getRegionSize();
+		//size = myAllocators[GENERATIONS-1]->getRegionSize();
 	}
 
 	address = allocate(size, 0);
 
     return postAllocateObjectToRootset(thread,id,size,refCount,classID,address);
+}
+
+int MemoryManager::preAllocateObjectThreadBased(int thread, int id, size_t size, int refCount, int classID) {
+    int headObj,newRefCount,remainingSize,parentSlot,parentID;
+    unsigned objID;
+    int regionSize;
+    void*   address;
+
+    headObj = 1;
+    newRefCount = refCount;
+    objID = id;
+    remainingSize = size;
+    regionSize = myAllocators[GENERATIONS-1]->getRegionSize();
+
+    while (remainingSize > regionSize) { //if object size is > region size, divide object into several chunks (objects) or arraylet
+        address = allocate(regionSize, 0);
+
+        if (headObj) {
+            newRefCount = refCount+1;
+        }
+        else { //if trailing chunk
+       	    objID = --chunkID;
+       	    newRefCount = 1;
+        }
+
+        postAllocateObjectToRootset(thread,objID,regionSize,newRefCount,classID,address);
+
+        if (!headObj) { //if trailing chunk
+           regionSetPointer(thread,parentID,parentSlot,objID);                 //point previous chunk to the current chunk
+       	   myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, objID); //if trailing chunk, remove from root
+        }
+        else
+       	    headObj = 0;
+
+        parentID   = objID;         //current Object will becom the parent of the next object in the chunk list
+        parentSlot = newRefCount-1; //parent slot will point to the next object in the chunk list
+
+        remainingSize -= regionSize;
+    }
+
+    if (remainingSize > 0) { //allocates the object if (remaining) size is less than region Size, otherwise allocates the object itself
+
+    	if (remainingSize < 24) //minimum object size;
+    		remainingSize = 24;
+
+        address = allocate(remainingSize, 0);
+        if (!headObj) {
+          	objID = --chunkID;
+        	newRefCount = 0;
+        }
+        postAllocateObjectToRootset(thread,objID,remainingSize,newRefCount,classID,address);
+
+        if (!headObj) { //if trailing chunk
+        	regionSetPointer(thread,parentID,parentSlot,objID);                 //point parent to the current object
+       		myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, objID); //if trailing arraylet, remove from root
+        }
+
+    }
+
+    return 0;
+}
+
+int MemoryManager::allocateObjectToRootset(int thread, int id, size_t size, int refCount, int classID) {
+
+	(*this.*preAllocateObject)(thread,id,size,refCount,classID);
+
+	return 0;
 }
 
 inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t size, int refCount, int classID,void *address) {//post allocation; by Tristan

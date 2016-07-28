@@ -38,10 +38,10 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, size_t maxHeapSize, i
 	}
 
 	if (allocator == (int)regionBased) {
-       operationReference = &Simulator::regionReferenceOperation;
+    	operationReference = &Simulator::regionReferenceOperation;
     }
     else {
-	   operationReference = &Simulator::referenceOperation;
+		operationReference = &Simulator::referenceOperation;
     }
 
 	counter = 0;
@@ -207,11 +207,9 @@ int Simulator::lastStepWorked(){
 	return 0;
 }
 
-
 void Simulator::allocateToRootset(TraceFileLine line){
 	myMemManager->allocateObjectToRootset(line.threadID, line.objectID, line.size, line.maxPointers, line.classID);
 }
-
 
 void Simulator::deleteRoot(TraceFileLine line){
 	myMemManager->requestRootDelete(line.threadID, line.objectID);

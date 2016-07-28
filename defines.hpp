@@ -70,7 +70,9 @@ enum traversalEnum {
 enum collectorEnum {
 						markSweepGC = 0,
 						traversalGC,
-						recyclerGC
+						recyclerGC,
+						balanced,
+						markSweepTB
 				};
 #define HIER_DEPTH_DEFAULT 2
 
@@ -78,7 +80,8 @@ enum allocatorEnum {
 						realAlloc = 0,
 						basicAlloc,
 						nextFitAlloc,
-						regionBased
+						regionBased,
+						threadBased
 				};
 
 enum gcReason {
@@ -98,9 +101,9 @@ enum writebarriersEnum {
 				};
 
 // create some fancy strings for debug output
-#define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : (traversal == (int)depthFirst ? "depthFirst" : "hotness"))
-#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : (collector == (int)recyclerGC ? "recycler" : (collector == (int)balanced? "balanced" : "copying"))))
-#define ALLOCATOR_STRING (allocator == (int)regionBased ? "regionBased" : (allocator == (int)basicAlloc ? "basic" : "nextFit"))
+#define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : "depthFirst")
+#define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : (collector == (int)recyclerGC ? "recycler" : (collector == (int)balanced ? "balanced" : (collector == (int)markSweepTB ? "mark-sweep (thread-based)" : "copying")))))
+#define ALLOCATOR_STRING (allocator == (int)regionBased ? "regionBased" : (allocator == (int)basicAlloc ? "basic" : (allocator == (int)threadBased ? "threadBased" : "nextFit")))
 #define WRITEBARRIER_STRING (writebarrier == (int)recycler ? "recycler" : (writebarrier == (int)referenceCounting ? "referenceCounting" : "disabled"))
 #define FINALGC_STRING (finalGC == 1 ? "enabled" : "disabled")
 

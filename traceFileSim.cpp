@@ -127,6 +127,10 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)traversalGC;
 				if (!strcmp(argv[i + 1], "recycler"))
 					return (int)recyclerGC;
+				if (!strcmp(argv[i + 1], "balanced"))
+					return (int)balanced;
+				if (!strcmp(argv[i + 1], "markSweepTB"))
+					return (int)markSweepTB;
 				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
@@ -143,6 +147,8 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)nextFitAlloc;
 				if (!strcmp(argv[i + 1], "regionBased"))
 					return (int)regionBased;
+				if (!strcmp(argv[i + 1], "threadBased"))
+					return (int)threadBased;
 				return -1;
 			} else if (!strcmp(option, "--writebarrier") || !strcmp(shortOption, "-wb")) {
 				if (!strcmp(argv[i + 1], "disabled"))
