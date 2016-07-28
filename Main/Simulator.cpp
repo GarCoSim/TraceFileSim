@@ -72,6 +72,9 @@ void Simulator::getNextLine(TraceFileLine *line){
 
 	initializeTraceFileLine(line);
 	line->type = currentLine[0];
+	if(currentLine[0] == '%'){
+		return;
+	}
 
 	string buffer = "";
 	char attributeID;
