@@ -73,6 +73,9 @@ void Simulator::getNextLine(TraceFileLine *line){
 	initializeTraceFileLine(line);
 	line->type = currentLine[0];
 	if(currentLine[0] == '%'){
+		if(gLineInTrace==1){
+			fprintf(stdout, "%s\n", currentLineString.c_str());
+		}
 		return;
 	}
 
