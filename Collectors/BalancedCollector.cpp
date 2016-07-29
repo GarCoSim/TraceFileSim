@@ -40,7 +40,12 @@ void BalancedCollector::collect(int reason) {
 	preCollect();
 
 	allRegions = myAllocator->getRegions();
-	buildCollectionSet();
+	if(reason == (int)reasonForced){
+		buildFinalCollectionSet();
+	}
+	else{
+		buildCollectionSet();
+	}
 
 	returnVal = copy();
 	if (returnVal == -1) {
@@ -55,6 +60,7 @@ void BalancedCollector::collect(int reason) {
 		return;
 	}
 
+	removeObjects();
 
 	updateRemsetPointers();
 	myPrintStatsQueue = myUpdatePointerQueue;
@@ -147,6 +153,25 @@ void BalancedCollector::buildCollectionSet() {
 		}
 	}
 	//fprintf(balancedLogFile, "Building collection set done\n");
+}
+
+
+void BalancedCollector::buildFinalCollectionSet(){
+	//fprintf(balancedLogFile, "\n\nBuilding final collection set\n");
+	Region* currentRegion;
+	unsigned int i;
+	
+	myCollectionSet.clear();
+	myCollectionSet.resize(allRegions.size(), 0);
+	
+	//Add all regions that contain objects
+	for (i = 0; i < allRegions.size(); i++) {
+		currentRegion = allRegions[i];
+		if(currentRegion->getNumObj() > 0){
+			myCollectionSet[i] = 1;
+			totalObjectsInCollectionSet += currentRegion->getNumObj();
+		}
+	}	
 }
 
 
@@ -394,6 +419,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 
 			addressAfter = (void *) obj->getAddress();
 			obj->setForwardedPointer(addressAfter);
+			obj->setForwarded(true);
 			statCopiedDuringThisGC++;
 			statCopiedObjects++;
 
@@ -439,6 +465,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 
 				addressAfter = (void *) obj->getAddress();
 				obj->setForwardedPointer(addressAfter);
+				obj->setForwarded(true);
 				statCopiedDuringThisGC++;
 				statCopiedObjects++;
 				//fprintf(balancedLogFile, "Copied object %i from region %u to region %u. Address before: %ld. Address after: %ld\n", obj->getID(), objRegionID, currentCopyToRegionID, (long)addressBefore, (long)addressAfter);
@@ -454,6 +481,50 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 		}
 
 		return -1;
+}
+
+void BalancedCollector::removeObjects(){
+	unsigned int i;
+	Region* currentRegion;
+	RawObject* raw;
+	Object* currentObject;
+	size_t heapPosition, regionEnd;
+
+	for(i = 0; i < allRegions.size(); i++){
+		if(myCollectionSet[i] == 1){
+			currentRegion = allRegions[i];
+			heapPosition = myAllocator->getRegionIndex(currentRegion);
+			regionEnd = (i+1) * myAllocator->getRegionSize();
+			while(heapPosition < regionEnd){
+		
+				raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
+		
+				if(raw!=NULL){
+					currentObject = (Object *)raw->associatedObject;
+					heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
+					
+					if (currentObject) {
+						heapPosition += currentObject->getHeapSize();
+						//if(!myAllocator->isInNewSpace(currentObj)){
+						if(!currentObject->isForwarded()){
+							myMemManager->requestDelete(currentObject, myGeneration == GENERATIONS - 1 ? 1 : 0);
+							//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
+						}
+						else{
+							currentObject->setForwarded(false);
+						}
+					}
+					else{
+						break;
+					}
+				}
+				else{
+					break;
+				}
+			}
+		}
+
+	}
 }
 
 void BalancedCollector::updateRemsetPointers() {
@@ -551,6 +622,7 @@ void BalancedCollector::reOrganizeRegions(){
 			currentRegion = allRegions[i];
 			//fprintf(stderr, "Resetting region %u\n", i);
 			currentRegion->reset();
+			myAllocator->setRegionFree(currentRegion);;
 			myAllocator->addNewFreeRegion(i);
 			myAllocator->removeEdenRegion(i);
 		}

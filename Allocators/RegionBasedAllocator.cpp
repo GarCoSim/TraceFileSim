@@ -282,7 +282,7 @@ size_t RegionBasedAllocator::getHeapIndex(Object *object) {
 			return (size_t)((char *)objectAddress - (char *)allHeaps.at(i) + offset);
 		}
 	}
-	printf("getHeapIndex\n");
+	
 	return -1;
 	//return (size_t) ((char *) object->getAddress() - (char *) allHeaps.at(0));
 }
@@ -294,6 +294,47 @@ void RegionBasedAllocator::gcFree(Object* object) {
 
 	setFree(heapIndex, size);
 	statLiveObjects--;
+}
+
+
+unsigned char *RegionBasedAllocator::getNextObjectAddress(size_t start){
+	std::vector<heapStats>::iterator it;
+	unsigned char *currentHeap;
+	size_t regionID, i, end;
+
+	regionID = start/regionSize;
+	// Determine which heap the region is in
+	for(it = allHeaps.end()-1; it >= allHeaps.begin(); --it){
+		if(regionID >= (*it).firstRegion){
+			currentHeap = (*it).heapStart;
+			break;
+		}
+	}
+	end = (regionID + 1) * regionSize;
+
+	for(i = start; i < end; i++){
+		if(isBitSet(i)){
+			return &currentHeap[i - ((*it).firstRegion * regionSize)];
+		}
+	}
+	return NULL;
+}
+
+
+size_t RegionBasedAllocator::getSpaceToNextObject(size_t start){
+	std::vector<heapStats>::iterator it;
+	size_t regionID, i, end;
+
+	regionID = start/regionSize;
+	end = (regionID + 1) * regionSize;
+
+	// Search from start to end of region for object
+	for(i = start; i < end; i++){
+		if(isBitSet(i)){
+			return i-start;
+		}
+	}
+	return NULL;
 }
 
 RegionBasedAllocator::~RegionBasedAllocator() {

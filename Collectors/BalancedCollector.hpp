@@ -40,6 +40,7 @@ private:
 	queue<Object *> myUpdatePointerQueue;
 	queue<Object *> myPrintStatsQueue;
 	void buildCollectionSet();
+	void buildFinalCollectionSet();
 	void preCollect();
 	int copy();
 	void getRootObjects();
@@ -49,6 +50,7 @@ private:
 	int copyAndForwardObject(Object *obj);
 	void updatePointers();
 	void emptyHelpers();
+	void removeObjects();
 	void updateRemsetPointers();
 	void printObjects(); //Good function to get stats from runs with Aaaron's Test Tracefiles
 	void printObjectInfo(Object *obj);

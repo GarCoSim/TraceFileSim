@@ -32,6 +32,8 @@ public:
 	void initializeHeap(size_t heapSize, size_t maxHeapSize);
 	int addRegions();
 	int mergeRegions();
+	unsigned char *getNextObjectAddress(size_t start);
+	size_t getSpaceToNextObject(size_t start);
 
 private:
 	void *allocate(size_t size, size_t lower, size_t upper);

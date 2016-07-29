@@ -212,6 +212,18 @@ void Allocator::freeOldSpace() {
 	setFree(oldSpaceStartHeapIndex, oldSpaceEndHeapIndex-oldSpaceStartHeapIndex);
 }
 
+size_t Allocator::getRegionIndex(Region* region){
+	std::vector<heapStats>::iterator it;
+	unsigned char* regionHeapAddress = region->getHeapAddress();
+
+	for(it = allHeaps.begin(); it != allHeaps.end(); it++){
+		if(regionHeapAddress == (*it).heapStart){
+			return (size_t)((unsigned char*)region->getAddress() + ((*it).firstRegion * regionSize));
+		}
+	}
+	return -1;
+}
+
 size_t Allocator::getUsedSpace(bool newSpace) {
 	size_t i;
 	size_t usedSpace = 0;
@@ -308,6 +320,16 @@ void Allocator::setFree(size_t heapIndex, size_t size) {
 	size_t toFree = heapIndex;
 
 	for (i = 0; i < size; i++) {
+		setBitUnused(toFree);
+		toFree++;
+	}
+}
+
+void Allocator::setRegionFree(Region* region){
+	size_t i;
+	size_t toFree = getRegionIndex(region);
+
+	for (i = 0; i < regionSize; i++) {
 		setBitUnused(toFree);
 		toFree++;
 	}
