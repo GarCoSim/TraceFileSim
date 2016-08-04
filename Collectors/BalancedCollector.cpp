@@ -40,6 +40,7 @@ void BalancedCollector::collect(int reason) {
 	preCollect();
 
 	allRegions = myAllocator->getRegions();
+	calculateFragmentation();
 	if(reason == (int)reasonForced){
 		buildFinalCollectionSet();
 	}
@@ -101,6 +102,77 @@ void BalancedCollector::preCollect() {
 	statCopiedDuringThisGC = 0;
 	totalObjectsInCollectionSet = 0;
 	statGcNumber++;
+}
+
+
+void BalancedCollector::calculateFragmentation(){
+	unsigned int i, j;
+	size_t regionSize, heapPosition, regionEnd;
+	vector<Object*> roots;
+	Object* currentObject;
+	RawObject* raw;
+
+	// Calculate how much space is used in each region
+	regionSize = myAllocator->getRegionSize();
+	fragmentation.clear();
+	fragmentation.resize(allRegions.size(), regionSize);
+
+	// Traverse the rootset
+	for(i = 0; i < NUM_THREADS; i++){
+		roots = myObjectContainer->getRoots(i);
+		for(j = 0; j < roots.size(); j++){
+			currentObject = roots[j];
+			mark(currentObject); //Mark object and children as visited (alive)
+		}
+	}
+	
+	for(i = 0; i < allRegions.size(); i++){
+		fragmentation[i] = regionSize - allRegions[i]->getCurrFree();
+		heapPosition = myAllocator->getRegionIndex(allRegions[i]);
+		regionEnd = (i+1) * regionSize;
+
+		while(heapPosition < regionEnd){ //Search the region for objects
+			raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
+	
+			if(raw!=NULL){ //If the raw object exists, get associated object
+				currentObject = (Object *)raw->associatedObject;
+				heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
+				
+				if (currentObject) { //If the object exists
+					heapPosition += currentObject->getHeapSize();
+					if(currentObject->getVisited()){ //If the object is reachable from the rootset
+						fragmentation[i] -= currentObject->getHeapSize(); //Remove object size from fragmentation calculation
+						currentObject->setVisited(false);
+					}
+				}
+				else{
+					break;
+				}
+			}
+			else{
+				break;
+			}
+		}
+	}
+}
+
+
+void BalancedCollector::mark(Object* currentObject){ 
+// Set an object and its children as visited
+	int numberOfChildren, i;
+	Object* childObject;
+
+	if(!currentObject->getVisited()){
+		currentObject->setVisited(true);
+		numberOfChildren = currentObject->getPointersMax();
+		for(i = 0; i < numberOfChildren; i++){
+			childObject = currentObject->getReferenceTo(i);
+			if(childObject){
+				mark(childObject);
+			}
+		}
+
+	}
 }
 
 
@@ -484,6 +556,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 }
 
 void BalancedCollector::removeObjects(){
+// Remove dead objects from the object map
 	unsigned int i;
 	Region* currentRegion;
 	RawObject* raw;
@@ -491,12 +564,12 @@ void BalancedCollector::removeObjects(){
 	size_t heapPosition, regionEnd;
 
 	for(i = 0; i < allRegions.size(); i++){
-		if(myCollectionSet[i] == 1){
+		if(myCollectionSet[i] == 1){ //Only look for dead objects in regions that have been collected
 			currentRegion = allRegions[i];
 			heapPosition = myAllocator->getRegionIndex(currentRegion);
 			regionEnd = (i+1) * myAllocator->getRegionSize();
-			while(heapPosition < regionEnd){
-		
+
+			while(heapPosition < regionEnd){ //Search the region for objects
 				raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
 		
 				if(raw!=NULL){

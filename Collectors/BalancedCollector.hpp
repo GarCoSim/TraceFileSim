@@ -37,11 +37,14 @@ private:
 	std::vector<unsigned int> myCollectionSet;
 	std::vector<unsigned int> copyToRegions[MAXREGIONAGE+1];
 	std::vector<Region*> allRegions;
+	std::vector<size_t> fragmentation;
 	queue<Object *> myUpdatePointerQueue;
 	queue<Object *> myPrintStatsQueue;
 	void buildCollectionSet();
 	void buildFinalCollectionSet();
 	void preCollect();
+	void calculateFragmentation();
+	void mark(Object* currentObject);
 	int copy();
 	void getRootObjects();
 	void copyObjectsInQueues();
