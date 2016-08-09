@@ -108,15 +108,6 @@ void Collector::printStats() {
 	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
 		myAllocator->printStats();
 	}
-	if(statCollectionReason == (int)reasonStatistics){
-		char fl[80];
-		sprintf(fl, "gen%d.log",myGeneration);
-		FILE* genfile = fopen(fl,"a");
-
-		fprintf(genfile,"%zu\n",heapUsed);
-		fflush(genfile);
-		fclose(genfile);
-	}
 	statCollectionReason = (int)reasonStatistics;
 }
 
