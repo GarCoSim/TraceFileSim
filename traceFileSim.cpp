@@ -189,8 +189,15 @@ int main(int argc, char *argv[]) {
 	
 	string logFileName;
 	char *customLogChar = &customLog[0u];
-	if(strcmp(customLogChar, ""))
-		logFileName = customLog + ".log";
+	if(strcmp(customLogChar, "")){
+		string theWordLog="log";
+		if(customLog.substr(customLog.length()-3, 3).compare(theWordLog)==0){
+			logFileName = customLog;
+		}
+		else{
+			logFileName = customLog + ".log";
+		}
+	}
 	else if (forceAGCAfterEveryStep)
 		logFileName = globalFilename + "Forced.log";
 	else
