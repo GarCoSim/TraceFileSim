@@ -40,7 +40,7 @@ void BalancedCollector::collect(int reason) {
 	preCollect();
 
 	allRegions = myAllocator->getRegions();
-	calculateFragmentation();
+	calculateDeadSpace();
 	if(reason == (int)reasonForced){
 		buildFinalCollectionSet();
 	}
@@ -105,17 +105,20 @@ void BalancedCollector::preCollect() {
 }
 
 
-void BalancedCollector::calculateFragmentation(){
+void BalancedCollector::calculateDeadSpace(){
 	unsigned int i, j;
 	size_t regionSize, heapPosition, regionEnd;
+	size_t heapDeadSpace, heapLiveSpace;
 	vector<Object*> roots;
 	Object* currentObject;
 	RawObject* raw;
 
-	// Calculate how much space is used in each region
+	// Calculate the percentage of each region that is occupied by dead objects
+	heapDeadSpace = 0;
+	heapLiveSpace = 0;
 	regionSize = myAllocator->getRegionSize();
-	fragmentation.clear();
-	fragmentation.resize(allRegions.size(), regionSize);
+	deadSpace.clear();
+	deadSpace.resize(allRegions.size());
 
 	// Traverse the rootset
 	for(i = 0; i < NUM_THREADS; i++){
@@ -127,7 +130,8 @@ void BalancedCollector::calculateFragmentation(){
 	}
 	
 	for(i = 0; i < allRegions.size(); i++){
-		fragmentation[i] = regionSize - allRegions[i]->getCurrFree();
+		(deadSpace.at(i)).regionID = i; //Record region ID
+		(deadSpace.at(i)).percentDead = regionSize - allRegions[i]->getCurrFree(); 
 		heapPosition = myAllocator->getRegionIndex(allRegions[i]);
 		regionEnd = (i+1) * regionSize;
 
@@ -140,20 +144,24 @@ void BalancedCollector::calculateFragmentation(){
 				
 				if (currentObject) { //If the object exists
 					heapPosition += currentObject->getHeapSize();
+					
 					if(currentObject->getVisited()){ //If the object is reachable from the rootset
-						fragmentation[i] -= currentObject->getHeapSize(); //Remove object size from fragmentation calculation
-						currentObject->setVisited(false);
+						heapLiveSpace += currentObject->getHeapSize();
+						(deadSpace.at(i)).percentDead -= currentObject->getHeapSize(); //Remove size of live object
+						currentObject->setVisited(false); //Reset isVisited
 					}
-				}
-				else{
+				} else{
 					break;
 				}
-			}
-			else{
+			} else{
 				break;
 			}
 		}
+		heapDeadSpace += (deadSpace.at(i)).percentDead; 
+		(deadSpace.at(i)).percentDead == 0 ? 0 : (deadSpace.at(i)).percentDead = 100*(deadSpace.at(i)).percentDead / (regionSize - allRegions[i]->getCurrFree()); //Express as a percent 
 	}
+	heapDeadSpace == 0 ? heapDeadSpace = 0 : heapDeadSpace = 100*heapDeadSpace/(heapDeadSpace + heapLiveSpace); 
+	fprintf(balancedLogFile, "%zu percent of the occupied heap is dead objects\n", heapDeadSpace);
 }
 
 
@@ -516,7 +524,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			currentCopyToRegionID = myAllocator->getNextFreeRegionID();
 			currentFreeSpace = allRegions[currentCopyToRegionID]->getCurrFree();
 			copyToRegions[objRegionAge].push_back(currentCopyToRegionID);
-
+			allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
 
 			if (objectSize <= currentFreeSpace) {
 				//fprintf(balancedLogFile, "\nGetting new copyToRegion with id: %u\n", currentCopyToRegionID);

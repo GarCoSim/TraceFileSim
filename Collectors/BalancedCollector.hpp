@@ -37,13 +37,12 @@ private:
 	std::vector<unsigned int> myCollectionSet;
 	std::vector<unsigned int> copyToRegions[MAXREGIONAGE+1];
 	std::vector<Region*> allRegions;
-	std::vector<size_t> fragmentation;
 	queue<Object *> myUpdatePointerQueue;
 	queue<Object *> myPrintStatsQueue;
 	void buildCollectionSet();
 	void buildFinalCollectionSet();
 	void preCollect();
-	void calculateFragmentation();
+	void calculateDeadSpace();
 	void mark(Object* currentObject);
 	int copy();
 	void getRootObjects();
@@ -61,6 +60,12 @@ private:
 	void printFinalStats();
 
 	int totalObjectsInCollectionSet;
+
+	typedef struct deadObjectStats{
+		unsigned int regionID;
+		size_t percentDead; //percentage of the region occupied by dead objects
+	} deadObjectStats;
+	std::vector<deadObjectStats> deadSpace;
 };
 
 }
