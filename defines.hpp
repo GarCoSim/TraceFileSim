@@ -61,6 +61,9 @@
 #define EDENREGIONS     25 //% of the whole heap
 #define MAXREGIONAGE	23
 
+#define DEAD_SPACE				1 //Consider space occupied by dead objects when selecting collection set regions
+#define DEAD_SPACE_THRESHOLD	10 //Percent dead space a region must have to be selected, 0 to select regions with highest percent
+
 enum traversalEnum {
 					breadthFirst = 0,
 					depthFirst,

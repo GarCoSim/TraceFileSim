@@ -128,23 +128,23 @@ void BalancedCollector::calculateDeadSpace(){
 			mark(currentObject); //Mark object and children as visited (alive)
 		}
 	}
-	
+
 	for(i = 0; i < allRegions.size(); i++){
 		(deadSpace.at(i)).regionID = i; //Record region ID
-		(deadSpace.at(i)).percentDead = regionSize - allRegions[i]->getCurrFree(); 
+		(deadSpace.at(i)).percentDead = regionSize - allRegions[i]->getCurrFree();
 		heapPosition = myAllocator->getRegionIndex(allRegions[i]);
 		regionEnd = (i+1) * regionSize;
 
 		while(heapPosition < regionEnd){ //Search the region for objects
 			raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
-	
+
 			if(raw!=NULL){ //If the raw object exists, get associated object
 				currentObject = (Object *)raw->associatedObject;
 				heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
-				
+
 				if (currentObject) { //If the object exists
 					heapPosition += currentObject->getHeapSize();
-					
+
 					if(currentObject->getVisited()){ //If the object is reachable from the rootset
 						heapLiveSpace += currentObject->getHeapSize();
 						(deadSpace.at(i)).percentDead -= currentObject->getHeapSize(); //Remove size of live object
@@ -157,15 +157,15 @@ void BalancedCollector::calculateDeadSpace(){
 				break;
 			}
 		}
-		heapDeadSpace += (deadSpace.at(i)).percentDead; 
-		(deadSpace.at(i)).percentDead == 0 ? 0 : (deadSpace.at(i)).percentDead = 100*(deadSpace.at(i)).percentDead / (regionSize - allRegions[i]->getCurrFree()); //Express as a percent 
+		heapDeadSpace += (deadSpace.at(i)).percentDead;
+		(deadSpace.at(i)).percentDead == 0 ? 0 : (deadSpace.at(i)).percentDead = 100*(deadSpace.at(i)).percentDead / (regionSize - allRegions[i]->getCurrFree()); //Express as a percent
 	}
-	heapDeadSpace == 0 ? heapDeadSpace = 0 : heapDeadSpace = 100*heapDeadSpace/(heapDeadSpace + heapLiveSpace); 
+	heapDeadSpace == 0 ? heapDeadSpace = 0 : heapDeadSpace = 100*heapDeadSpace/(heapDeadSpace + heapLiveSpace);
 	fprintf(balancedLogFile, "%zu percent of the occupied heap is dead objects\n", heapDeadSpace);
 }
 
 
-void BalancedCollector::mark(Object* currentObject){ 
+void BalancedCollector::mark(Object* currentObject){
 // Set an object and its children as visited
 	int numberOfChildren, i;
 	Object* childObject;
@@ -212,22 +212,61 @@ void BalancedCollector::buildCollectionSet() {
 		}
 	}
 
-	//Add more regions with age > 0
-	//linear function passing two points (0,1) (age 0 always selected) and (MAXREGIONAGE, MAXAGEP)
-	//there is maximum age which can also be picked with some non-0 probability
-	for (i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
-		if (myCollectionSet[i]==0) {
-			currentRegion = allRegions[i];
-			if (currentRegion->getNumObj() > 0) {
-				regionAge = currentRegion->getAge();
-				probability = (100-MAXAGEP)/(0-MAXREGIONAGE)*regionAge+100;
-				dice = rand()%100+1;
-				if (dice<=probability) {
+	if(DEAD_SPACE == 0){
+		//Add more regions with age > 0
+		//linear function passing two points (0,1) (age 0 always selected) and (MAXREGIONAGE, MAXAGEP)
+		//there is maximum age which can also be picked with some non-0 probability
+		for (i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
+			if (myCollectionSet[i]==0) {
+				currentRegion = allRegions[i];
+				if (currentRegion->getNumObj() > 0) {
+					regionAge = currentRegion->getAge();
+					probability = (100-MAXAGEP)/(0-MAXREGIONAGE)*regionAge+100;
+					dice = rand()%100+1;
+					if (dice<=probability) {
+						myCollectionSet[i] = 1;
+						//fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
+						fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
+						regionsInSet++;
+						totalObjectsInCollectionSet += currentRegion->getNumObj();
+					}
+				}
+			}
+		}
+	} else if(DEAD_SPACE_THRESHOLD == 0){
+		// Sort percent dead space in descending order
+		for (i = 1; i < deadSpace.size(); i++){
+			if((deadSpace.at(i)).percentDead > (deadSpace.at(i-1)).percentDead){
+				j = 0;
+				while((deadSpace.at(i)).percentDead < (deadSpace.at(j)).percentDead){
+					j++;
+				}
+				deadSpace.insert(deadSpace.begin() + j, deadSpace.at(i));
+				deadSpace.erase(deadSpace.begin() + i + 1);
+			}
+		}
+
+		// Add more regions with the highest percent dead space
+		for(i = 0; (i < deadSpace.size() && regionsInSet<=setSize); i++) {
+			if(myCollectionSet[(deadSpace.at(i)).regionID] == 0 && (deadSpace.at(i)).percentDead > 0){
+				myCollectionSet[(deadSpace.at(i)).regionID] = 1;
+				regionsInSet++;
+				totalObjectsInCollectionSet += allRegions[(deadSpace.at(i)).regionID]->getNumObj();
+				//fprintf(stderr, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
+				fprintf(balancedLogFile, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
+			}
+		}
+
+	} else{
+		// Add more regions with percent dead meeting the minimum threshold
+		for(i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
+			if(myCollectionSet[i] == 0 && allRegions[i]->getNumObj() > 0){
+				if((deadSpace.at(i)).percentDead >= DEAD_SPACE_THRESHOLD){
 					myCollectionSet[i] = 1;
-					//fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
-					//fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
 					regionsInSet++;
-					totalObjectsInCollectionSet += currentRegion->getNumObj();
+					totalObjectsInCollectionSet += allRegions[i]->getNumObj();
+					//fprintf(stderr, "Added region %i with %zu  percent dead space to collection set\n", i, (deadSpace.at(i)).percentDead);
+					//fprintf(balancedLogFile, "Added region %i with %zu percent dead space to collection set\n", i, (deadSpace.at(i)).percentDead);
 				}
 			}
 		}
@@ -240,10 +279,10 @@ void BalancedCollector::buildFinalCollectionSet(){
 	//fprintf(balancedLogFile, "\n\nBuilding final collection set\n");
 	Region* currentRegion;
 	unsigned int i;
-	
+
 	myCollectionSet.clear();
 	myCollectionSet.resize(allRegions.size(), 0);
-	
+
 	//Add all regions that contain objects
 	for (i = 0; i < allRegions.size(); i++) {
 		currentRegion = allRegions[i];
@@ -251,7 +290,7 @@ void BalancedCollector::buildFinalCollectionSet(){
 			myCollectionSet[i] = 1;
 			totalObjectsInCollectionSet += currentRegion->getNumObj();
 		}
-	}	
+	}
 }
 
 
@@ -579,11 +618,11 @@ void BalancedCollector::removeObjects(){
 
 			while(heapPosition < regionEnd){ //Search the region for objects
 				raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
-		
+
 				if(raw!=NULL){
 					currentObject = (Object *)raw->associatedObject;
 					heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
-					
+
 					if (currentObject) {
 						heapPosition += currentObject->getHeapSize();
 						//if(!myAllocator->isInNewSpace(currentObj)){
