@@ -92,7 +92,9 @@ void Allocator::setNumberOfRegionsHeap(int value) {
 
 		// Calculate maximum region merges
 		maximumMerges = log2(maximumRegionSize/regionSize);
-		numberOfRegions += numberOfRegions%(int)pow(2, maximumMerges);
+		while(numberOfRegions%(int)pow(2, maximumMerges)){
+			numberOfRegions += numberOfRegions;
+		}
 
 		overallHeapSize = numberOfRegions * regionSize;
 		maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));

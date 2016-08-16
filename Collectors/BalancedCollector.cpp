@@ -226,7 +226,7 @@ void BalancedCollector::buildCollectionSet() {
 					if (dice<=probability) {
 						myCollectionSet[i] = 1;
 						//fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
-						fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
+						//fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
 						regionsInSet++;
 						totalObjectsInCollectionSet += currentRegion->getNumObj();
 					}
@@ -253,7 +253,7 @@ void BalancedCollector::buildCollectionSet() {
 				regionsInSet++;
 				totalObjectsInCollectionSet += allRegions[(deadSpace.at(i)).regionID]->getNumObj();
 				//fprintf(stderr, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
-				fprintf(balancedLogFile, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
+				//fprintf(balancedLogFile, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
 			}
 		}
 
