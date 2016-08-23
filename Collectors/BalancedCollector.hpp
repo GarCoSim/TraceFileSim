@@ -60,6 +60,8 @@ private:
 	void printFinalStats();
 
 	int totalObjectsInCollectionSet;
+	int regionsInSet;
+	int regionsReclaimed; 
 
 	typedef struct deadObjectStats{
 		unsigned int regionID;

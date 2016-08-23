@@ -194,7 +194,7 @@ void BalancedCollector::buildCollectionSet() {
 
 	myCollectionSet.clear();
 	myCollectionSet.resize(allRegions.size(), 0);
-	int regionsInSet = 0;
+	regionsInSet = 0;
 
 	std::vector<unsigned int> edenRegions = myAllocator->getEdenRegions();
 	unsigned int i, j;
@@ -227,6 +227,7 @@ void BalancedCollector::buildCollectionSet() {
 						myCollectionSet[i] = 1;
 						//fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
 						//fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
+						//fprintf(balancedLogFile, "Added region %i of age %i and with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, regionAge, (deadSpace.at(i)).percentDead);
 						regionsInSet++;
 						totalObjectsInCollectionSet += currentRegion->getNumObj();
 					}
@@ -271,7 +272,10 @@ void BalancedCollector::buildCollectionSet() {
 			}
 		}
 	}
+
+	regionsReclaimed = regionsInSet;
 	//fprintf(balancedLogFile, "Building collection set done\n");
+	printf("Building collection set done\n");
 }
 
 
@@ -556,6 +560,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			return returnVal;
 		}
 		allRegions = myAllocator->getRegions();
+		myCollectionSet.resize(allRegions.size(), 0);
 	}
 
 	//No copyToRegion found, so add a new one
@@ -564,6 +569,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			currentFreeSpace = allRegions[currentCopyToRegionID]->getCurrFree();
 			copyToRegions[objRegionAge].push_back(currentCopyToRegionID);
 			allRegions[currentCopyToRegionID]->setAge(objRegionAge+1);
+			regionsReclaimed--;
 
 			if (objectSize <= currentFreeSpace) {
 				//fprintf(balancedLogFile, "\nGetting new copyToRegion with id: %u\n", currentCopyToRegionID);
@@ -777,7 +783,7 @@ void BalancedCollector::printObjectInfo(Object* obj){
 
 void BalancedCollector::printFinalStats() {
 	fprintf(balancedLogFile, "Garbage Collection #%d done!\n", statGcNumber);
-	fprintf(balancedLogFile, "Amount of free regions: %zu. Amount of eden regions: %zu \n\n****************************************************************\n\n", myAllocator->getFreeRegions().size(), myAllocator->getEdenRegions().size());
+	fprintf(balancedLogFile, "Amount of free regions: %zu. Amount of eden regions: %zu \nRegions collected: %i, regions reclaimed: %i\n\n****************************************************************\n\n", myAllocator->getFreeRegions().size(), myAllocator->getEdenRegions().size(), regionsInSet, regionsReclaimed);
 }
 
 BalancedCollector::~BalancedCollector() {
