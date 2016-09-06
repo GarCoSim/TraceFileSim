@@ -142,7 +142,6 @@ void MemoryManager::initAllocators(size_t heapsize, size_t maxheapsize) {
 				myAllocators[i]->initializeHeap(genSizes[i], maxheapsize);
 				break;
 		}
-
 	}
 	free(genSizes);
 }
@@ -235,7 +234,6 @@ int MemoryManager::evalCollect(){
 	myGarbageCollectors[GENERATIONS-1]->collect((int)reasonEval);
 	return 0;
 }
-
 
 void *MemoryManager::allocate(size_t size, int generation) {
 	//check if legal generation
@@ -389,14 +387,13 @@ int MemoryManager::preAllocateObjectThreadBased(int thread, int id, size_t size,
         else
        	    headObj = 0;
 
-        parentID   = objID;         //current Object will becom the parent of the next object in the chunk list
+        parentID = objID; //current Object will becom the parent of the next object in the chunk list
         parentSlot = newRefCount-1; //parent slot will point to the next object in the chunk list
 
         remainingSize -= regionSize;
     }
 
     if (remainingSize > 0) { //allocates the object if (remaining) size is less than region Size, otherwise allocates the object itself
-
     	if (remainingSize < 24) //minimum object size;
     		remainingSize = 24;
 
@@ -405,6 +402,7 @@ int MemoryManager::preAllocateObjectThreadBased(int thread, int id, size_t size,
           	objID = --chunkID;
         	newRefCount = 0;
         }
+
         postAllocateObjectToRootset(thread,objID,remainingSize,newRefCount,classID,address);
 
         if (!headObj) { //if trailing chunk
@@ -453,6 +451,10 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 	object->setGeneration(0);
 	//add to Containers
 	addRootToContainers(object, thread);
+
+	if (myWriteBarrier){
+		myWriteBarrier->process(NULL, object);
+	}
 
 	if (DEBUG_MODE == 1) {
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
@@ -519,7 +521,7 @@ void MemoryManager::requestDelete(Object* object, int gGC) {
 //				}
 //			}
 //		}
-		int status = myObjectContainers[i]->removeReferenceTo(object);
+    int status = myObjectContainers[i]->removeReferenceTo(object);
 		if (status == -1) {
 			fprintf(stderr,
 					"ERROR(Line %d):Object %d(g%d) could not be removed from object container %d\n",
@@ -708,7 +710,6 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 		}
 	}
 
-
 	if (DEBUG_MODE == 1) {
 		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
 		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
@@ -763,7 +764,7 @@ void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID)
 int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int childID) {
 	unsigned long parentRegion,childRegion;
 
-	preSetPointer(thread,parentID,parentSlot,childID);
+	setPointer(thread,parentID,parentSlot,childID);
 
 	parentRegion = myAllocators[0]->getObjectRegion(parent);
 
@@ -775,6 +776,21 @@ int MemoryManager::regionSetPointer(int thread, int parentID, int parentSlot,int
 
 	}
 
+       if (parentRegion != childRegion) {
+		   myAllocators[0]->getRegions()[childRegion]->insertObjectReference(parent->getAddress());
+	   }
+    }
+
+	/* Do not delete old remset pointers. Deal with false pointers during collection cycle.
+	unsigned long oldChildRegion;
+    if (oldChild) {
+       oldChildRegion = myAllocators[0]->getObjectRegion(oldChild);
+	   int oldChildID = oldChild->getID();
+       if (parentRegion != oldChildRegion) {
+		   myAllocators[0]->getRegions()[oldChildRegion]->eraseObjectReference((void*)parent);
+       }
+    }
+	*/
 	return 0;
 }
 
@@ -867,5 +883,4 @@ MemoryManager::~MemoryManager() {
 	classTable.clear();
 	//delete(classTable);
 }
-
 }

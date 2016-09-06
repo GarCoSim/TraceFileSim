@@ -107,7 +107,6 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	return NULL;
 }
 
-
 // Attempt to add more regions when no more free regions exist
 int RegionBasedAllocator::addRegions(){
 	size_t newHeapSize;
@@ -116,6 +115,7 @@ int RegionBasedAllocator::addRegions(){
 	Region* balancedRegion;
 	size_t currentAddress = 0;
 	char* newHeapBitMap;
+	heapStats currentHeap;
 
 	if(numberOfRegions >= MAXREGIONS || overallHeapSize == maximumHeapSize){
 		return -1; //can't add more regions, at maximum
@@ -271,20 +271,17 @@ int RegionBasedAllocator::mergeRegions(){
 size_t RegionBasedAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
 	void *objectAddress = object->getAddress();
-	unsigned int i, j;
-	char *offset;
+	std::vector<heapStats>::iterator it;
+	heapStats currentHeap;
 
-	for(i=0; i<allHeaps.size(); i+=2){
-		if(objectAddress >= &allHeaps.at(i)[0] && objectAddress < &allHeaps.at(i+1)[0]){
-			for(j=0; j<i; j+=2){
-				offset += ((char *)&allHeaps.at(j+1)[0] - (char *)&allHeaps.at(j)[0]);
-			}
-			return (size_t)((char *)objectAddress - (char *)allHeaps.at(i) + offset);
+	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
+		currentHeap = *it;
+		if(objectAddress >= currentHeap.heapStart && objectAddress < currentHeap.heapEnd){
+			return (size_t)((char *)objectAddress - (char *)currentHeap.heapStart + (regionSize * currentHeap.firstRegion));
 		}
 	}
-	
 	return -1;
-	//return (size_t) ((char *) object->getAddress() - (char *) allHeaps.at(0));
+
 }
 
 
@@ -339,6 +336,5 @@ size_t RegionBasedAllocator::getSpaceToNextObject(size_t start){
 
 RegionBasedAllocator::~RegionBasedAllocator() {
 }
-
 
 }

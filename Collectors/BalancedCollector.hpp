@@ -60,6 +60,17 @@ private:
 	void printFinalStats();
 
 	int totalObjectsInCollectionSet;
+
+	//overloaded functions for thread-based GC
+	std::vector<unsigned int> copyToRegionsTB[NUM_THREADS];
+
+	void buildCollectionSet(int thread);
+	int  copy(int thread);
+	int  copyObjectsInQueues(int thread);
+	int  copyAndForwardObject(Object *obj,int thread);
+	void emptyHelpers(int thread);
+	void removeObjects(int regionIdx);
+	void reOrganizeRegions(int regionIdx);
 	int regionsInSet;
 	int regionsReclaimed; 
 

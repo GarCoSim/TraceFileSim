@@ -100,7 +100,10 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 
 string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
+<<<<<<< HEAD
 
+=======
+>>>>>>> isolated my changes from the noncompiling head verssion - including arraylet stuf and whitespace clean up
 	for (i = 1; i < argc; i++){
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--logLocation") || !strcmp(shortOption, "-l")) {
@@ -114,7 +117,6 @@ string setLogLocation(int argc, char *argv[], const char *option, const char *sh
 
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-
 	for (i = 1; i < argc; i++) {
 		if ((!strcmp("--force", option) || !strcmp("-f", shortOption)) && (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption))) {
 			return 1;
@@ -282,7 +284,7 @@ int main(int argc, char *argv[]) {
 	}
 	balancedLogFile = fopen(balancedLogFileName.c_str(), "w+");
 
-	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zuWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
+	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s | %15s | %12s | %21s\n",

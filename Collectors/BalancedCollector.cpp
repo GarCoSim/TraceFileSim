@@ -23,11 +23,9 @@ namespace traceFileSimulator {
 BalancedCollector::BalancedCollector() {
 }
 
-
 void BalancedCollector::initializeHeap() {
 	myAllocator->setNumberOfRegionsHeap(0);
 }
-
 
 void BalancedCollector::collect(int reason) {
 	int returnVal;
@@ -73,28 +71,27 @@ void BalancedCollector::collect(int reason) {
 	statFreedDuringThisGC = totalObjectsInCollectionSet - statCopiedDuringThisGC;
 	statFreedObjects += statFreedDuringThisGC;
 
-	postCollect();
-	printFinalStats();
+  postCollect();
+  printFinalStats();
 	stop = clock();
 	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
 	fflush(balancedLogFile);
 }
 
-
 void BalancedCollector::emptyHelpers() {
-	while (!myQueue.empty()) {
-		myQueue.pop();
-	}
+    while (!myQueue.empty()) {
+      myQueue.pop();
+    }
 
-	while (!myUpdatePointerQueue.empty()) {
-		myUpdatePointerQueue.pop();
-	}
+    while (!myUpdatePointerQueue.empty()) {
+      myUpdatePointerQueue.pop();
+    }
 
-	int i;
-	for (i = 0; i < MAXREGIONAGE; i++) {
-		copyToRegions[i].clear();
-	}
+    int i;
+    for (i = 0; i < MAXREGIONAGE; i++) {
+      copyToRegions[i].clear();
+    }
 }
 
 void BalancedCollector::preCollect() {
@@ -103,7 +100,6 @@ void BalancedCollector::preCollect() {
 	totalObjectsInCollectionSet = 0;
 	statGcNumber++;
 }
-
 
 void BalancedCollector::calculateDeadSpace(){
 	unsigned int i, j;
@@ -272,12 +268,8 @@ void BalancedCollector::buildCollectionSet() {
 			}
 		}
 	}
-
-	regionsReclaimed = regionsInSet;
 	//fprintf(balancedLogFile, "Building collection set done\n");
-	printf("Building collection set done\n");
 }
-
 
 void BalancedCollector::buildFinalCollectionSet(){
 	//fprintf(balancedLogFile, "\n\nBuilding final collection set\n");
@@ -290,8 +282,8 @@ void BalancedCollector::buildFinalCollectionSet(){
 	//Add all regions that contain objects
 	for (i = 0; i < allRegions.size(); i++) {
 		currentRegion = allRegions[i];
-		if(currentRegion->getNumObj() > 0){
-			myCollectionSet[i] = 1;
+    if(currentRegion->getNumObj() > 0){
+      myCollectionSet[i] = 1;
 			totalObjectsInCollectionSet += currentRegion->getNumObj();
 		}
 	}
@@ -315,11 +307,9 @@ int BalancedCollector::copy() {
 		fprintf(balancedLogFile, "Copying  remset objects was unsuccessful!\n");
 		return -1;
 	}
-
 	fprintf(balancedLogFile, "Copying successfully done\n");
 	return 0;
 }
-
 
 void BalancedCollector::getRootObjects() {
 	fprintf(balancedLogFile, "Get Root Objects\n");
@@ -448,8 +438,6 @@ int BalancedCollector::copyObjectsInQueues() {
 					child->setVisited(true);
 					myQueue.push(child);
 					myUpdatePointerQueue.push(child);
-
-
 				}
 			}
 		}
@@ -457,52 +445,6 @@ int BalancedCollector::copyObjectsInQueues() {
 
 	fprintf(balancedLogFile, "\nCopying enqueued Objects done. Copied %u objects.\n\n", statCopiedDuringThisGC);
 	return 0;
-}
-
-void BalancedCollector::getRemsetObjects() {
-	fprintf(balancedLogFile, "Get Remset Objects\n");
-
-	Object* currentObj;
-	std::set<void*> currentRemset;
-	std::set<void*>::iterator remsetIterator;
-	int j;
-	int children;
-	unsigned int parentRegion, childRegion, i;
-	Object* child;
-	void* remsetPointer;
-
-	for (i = 0; i < myCollectionSet.size(); i++) {
-		if (myCollectionSet[i] == 1) {
-			currentRemset = allRegions[i]->getRemset();
-			for (remsetIterator = currentRemset.begin(); remsetIterator != currentRemset.end(); ++remsetIterator) {
-
-				remsetPointer = *remsetIterator;
-				RawObject *rawObject = (RawObject *) remsetPointer;
-				currentObj = rawObject->associatedObject;
-				myUpdatePointerQueue.push(currentObj);
-
-					parentRegion =  myAllocator->getObjectRegion(currentObj);
-					if (myCollectionSet[parentRegion] == 0) {
-						children = currentObj->getPointersMax();
-						for (j = 0; j < children; j++) {
-							child = currentObj->getReferenceTo(j);
-							if (child && !child->getVisited()) {
-								childRegion =  myAllocator->getObjectRegion(child);
-
-								if (myCollectionSet[childRegion] == 1) {
-									child->setVisited(true);
-									myQueue.push(child);
-									myUpdatePointerQueue.push(child);
-
-								}
-							}
-						}
-					}
-			}
-		}
-	}
-	fprintf(balancedLogFile, "Getting Remset Objects done. Added %zu objects to the queue.\n", myQueue.size());
-	fprintf(balancedLogFile, "%zu pointers to be modified.\n\n", myUpdatePointerQueue.size());
 }
 
 int BalancedCollector::copyAndForwardObject(Object *obj) {
@@ -608,8 +550,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 		return -1;
 }
 
-void BalancedCollector::removeObjects(){
-// Remove dead objects from the object map
+void BalancedCollector::removeObjects(){ //remove objects in a region in the collection set
 	unsigned int i;
 	Region* currentRegion;
 	RawObject* raw;
