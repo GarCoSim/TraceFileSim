@@ -10,7 +10,7 @@
 
 
 #include "../defines.hpp"
-#include <vector>
+#include <map>
 #include <string>
 
 using namespace std;
@@ -75,7 +75,7 @@ private:
 	writebarriersEnum _writebarrier;
 
 	bool classTableLoaded;
-	vector<string> classTable;
+	map< int, string > classTable;
 
 	Allocator* myAllocators[GENERATIONS];
 	ObjectContainer* myObjectContainers[GENERATIONS];

@@ -26,6 +26,10 @@
 #include <fstream>
 #include "MemoryManager.hpp"
 
+#include <iostream>
+#include <string> // std::stoi
+#include <sstream>
+
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern FILE* balancedLogFile;
@@ -64,25 +68,41 @@ bool MemoryManager::loadClassTable(string traceFilePath) {
 	size_t found;
 	string className = globalFilename + ".cls";
 	string line;
-
-	// we need to push an empty element into the vector as our classes start with id 1
-	classTable.push_back("EMPTY");
+  char delim = ' ';
+  string token;
+  vector<string> splitLine;
+  int id;
 
 	classFile.open(className.c_str());
 	if (!classFile.good())
 		return false;
 
-	do {
+  while (!classFile.eof()){
 		if(getline(classFile, line)) {
-			found = line.find(": ");
-			line = line.substr(found + 2, line.size() - found - 2);
-			classTable.push_back(line);
+      stringstream ss(line);
+      splitLine.clear();
+      while(getline(ss, token, delim)){
+        splitLine.push_back(token);
+      }
+      string front = splitLine.front();
+      found = front.find("C");
+      if(found!=std::string::npos){
+        istringstream convert(front.substr(found+1,front.length()));
+        convert >> id;
+      }
+      else{
+        std::cout<<"loading the class table a line does not start with 'C'"<<std::endl<<line<<std::endl;
+        classFile.close();
+        return false;
+      }
+      classTable.insert( std::pair<int,string>(id, splitLine.back()) );
 		}
-	} while (!classFile.eof());
-
+  }
 	classTableLoaded = true;
 
-	return true;;
+  classFile.close();
+
+	return true;
 }
 
 char *MemoryManager::getClassName(int classNumber) {
