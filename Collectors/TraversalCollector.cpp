@@ -53,10 +53,10 @@ void TraversalCollector::swap() {
 	 * if we use a real allocator we do not delete the object, we just remove it from the object list
 	 * it will then by overwritten afterwards. the real allocator just removes it from the object list
 	 */
-	size_t heapPosition= 0;
+	size_t heapPosition= myAllocator->getOldSpaceStartHeapIndex();
 	Object *currentObj;
 	RawObject* raw;
-	while(heapPosition<myAllocator->getHeapSize()){
+	while(heapPosition<myAllocator->getOldSpaceEndHeapIndex()){
 		
 		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
 		

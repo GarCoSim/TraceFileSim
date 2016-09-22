@@ -48,12 +48,20 @@ size_t Allocator::getFreeSize() {
 	return count;
 }
 
-unsigned char *Allocator::getHeap () {
+unsigned char *Allocator::getHeap() {
 	return heap;
 }
 
+size_t Allocator::getOldSpaceStartHeapIndex(){
+	return oldSpaceStartHeapIndex;
+}
+
+size_t Allocator::getOldSpaceEndHeapIndex(){
+	return oldSpaceEndHeapIndex;
+}
+
 size_t Allocator::getSpaceToNextObject(size_t start){
-	for(int i=start; i<getRegionSize(); i++){
+	for(int i=start; i<oldSpaceEndHeapIndex; i++){
 		if(isBitSet(i)){
 			return i-start;
 		}
@@ -62,7 +70,7 @@ size_t Allocator::getSpaceToNextObject(size_t start){
 }
 
 unsigned char *Allocator::getNextObjectAddress(size_t start){
-	for(int i=start; i<getRegionSize(); i++){
+	for(int i=start; i<oldSpaceEndHeapIndex; i++){
 		if(isBitSet(i)){
 			return &heap[i];
 		}
