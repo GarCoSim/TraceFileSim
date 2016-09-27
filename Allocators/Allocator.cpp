@@ -61,7 +61,7 @@ size_t Allocator::getOldSpaceEndHeapIndex(){
 }
 
 size_t Allocator::getSpaceToNextObject(size_t start){
-	for(int i=start; i<oldSpaceEndHeapIndex; i++){
+	for(size_t i=start; i<oldSpaceEndHeapIndex; i++){
 		if(isBitSet(i)){
 			return i-start;
 		}
@@ -70,7 +70,7 @@ size_t Allocator::getSpaceToNextObject(size_t start){
 }
 
 unsigned char *Allocator::getNextObjectAddress(size_t start){
-	for(int i=start; i<oldSpaceEndHeapIndex; i++){
+	for(size_t i=start; i<oldSpaceEndHeapIndex; i++){
 		if(isBitSet(i)){
 			return &heap[i];
 		}
