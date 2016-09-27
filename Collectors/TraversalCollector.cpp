@@ -129,9 +129,9 @@ void TraversalCollector::getAllRoots() {
 		myMemManager->clearRemSets();
 
 		vector<Object*> roots;
-		for (i = 0; i < NUM_THREADS; i++) {
-			roots = myObjectContainer->getRoots(i);
-			if(order==breadthFirst){
+		if(order==breadthFirst){
+			for (i = 0; i < NUM_THREADS; i++) {
+				roots = myObjectContainer->getRoots(i);
 				for (j = 0; j < (int)roots.size(); j++) {
 					currentObj = roots[j];
 					if (currentObj && !currentObj->getVisited()) {
@@ -144,11 +144,13 @@ void TraversalCollector::getAllRoots() {
 					}
 				}
 			}
-			else if(order==depthFirst){
+		}
+		else if(order==depthFirst){
+			for (i=NUM_THREADS-1; i >= 0; i--) {
+				roots = myObjectContainer->getRoots(i);
 				for (j=(int)roots.size()-1; j >= 0; j--) {
 					currentObj = roots[j];
-					if (currentObj && !currentObj->getVisited()) {
-						currentObj->setVisited(true);
+					if (currentObj) {
 						//add to rem set if the root is in a younger generation.
 						if (currentObj->getGeneration() < myGeneration) {
 							myMemManager->requestRemSetAdd(currentObj);
@@ -214,6 +216,12 @@ void TraversalCollector::depthFirstCopying() {
 	while (!myStack.empty()) {
 		currentObj = myStack.top();
 		myStack.pop();
+		if(currentObj->getVisited()==false){
+			currentObj->setVisited(true);
+		}
+		else{
+			continue;
+		}
 		int kids = currentObj->getPointersMax();
 		copyAndForwardObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
@@ -224,7 +232,6 @@ void TraversalCollector::depthFirstCopying() {
 				myMemManager->requestRemSetAdd(child);
 			}
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
-				child->setVisited(true);
 
 				myStack.push(child);
 			}
