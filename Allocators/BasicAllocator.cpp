@@ -41,6 +41,7 @@ void *BasicAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			setAllocated(potentialStart, size);
 			return &heap[potentialStart];
 		}
+		potentialStart+=contiguous;
 	}
 
 	return NULL;
