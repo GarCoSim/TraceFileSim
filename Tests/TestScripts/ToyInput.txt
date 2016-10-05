@@ -13,9 +13,9 @@
 1 double small MB; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
 2 double small MN; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
 3 double small MR; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
-1 double small TB; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
-2 double small TN; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
-3 double small TR; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
+#1 double small TB; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
+#2 double small TN; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
+#3 double small TR; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
 
 #Collection tests. Check each collector on Aaron's toy trace files
 1 chained MB; ./../../traceFileSim ../TraceFiles/chained.trace -h 1024 -c markSweep -a basic -fGC enabled; ../TraceFiles/chained.log; 2; 0; Statistics
