@@ -1,6 +1,22 @@
 before_script:
+  - pwd
+  - ls -al
   - make clean
 
 build:
   script:
     - make all
+
+test-regression-synthetic:
+  script:
+    - make all
+    - cd Tests/TestScripts/
+    - ./TestMain.sh SyntheticInput.txt -all
+    - cd ../../
+
+test-regression-real:
+  script:
+    - make all
+    - cd Tests/TestScripts/
+    - ./TestMain.sh RealInput.txt -all
+    - cd ../../
