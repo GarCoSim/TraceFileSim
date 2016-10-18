@@ -17,6 +17,8 @@ test-regression-synthetic:
 test-regression-real:
   script:
     - make all
+    - mkdir Tests/ExternalLogs/
     - cd Tests/TestScripts/
     - ./TestMain.sh RealInput.txt -all
+    - ls -al ../ExternalLogs/
     - cd ../../
