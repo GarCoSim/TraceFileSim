@@ -24,6 +24,16 @@
 #define WRITE_ALLOCATION_INFO 	  0
 #define FINAL_GC   0 //Trigger a GC after the last line in the trace file
 
+//ERROR HANDLING
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define ERRMSG(...) { \
+  fprintf(stderr, "ERROR: %s:%d %s - ", __FILENAME__, __LINE__, __FUNCTION__);\
+  fprintf(stderr, __VA_ARGS__);\
+  fprintf(stderr, "\n");\
+  fflush(stderr);\
+}
+
 //GENERATIONAL GC
 #define GENERATIONS        1
 #define GEN_DEBUG          0
