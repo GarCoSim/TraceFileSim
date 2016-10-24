@@ -165,4 +165,12 @@ while IFS=';' read -ra LINE; do
 	simCrashed "${LINE[0]}" ${LINE[2]}
 done < $1
 
+if [ $RC -ne 0 ]
+then
+	echo -e "\nERROR(s) were encountered! RC: $RC\n" >&2
+	echo -e "Please Verify your changes and the Regression tests.\n" >&2
+	echo -e "You MUST CORRECT one or both before you are able to push!\n" >&2
+	echo -e "Please see ../../CONTRIBUTING.md\n" >&2
+fi
+
 exit $RC
