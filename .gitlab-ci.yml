@@ -7,12 +7,17 @@ build:
   script:
     - make all
 
+test-regression-synthetic-basecases:
+  script:
+    - make all
+    - cd Tests/TestScripts/
+    - ./TestMain.sh SyntheticBaseCasesInput.txt -all
+
 test-regression-synthetic:
   script:
     - make all
     - cd Tests/TestScripts/
     - ./TestMain.sh SyntheticInput.txt -all
-    - cd ../../
 
 test-regression-real:
   script:
@@ -20,5 +25,3 @@ test-regression-real:
     - mkdir Tests/ExternalLogs/
     - cd Tests/TestScripts/
     - ./TestMain.sh RealInput.txt -all
-    - ls -al ../ExternalLogs/
-    - cd ../../
