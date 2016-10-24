@@ -131,6 +131,9 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 }
 
 int main(int argc, char *argv[]) {
+
+	fprintf(stderr, "TraceFileSimulator Version: %s\n\n", VERSION);
+
 	if(argc < 2) {
 		fprintf(stderr, "Usage: TraceFileSimulator traceFile [OPTIONS]\n" \
 						"Options:\n" \
@@ -146,12 +149,9 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	fprintf(stderr, "TraceFileSimulator v%lf\n\n", VERSION);
-
 	if(WRITE_DETAILED_LOG) {
 		gDetLog = fopen("detailed.log","w+");
 	}
-
 
 	char *filename		= argv[1];
 	size_t heapSize		= setHeapSize(argc, argv, "--heapsize",  "-h");
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
 
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
-	fprintf(gLogFile, "TraceFileSimulator v%lf\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n", 
+	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s\n",

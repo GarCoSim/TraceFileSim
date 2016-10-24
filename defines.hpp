@@ -8,7 +8,7 @@
 #ifndef _DEFINES_HPP_
 #define _DEFINES_HPP_
 
-#define VERSION 3.01
+#define VERSION "3.0.1"
 
 #define NUM_THREADS		50
 #define ROOTSET_SIZE    50
