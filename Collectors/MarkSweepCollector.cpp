@@ -111,9 +111,6 @@ void MarkSweepCollector::sweep() {
 				statFreedObjects++;
 				statFreedDuringThisGC++;
 			}
-			if(!currentObj){
-				break;
-			}
 		}
 		else{
 			break;

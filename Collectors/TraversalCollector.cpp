@@ -10,7 +10,8 @@
 #include "../Allocators/Allocator.hpp"
 #include "../Main/ObjectContainer.hpp"
 #include "../Main/MemoryManager.hpp"
-
+#include <sstream>
+#include <cstdlib>
 extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
@@ -62,21 +63,25 @@ void TraversalCollector::swap() {
 		
 		if(raw!=NULL){
 			currentObj = (Object *)raw->associatedObject;
+			if(!currentObj){
+				std::stringstream ss;
+				ss << "Object does not exist at heap position " << heapPosition << ". The algorithm for stepping through the heap has failed.\n";
+				ERRMSG(ss.str().c_str());
+				exit(1);
+			}
+			
 			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
 			heapPosition += currentObj->getHeapSize();
-			if (currentObj) {
-				if(!myAllocator->isInNewSpace(currentObj)){
-					if(!currentObj->isForwarded()){
-						statFreedObjects++;
-						statFreedDuringThisGC++;
-					}
-					myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
-					//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
+
+			if(!myAllocator->isInNewSpace(currentObj)){
+				if(!currentObj->isForwarded()){
+					statFreedObjects++;
+					statFreedDuringThisGC++;
 				}
+				myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
+				//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
 			}
-			else{
-				break;
-			}
+
 		}
 		else{
 			break;
