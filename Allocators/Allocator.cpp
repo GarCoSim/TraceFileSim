@@ -279,10 +279,6 @@ void Allocator::gcFree(Object* object) {
 	statLiveObjects--;
 }
 
-void *Allocator::allocate(size_t size, size_t lower, size_t upper) {
-	return NULL;
-}
-
 void Allocator::printStats(long trigReason) {
 }
 

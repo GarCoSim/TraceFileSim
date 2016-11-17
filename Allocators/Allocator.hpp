@@ -59,7 +59,7 @@ protected:
 	void setBitUnused(size_t heapIndex);
 	size_t getHeapIndex(Object *object);
 
-    virtual void *allocate(size_t size, size_t lower, size_t upper);
+    virtual void *allocate(size_t size, size_t lower, size_t upper) = 0;
    
 
 	bool isSplitHeap;
