@@ -20,7 +20,7 @@
 #include "../WriteBarriers/RecyclerWriteBarrier.hpp" 
 #include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp" 
 
-
+#include <sstream>
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
@@ -482,7 +482,7 @@ void MemoryManager::addToContainers(Object* object) {
 
 
 int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int childID) {
-	int parentGeneration;
+	int parentGeneration = -1;
 
 	if (WRITE_DETAILED_LOG == 1) {
 		fprintf(gDetLog, "(%d) Set pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
@@ -493,19 +493,30 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 	int childGeneration = -1;
 	if(childID != 0) {
 		child = myObjectContainers[GENERATIONS - 1]->getByID(childID);
-		if (child)
+		if (child){
 			childGeneration = child->getGeneration();
-		else
-			fprintf(stderr, "Child %i not existing in setPointer\n", childID);
+		}
+		else{
+			std::stringstream ss;
+			ss << "Child object " << childID << " does not exist. Ignoring trace file statement and continuing.\n";
+			ERRMSG(ss.str().c_str());
+			return 0;
+		}
 	}
-	if (parent)
+	
+	if (parent){
 		parentGeneration = parent->getGeneration();
-	else
-		fprintf(stderr, "Parent %i not existing in setPointer\n", parentID);
-
-	//check old child, if it created remSet entries and delete them
-	if (parent)
 		oldChild = parent->getReferenceTo(parentSlot);
+		parent->setPointer(parentSlot, child);
+	}
+	else{
+		std::stringstream ss;
+		ss << "Parent object " << parentID << " does not exist. Ignoring trace file statement and continuing.\n";
+		ERRMSG(ss.str().c_str());
+		return 0;
+	}
+
+	//check old child, if it has remSet entries then delete them
 	if (oldChild && parentGeneration > oldChild->getGeneration()) {
 		int i;
 		for (i = oldChild->getGeneration(); i < parentGeneration; i++) {
@@ -519,9 +530,8 @@ int MemoryManager::setPointer(int thread, int parentID, int parentSlot, int chil
 			}
 		}
 	}
-	if (parent)
-		parent->setPointer(parentSlot, child);
-	if (parentGeneration > childGeneration && childID != 0) {
+	//Add child to remsets
+	if (childID && parentGeneration > childGeneration) {
 		int i;
 		for (i = childGeneration; i < parentGeneration; i++) {
 			if (child)
