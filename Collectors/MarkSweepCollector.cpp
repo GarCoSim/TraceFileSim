@@ -10,7 +10,8 @@
 #include "../Allocators/Allocator.hpp"
 #include "../Main/ObjectContainer.hpp"
 #include "../Main/MemoryManager.hpp"
-
+#include <sstream>
+#include <cstdlib>
 extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
@@ -90,17 +91,22 @@ void MarkSweepCollector::sweep() {
 		
 		if(raw!=NULL){
 			currentObj = (Object *)raw->associatedObject;
+			if(!currentObj){
+				std::stringstream ss;
+				ss << "Object does not exist at heap position " << heapPosition << ". The algorithm for stepping through the heap has failed.\n";
+				ERRMSG(ss.str().c_str());
+				exit(1);
+			}
 			//currentObj = *(Object **)(objAddress+sizeof(Object *));
 			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
 			heapPosition += currentObj->getHeapSize();
-			
+				
 			if(myGeneration == GENERATIONS -1){
 				gGC = 1;
 			} else {
 				gGC = 0;
 			}
-			if (currentObj && !currentObj->getVisited()) {
-				
+			if (!currentObj->getVisited()) {
 				myMemManager->requestDelete(currentObj, gGC);
 				statFreedObjects++;
 				statFreedDuringThisGC++;
