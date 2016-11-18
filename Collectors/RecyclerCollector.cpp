@@ -146,9 +146,9 @@ void RecyclerCollector::scanBlack(Object *obj) {
 void RecyclerCollector::collectCandidates() {
 	std::set<Object*>::iterator it = myCandidates.begin();
  	while (it != myCandidates.end()) {
- 		myCandidates.erase(it);
-		collectWhite(*it);
-		it++;
+		Object* candidate = *it;
+ 		myCandidates.erase(it++);
+		collectWhite(candidate);
  	}
 }
 
