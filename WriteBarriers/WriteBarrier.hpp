@@ -23,7 +23,7 @@ public:
 	virtual ~WriteBarrier();
 	void setEnvironment(Collector* collector);
 
-	virtual void process(Object *oldChild, Object *child);
+	virtual void process(Object *oldChild, Object *child) = 0;
 
 protected:
 	Collector* myCollector;

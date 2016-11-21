@@ -140,11 +140,8 @@ void CardTable::unmarkCard(long address) {
 	card[address>>nShift] = 0;
 }
 
-void CardTable::freeCards() { 
-	free(card);
-}
-
 CardTable::~CardTable() {
+	free(card);
 }
 
 }

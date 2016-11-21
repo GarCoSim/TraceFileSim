@@ -47,9 +47,6 @@ void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container,
 	order = (traversalEnum)traversal;
 }
 
-void Collector::collect(int reason) {
-}
-
 void Collector::checkWatermark() {
 	size_t size = myAllocator->getRegionSize();
 	size_t free = myAllocator->getFreeSize();
