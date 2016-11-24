@@ -2,6 +2,7 @@
 #For each line in TestInputs.txt file, execute simulator based on line's contents
 #And compare output log file to various expected outputs in line's contents.
 PRINT_FAILS_ONLY=1
+RC=0 # Return Code (0 == success; 1 == failure)
 if [ -n $2 ] 
 then
 	if [ "-all" == "$2" ]
@@ -14,7 +15,8 @@ TOLERANCE=0
 if [ -z $1 ] || [ ! -f $1 ] 
 then
 	echo "Invalid input file."
-	exit 1
+	RC=1
+	exit $RC
 fi
 
 #Arguments: (trialNum, logLocation, expectedVal)
@@ -48,6 +50,7 @@ numGC () {
 	if [ $returnVal -eq -1 ]
 	then
 		echo "$1 failed: Number of GC's ($NUMLINES) too different from expected value ($3)"
+		RC=1
 	else
 		if [ $PRINT_FAILS_ONLY -eq 0 ]
 		then
@@ -64,6 +67,7 @@ memUsed (){
 	if [ $returnVal -eq -1 ]
 	then
 		echo "$1 failed: Final heap size ($finalFree) too different from expected value ($3)"
+		RC=1
 	else
 		if [ $PRINT_FAILS_ONLY -eq 0 ]
 		then
@@ -83,6 +87,7 @@ lastCollectionReason(){
 		fi
 	else
 		echo "$1 failed: Last collection reason ($reason) does not match expected reason ($3)"
+		RC=1
 	fi
 }
 
@@ -92,6 +97,7 @@ simCrashed(){
 	if [[ $lastLine =~ ^[0-9].* ]]
 	then
 		echo "$1 failed: Simulator crashed during execution."
+		RC=1
 	fi
 }
 
@@ -132,6 +138,7 @@ while IFS=';' read -ra LINE; do
 	if [ ! -e ${LINE[2]} ]
 	then
 		echo "${LINE[0]} failed: Log file not found."
+		RC=1
 		continue;
 	fi
 #Since consecutive trials can have the same log file, we have to cut it close on "newness" testing.
@@ -140,6 +147,7 @@ while IFS=';' read -ra LINE; do
 	if test `find ${LINE[2]} -mmin +0.0005` 
 	then
 		echo "${LINE[0]} failed: Log file not created by this line, or simulator crashed during execution."
+		RC=1
 		continue;
 	fi
 
@@ -148,6 +156,7 @@ while IFS=';' read -ra LINE; do
 	if [ $logTest -eq 1 ]
 	then
 		echo "${LINE[0]} failed: Log file is empty. Simulator may have crashed early in execution."
+		RC=1
 		continue
 	fi
 	numGC "${LINE[0]}" ${LINE[2]} ${LINE[3]}
@@ -156,3 +165,12 @@ while IFS=';' read -ra LINE; do
 	simCrashed "${LINE[0]}" ${LINE[2]}
 done < $1
 
+if [ $RC -ne 0 ]
+then
+	echo -e "\nERROR(s) were encountered! RC: $RC\n" >&2
+	echo -e "Please Verify your changes and the Regression tests.\n" >&2
+	echo -e "You MUST CORRECT one or both before you are able to push!\n" >&2
+	echo -e "Please see ../../CONTRIBUTING.md\n" >&2
+fi
+
+exit $RC

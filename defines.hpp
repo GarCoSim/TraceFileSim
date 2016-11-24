@@ -8,7 +8,7 @@
 #ifndef _DEFINES_HPP_
 #define _DEFINES_HPP_
 
-#define VERSION 3.01
+#define VERSION "3.0.1"
 
 #define NUM_THREADS		50
 #define ROOTSET_SIZE    50
@@ -23,6 +23,16 @@
 #define WRITE_HEAPMAP         	  0
 #define WRITE_ALLOCATION_INFO 	  0
 #define FINAL_GC   0 //Trigger a GC after the last line in the trace file
+
+//ERROR HANDLING
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define ERRMSG(...) { \
+  fprintf(stderr, "ERROR: %s:%d %s - ", __FILENAME__, __LINE__, __FUNCTION__);\
+  fprintf(stderr, __VA_ARGS__);\
+  fprintf(stderr, "\n");\
+  fflush(stderr);\
+}
 
 //GENERATIONAL GC
 #define GENERATIONS        1

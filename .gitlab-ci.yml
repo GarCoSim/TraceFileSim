@@ -1,0 +1,27 @@
+before_script:
+  - pwd
+  - ls -al
+  - make clean
+
+build:
+  script:
+    - make all
+
+test-regression-synthetic-basecases:
+  script:
+    - make all
+    - cd Tests/TestScripts/
+    - ./TestMain.sh SyntheticBaseCasesInput.txt -all
+
+test-regression-synthetic:
+  script:
+    - make all
+    - cd Tests/TestScripts/
+    - ./TestMain.sh SyntheticInput.txt -all
+
+test-regression-real:
+  script:
+    - make all
+    - mkdir Tests/ExternalLogs/
+    - cd Tests/TestScripts/
+    - ./TestMain.sh RealInput.txt -all

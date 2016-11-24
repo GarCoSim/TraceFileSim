@@ -18,7 +18,6 @@ public:
 	CardTable(int size,long heapSize);
 	virtual ~CardTable();
 
-    void freeCards();
     int  getCardIndex(long address);
     int  getCardSize();
     int  getNumCards();

@@ -29,7 +29,7 @@ public:
 	Collector();
 	void setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation, int traversal);
 	virtual ~Collector();
-	virtual void collect(int reason);
+	virtual void collect(int reason) = 0;
 	virtual void checkWatermark();
 	void printStats();
 	virtual int promotionPhase();

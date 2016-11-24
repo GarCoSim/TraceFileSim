@@ -78,7 +78,7 @@ private:
 	Collector* myGarbageCollectors[GENERATIONS];
 	WriteBarrier* myWriteBarrier;
 	int stats[GENERATIONS];
-	Object *parent,*child,*oldChild;
+	
 };
 
 } 

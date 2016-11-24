@@ -66,7 +66,8 @@ size_t Allocator::getSpaceToNextObject(size_t start){
 			return i-start;
 		}
 	}
-	return NULL;
+	ERRMSG("Object found in getNextObjectAddress(), but here it doesn't exist.\n");
+	exit (1);
 }
 
 unsigned char *Allocator::getNextObjectAddress(size_t start){
@@ -276,10 +277,6 @@ void Allocator::gcFree(Object* object) {
 
 	setFree(heapIndex, size);
 	statLiveObjects--;
-}
-
-void *Allocator::allocate(size_t size, size_t lower, size_t upper) {
-	return NULL;
 }
 
 void Allocator::printStats(long trigReason) {

@@ -20,11 +20,6 @@ void WriteBarrier::setEnvironment(Collector* collector) {
 	myCollector = collector;
 }
 
-
-void WriteBarrier::process(Object *oldChild, Object *child) {
-	
-}
-
 WriteBarrier::~WriteBarrier() {
 }
 

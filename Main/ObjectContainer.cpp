@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "../defines.hpp"
 #include <algorithm>
+#include <sstream>
 
 extern int gLineInTrace;
 
@@ -129,8 +130,13 @@ Object* ObjectContainer::getRoot(int thread, int objectID) {
 }
 
 int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
-	if (!object)
+	if (!object){
 		fprintf(stderr, "ERROR(Line %d): trying to delete a non existing object\n", gLineInTrace);
+		std::stringstream ss;
+		ss << "ERROR(Line"<< gLineInTrace << "): trying to delete an object that doesn't exist\n";
+		ERRMSG(ss.str().c_str());
+		exit(1);
+	}
 	int id = object->getID();
 	return deleteObject(id, deleteFlag);
 }

@@ -1,3 +1,7 @@
+# Ignore executable
+traceFileSim
+
+# Ignore Build Artifacts
 **.o
 **.log
 **.trace
@@ -5,3 +9,7 @@
 **.td
 **.cachelog
 Debug/*
+
+# Ignore Eclipse Project Files
+.cproject
+.project
