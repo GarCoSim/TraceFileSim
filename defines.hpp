@@ -44,7 +44,8 @@
 
 enum traversalEnum {
 					breadthFirst = 0,
-					depthFirst
+					depthFirst,
+					hierarchical
 				};
 
 enum collectorEnum {
@@ -52,6 +53,7 @@ enum collectorEnum {
 						traversalGC,
 						recyclerGC
 				};
+#define HIER_DEPTH_DEFAULT 2
 
 enum allocatorEnum {
 						realAlloc = 0,

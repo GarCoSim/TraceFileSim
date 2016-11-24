@@ -24,9 +24,14 @@ public:
 	void initializeHeap();
 
 private:
+//for hierarchical collection
+	size_t parentCount;
+	size_t childCount;
+
 	void copy();
 	void breadthFirstCopying();
 	void depthFirstCopying();
+	void hierarchicalCopying();
 	void getAllRoots();
 	void emptyHelpers();
 	void swap();

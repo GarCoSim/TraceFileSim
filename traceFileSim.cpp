@@ -21,6 +21,7 @@ FILE* gLogFile;
 FILE* gDetLog;
 int forceAGCAfterEveryStep = 0;
 string globalFilename;
+int hierDepth;
 
 size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
@@ -100,6 +101,12 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)breadthFirst;
 				if (!strcmp(argv[i + 1], "depthFirst"))
 					return (int)depthFirst;
+				if (!strcmp(argv[i + 1], "hierarchical"))
+					return (int)hierarchical;
+				return -1;
+			} else if (!strcmp(option, "--hierarchicalDepth") || !strcmp(shortOption, "-hd")) {
+				if(argc>(i+1) && argv[i + 1][0] != '-')
+					return atoi(argv[i + 1]);
 				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
 				if (!strcmp(argv[i + 1], "real"))
@@ -137,7 +144,7 @@ int main(int argc, char *argv[]) {
 						"  --watermark x, -w x		uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
 						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
-						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
+						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, hierarchical, default: breadthFirst)\n" \
 						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
 						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
 						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
@@ -161,6 +168,7 @@ int main(int argc, char *argv[]) {
 	int allocator		= setArgs(argc, argv, "--allocator", "-a");
 	int writebarrier	= setArgs(argc, argv, "--writebarrier", "-wb");
 	int finalGC			= setArgs(argc, argv, "--finalGC", "-fGC");
+	hierDepth 			= setArgs(argc, argv, "--hierarchicalDepth", "-hd");
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 
@@ -176,6 +184,9 @@ int main(int argc, char *argv[]) {
 		writebarrier = (int)disabled;
 	if (finalGC == -1)
 		finalGC = FINAL_GC;
+	if (hierDepth == -1){
+		hierDepth = HIER_DEPTH_DEFAULT;
+	}
 	if (heapSize == 0) {
 		if (collector != (int)traversalGC)
 			heapSize = 350000;

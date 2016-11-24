@@ -104,6 +104,13 @@ void Object::setVisited(bool value){
 	isVisited = value;
 }
 
+int Object::getDepth(){
+	return depth;
+}
+void Object::setDepth(int d){
+	depth = d;
+}
+
 int Object::getReferenceCount() {
 	return referenceCount;
 }
