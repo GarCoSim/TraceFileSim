@@ -9,12 +9,22 @@
 1 double equal TB; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a basic; ../TraceFiles/double.log; 1; 128; Statistics
 2 double equal TN; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
 3 double equal TR; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -a real; ../TraceFiles/double.log; 1; 128; Statistics
+1 double equal TB; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -t depthFirst -a basic; ../TraceFiles/double.log; 1; 128; Statistics
+2 double equal TN; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -t depthFirst -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
+3 double equal TR; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -t depthFirst -a real; ../TraceFiles/double.log; 1; 128; Statistics
+1 double equal TB; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -t hierarchical -a basic; ../TraceFiles/double.log; 1; 128; Statistics
+2 double equal TN; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -t hierarchical -a nextFit; ../TraceFiles/double.log; 1; 128; Statistics
+3 double equal TR; ./../../traceFileSim ../TraceFiles/double.trace -h 256 -c traversal -t hierarchical -a real; ../TraceFiles/double.log; 1; 128; Statistics
 
 1 double small MB; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
 2 double small MN; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
 3 double small MR; ./../../traceFileSim ../TraceFiles/double.trace -h 127 -c markSweep -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
 1 double small TB; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
 2 double small TN; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
+1 double small TB; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -t depthFirst -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
+2 double small TN; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -t depthFirst -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
+1 double small TB; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -t hierarchical -a basic; ../TraceFiles/double.log; 1; 64; FailedAlloc
+2 double small TN; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -t hierarchical -a nextFit; ../TraceFiles/double.log; 1; 64; FailedAlloc
 #3 double small TR; ./../../traceFileSim ../TraceFiles/double.trace -h 254 -c traversal -a real; ../TraceFiles/double.log; 1; 64; FailedAlloc
 
 #Collection tests. Check each collector on Aaron's toy trace files
