@@ -179,7 +179,6 @@ void TraversalCollector::getAllRoots() {
 						}
 						currentObj->setDepth(0);
 						myDoubleQueue.push_back(currentObj);
-						parentCount++;
 					}
 				}
 			}
