@@ -272,7 +272,6 @@ void TraversalCollector::hierarchicalCopying() {
 	Object* child;
 
 
-	//depth first through the tree using a stack
 	while (!myDoubleQueue.empty()) {
 		currentObj = myDoubleQueue.front();
 		myDoubleQueue.pop_front();
@@ -286,7 +285,7 @@ void TraversalCollector::hierarchicalCopying() {
 		copyAndForwardObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
 		
-		//leaf
+		//Leaf of mini-tree: switch to breadth-first
 		if(currentObj->getDepth() % hierDepth == hierDepth-1){
 			for(i = 0; i < kids; i++){
 				child = currentObj->getReferenceTo(i);
@@ -299,6 +298,7 @@ void TraversalCollector::hierarchicalCopying() {
 				}
 			}
 		}
+		//Non-leaf: depth-first
 		else{
 			for (i = kids-1; i >=0; i--) {
 				child = currentObj->getReferenceTo(i);
