@@ -15,9 +15,8 @@
 extern int gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
-
 extern FILE* gcFile;
-
+extern int hierDepth;
 extern clock_t start, stop;
 
 namespace traceFileSimulator {
@@ -120,6 +119,9 @@ void TraversalCollector::copy() {
 		case depthFirst:
 			depthFirstCopying();
 			break;
+		case hierarchical:
+			hierarchicalCopying();
+			break;
 		default:
 			break;
 	}
@@ -161,6 +163,22 @@ void TraversalCollector::getAllRoots() {
 							myMemManager->requestRemSetAdd(currentObj);
 						}
 						myStack.push(currentObj);
+					}
+				}
+			}
+		}
+		else if(order==hierarchical){
+			for (i = 0; i < NUM_THREADS; i++) {
+				roots = myObjectContainer->getRoots(i);
+				for (j = 0; j < (int)roots.size(); j++) {
+					currentObj = roots[j];
+					if (currentObj) {
+						//add to rem set if the root is in a younger generation.
+						if (currentObj->getGeneration() < myGeneration) {
+							myMemManager->requestRemSetAdd(currentObj);
+						}
+						currentObj->setDepth(0);
+						myDoubleQueue.push_back(currentObj);
 					}
 				}
 			}
@@ -244,7 +262,57 @@ void TraversalCollector::depthFirstCopying() {
 	}
 }
 
+//Access from front only
+//Rootset: Place on back in order
+//Non-leaf: Place children on front in reverse order
+//Leaf: Place children on back in order
+void TraversalCollector::hierarchicalCopying() {
+	int i;
+	Object* currentObj;
+	Object* child;
 
+
+	while (!myDoubleQueue.empty()) {
+		currentObj = myDoubleQueue.front();
+		myDoubleQueue.pop_front();
+		if(currentObj->getVisited()==false){
+			currentObj->setVisited(true);
+		}
+		else{
+			continue;
+		}
+		int kids = currentObj->getPointersMax();
+		copyAndForwardObject(currentObj);
+		currentObj->setAge(currentObj->getAge() + 1);
+		
+		//Leaf of mini-tree: switch to breadth-first
+		if(currentObj->getDepth() % hierDepth == hierDepth-1){
+			for(i = 0; i < kids; i++){
+				child = currentObj->getReferenceTo(i);
+				if(child && child->getGeneration() < currentObj->getGeneration()){
+					myMemManager->requestRemSetAdd(child);
+				}
+				if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
+					child->setDepth(currentObj->getDepth() + 1);
+					myDoubleQueue.push_back(child);
+				}
+			}
+		}
+		//Non-leaf: depth-first
+		else{
+			for (i = kids-1; i >=0; i--) {
+				child = currentObj->getReferenceTo(i);
+				if(child && child->getGeneration() < currentObj->getGeneration()){
+					myMemManager->requestRemSetAdd(child);
+				}
+				if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
+					child->setDepth(currentObj->getDepth() + 1);
+					myDoubleQueue.push_front(child);
+				}
+			}
+		}
+	}
+}
 
 void TraversalCollector::reallocateAllLiveObjects() {
 	int i;

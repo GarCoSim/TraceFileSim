@@ -42,6 +42,9 @@ public:
 	
 	bool 	getVisited();
 	void	setVisited(bool value);
+	
+	int getDepth();
+	void setDepth(int d);
 
 	int getAge() const {
 		return myAge;
@@ -94,6 +97,7 @@ private:
 
 	//garbage collector stuff
 	bool       isVisited;
+	int depth;
 
 	//genCon
 	int        myAge;

@@ -24,9 +24,11 @@ public:
 	void initializeHeap();
 
 private:
+
 	void copy();
 	void breadthFirstCopying();
 	void depthFirstCopying();
+	void hierarchicalCopying();
 	void getAllRoots();
 	void emptyHelpers();
 	void swap();

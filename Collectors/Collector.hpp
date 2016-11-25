@@ -10,6 +10,7 @@
 
 #include <queue>
 #include <stack>
+#include <deque>
 #include <map>
 #include "../defines.hpp"
 
@@ -57,6 +58,7 @@ protected:
 	ObjectContainer* myObjectContainer;
 	queue<Object *> myQueue;
 	stack<Object *> myStack;
+	deque<Object *> myDoubleQueue;
 	map<void *, void *> forwardPointers;
 
 	WriteBarrier* myWriteBarrier;
