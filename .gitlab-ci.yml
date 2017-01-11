@@ -2,6 +2,8 @@ before_script:
   - pwd
   - ls -al
   - make clean
+  - git submodule sync --recursive
+  - git submodule update --init --recursive
 
 build:
   script:
