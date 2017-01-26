@@ -15,7 +15,8 @@ using namespace std;
 
 namespace traceFileSimulator {
 
-NextFitAllocator::NextFitAllocator() {
+NextFitAllocator::NextFitAllocator() : Allocator(){
+	oldSpaceRememberedHeapIndex = 0;
 }
 
 bool NextFitAllocator::isRealAllocator() {
