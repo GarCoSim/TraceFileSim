@@ -132,33 +132,36 @@ while IFS=';' read -ra LINE; do
 	esac
 
 #Run simulator
-	eval ${LINE[1]} &> /dev/null
+	uniqueID=$(($(date +%s%N)/1000000))
+	simCall="${LINE[1]} -li $uniqueID"
+	eval $simCall &> /dev/null
 	
-#No way to intercept log files during execution. Instead, check if log file exists, and if it is relatively new
+#Check if log file exists, and if unique identifier on first line matches
 	if [ ! -e ${LINE[2]} ]
 	then
 		echo "${LINE[0]} failed: Log file not found."
 		RC=1
 		continue;
 	fi
-#Since consecutive trials can have the same log file, we have to cut it close on "newness" testing.
-#However, since all runs of the simulator have a final "statistics" printout just before execution finish,
-#this test shouldn't give any false positives. It may happen, though.
-	if test `find ${LINE[2]} -mmin +0.0005` 
-	then
-		echo "${LINE[0]} failed: Log file not created by this line, or simulator crashed during execution."
-		RC=1
-		continue;
-	fi
 
-#NEW TEST CALLS SHOULD GO HERE
-	logTest=$(emptyLog ${LINE[2]})
-	if [ $logTest -eq 1 ]
+	logEmpty=$(emptyLog ${LINE[2]})
+	if [ $logEmpty -eq 1 ]
 	then
 		echo "${LINE[0]} failed: Log file is empty. Simulator may have crashed early in execution."
 		RC=1
 		continue
 	fi
+	
+	idLine=$(head -n 1 ${LINE[2]})
+	logID=$(echo $idLine | awk '{print $2}')
+	if [ $logID -ne $uniqueID ]
+	then
+		echo "${LINE[0]} failed: Log file exists, but was not created by this run of the simulator."
+		RC=1
+		continue
+	fi
+	
+#NEW TEST CALLS SHOULD GO HERE
 	numGC "${LINE[0]}" ${LINE[2]} ${LINE[3]}
 	memUsed "${LINE[0]}" ${LINE[2]} ${LINE[4]}
 	lastCollectionReason "${LINE[0]}" ${LINE[2]} ${LINE[5]}
