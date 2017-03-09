@@ -16,6 +16,8 @@
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern FILE* traversalDepthFile;
+
 
 FILE* gcFile;
 
@@ -33,10 +35,13 @@ void MarkSweepCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	fprintf(stderr, "GC #%zu at %0.3fs", statGcNumber + 1, elapsed_secs);
+	traversalDepth.clear();
+	fprintf(traversalDepthFile, "GC: %i\n", statGcNumber);
+	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
 	preCollect();
 	mark();
 	sweep();
+	printTraversalDepthStats();
 	/* Uncomment this to enable compaction
 	if (statFreedDuringThisGC > 0) {
 		compact();
@@ -62,6 +67,10 @@ void MarkSweepCollector::mark() {
 	initializeMarkPhase();
 	enqueueAllRoots();
 
+	unsigned int rootObjects = traversalDepth.size();
+	fprintf(traversalDepthFile, "RootObjects: %u\n", rootObjects);
+	fflush(traversalDepthFile);
+
 	//breadth first through the tree
 	size_t i;
 	while (!myQueue.empty()) {
@@ -78,9 +87,13 @@ void MarkSweepCollector::mark() {
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 				child->setVisited(true);
 				myQueue.push(child);
+
+				traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
 			}
 		}
 	}
+	fprintf(traversalDepthFile, "OtherObjects: %zu\n", traversalDepth.size() - rootObjects);
+	fflush(traversalDepthFile);
 }
 
 /** Deletes all unmarked objects in all generations
@@ -150,6 +163,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
 					myQueue.push(currentObj);
+					traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
 				}
 			}
 		}
@@ -159,6 +173,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
 				myQueue.push(currentObj);
+				traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
 			}
 		}
 	}

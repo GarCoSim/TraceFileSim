@@ -18,6 +18,7 @@ using namespace std;
 TRACE_FILE_LINE_SIZE gLineInTrace;
 int gAllocations;
 FILE* gLogFile;
+FILE* traversalDepthFile;
 FILE* gDetLog;
 FILE* balancedLogFile;
 int forceAGCAfterEveryStep = 0;
@@ -352,6 +353,9 @@ int main(int argc, char *argv[]) {
 	if (forceAGCAfterEveryStep)
 		fprintf(stderr, "Forcing a GC after every step\n");
 
+	string depthFileName = globalFilename + "TraversalDepth.log";
+	traversalDepthFile = fopen(depthFileName.c_str(), "w+");
+
 	//start measuring time
 	clock_t start = clock();
 
@@ -387,7 +391,10 @@ int main(int argc, char *argv[]) {
 	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
 
 	fclose(gLogFile);
+
 	fclose(balancedLogFile);
+
+	fclose(traversalDepthFile);
 
 	delete(simulator);
 

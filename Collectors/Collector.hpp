@@ -83,6 +83,10 @@ protected:
 	MemoryManager* myMemManager;
 
 	traversalEnum order;
+
+	std::map<int, int> traversalDepth;
+	std::multimap<float,int> traversalDepthStats;
+	void printTraversalDepthStats();
 };
 
 }

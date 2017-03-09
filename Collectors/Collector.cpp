@@ -16,6 +16,7 @@
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern FILE* traversalDepthFile;
 
 extern FILE* gcFile;
 
@@ -259,7 +260,41 @@ void Collector::preCollect(){
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (allGCs / (statGcNumber + 1)));
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
+
+	//fprintf(traversalDepthFile, "\n\nOverall highes traversalDepth: %i\n", );
+	//fprintf(traversalDepthFile, "Overall average traversalDepth: %i\n", );
+
+  	std::multimap<float,int>::iterator it;
+  	float totalAverageDepth = 0;
+  	int totalAverageHeight = 0;
+
+  	for (it=traversalDepthStats.begin(); it!=traversalDepthStats.end(); ++it) {
+  		totalAverageDepth += (*it).first;
+  		totalAverageHeight += (*it).second;
+  	}
+  	
+  	fprintf(traversalDepthFile, "\nAverage values over all GCs:\n");
+  	fprintf(traversalDepthFile, "Total average traversalDepth: %.2f\nAverage highest traversalDepth: %.2f\n\n", (float)totalAverageDepth/traversalDepthStats.size(), (float)totalAverageHeight/traversalDepthStats.size());
+}
+
+void Collector::printTraversalDepthStats() {
+	int totalTraversalDepth = 0;
+	int deepestDepth = 0;
+
+	std::map<int,int>::iterator it;
+	for (it=traversalDepth.begin(); it!=traversalDepth.end(); ++it) {
+		totalTraversalDepth += it->second;
+		if (deepestDepth < it->second) {
+			deepestDepth = it->second;
+		}
+	}
+	float averageDepth = (float)totalTraversalDepth/traversalDepth.size();
+	fprintf(traversalDepthFile, "averageDepth: %.2f\n", averageDepth);
+	fprintf(traversalDepthFile, "deepestDepth: %i\n\n", deepestDepth);
+	fflush(traversalDepthFile);
+
+	traversalDepthStats.insert ( std::pair<float,int>(averageDepth,deepestDepth) );
 }
 
 /** Calls the MemoryManager::requestDelete(Object*, int) method on the object
