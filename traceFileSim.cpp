@@ -387,6 +387,7 @@ int main(int argc, char *argv[]) {
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
+
 	printf("Simulation ended successfully, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
 	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
 
