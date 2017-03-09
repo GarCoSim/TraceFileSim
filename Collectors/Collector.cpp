@@ -260,8 +260,6 @@ void Collector::preCollect(){
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
-
 	//fprintf(traversalDepthFile, "\n\nOverall highes traversalDepth: %i\n", );
 	//fprintf(traversalDepthFile, "Overall average traversalDepth: %i\n", );
 
@@ -276,6 +274,8 @@ void Collector::lastStats() {
   	
   	fprintf(traversalDepthFile, "\nAverage values over all GCs:\n");
   	fprintf(traversalDepthFile, "Total average traversalDepth: %.2f\nAverage highest traversalDepth: %.2f\n\n", (float)totalAverageDepth/traversalDepthStats.size(), (float)totalAverageHeight/traversalDepthStats.size());
+
+  	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
 }
 
 void Collector::printTraversalDepthStats() {
