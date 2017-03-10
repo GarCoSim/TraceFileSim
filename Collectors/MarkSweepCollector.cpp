@@ -88,7 +88,6 @@ void MarkSweepCollector::mark() {
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 				child->setVisited(true);
 				myQueue.push(child);
-
 				traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
 			}
 		}

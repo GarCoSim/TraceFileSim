@@ -34,7 +34,13 @@ void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+
 	fprintf(stderr, "GC #%zu at %0.3fs", statGcNumber + 1, elapsed_secs);
+
+	traversalDepth.clear();
+	amountRootObjects = 0;
+	amountOtherObjects = 0;
+
 	preCollect();
 
 	copy();
@@ -42,6 +48,8 @@ void TraversalCollector::collect(int reason) {
 	swap();
 
 	updatePointers();
+
+	printTraversalDepthStats();
 
 	postCollect();
 
@@ -126,6 +134,8 @@ void TraversalCollector::copy() {
 
 	getAllRoots();
 
+	amountRootObjects = traversalDepth.size();
+
 	switch(order) {
 		case breadthFirst:
 			breadthFirstCopying();
@@ -139,6 +149,8 @@ void TraversalCollector::copy() {
 		default:
 			break;
 	}
+
+	amountOtherObjects = traversalDepth.size() - amountRootObjects;
 }
 
 /** Puts all root objects in the appropriate helper structure depending on
@@ -167,6 +179,7 @@ void TraversalCollector::getAllRoots() {
 							myMemManager->requestRemSetAdd(currentObj);
 						}
 						myQueue.push(currentObj);
+						traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
 					}
 				}
 			}
@@ -192,6 +205,7 @@ void TraversalCollector::getAllRoots() {
 							myMemManager->requestRemSetAdd(currentObj);
 						}
 						myStack.push(currentObj);
+						traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
 					}
 				}
 			}
@@ -208,6 +222,7 @@ void TraversalCollector::getAllRoots() {
 						}
 						currentObj->setDepth(0);
 						myDoubleQueue.push_back(currentObj);
+						traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
 					}
 				}
 			}
@@ -220,6 +235,7 @@ void TraversalCollector::getAllRoots() {
 				currentObj->setVisited(true);
 				myQueue.push(currentObj);
 				myStack.push(currentObj);
+				traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
 			}
 		}
 	}
@@ -264,6 +280,7 @@ void TraversalCollector::breadthFirstCopying() {
 				child->setVisited(true);
 
 				myQueue.push(child);
+				traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
 			}
 		}
 	}
@@ -308,6 +325,7 @@ void TraversalCollector::depthFirstCopying() {
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 
 				myStack.push(child);
+				traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
 			}
 		}
 	}
@@ -345,6 +363,7 @@ void TraversalCollector::hierarchicalCopying() {
 				if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 					child->setDepth(currentObj->getDepth() + 1);
 					myDoubleQueue.push_back(child);
+					traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
 				}
 			}
 		}
@@ -358,6 +377,7 @@ void TraversalCollector::hierarchicalCopying() {
 				if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 					child->setDepth(currentObj->getDepth() + 1);
 					myDoubleQueue.push_front(child);
+					traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
 				}
 			}
 		}
