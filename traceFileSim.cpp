@@ -101,12 +101,6 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)breadthFirst;
 				if (!strcmp(argv[i + 1], "depthFirst"))
 					return (int)depthFirst;
-				if (!strcmp(argv[i + 1], "hierarchical"))
-					return (int)hierarchical;
-				return -1;
-			} else if (!strcmp(option, "--hierarchicalDepth") || !strcmp(shortOption, "-hd")) {
-				if(argc>(i+1) && argv[i + 1][0] != '-')
-					return atoi(argv[i + 1]);
 				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
 				if (!strcmp(argv[i + 1], "real"))
@@ -137,6 +131,15 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 	return -1;
 }
 
+long long setIdentifier(int argc, char *argv[]) {
+	for (int i = 1; i < argc; i++) {
+		if(!strcmp(argv[i], "--logIdentifier") || !strcmp(argv[i], "-li")){
+			return atoll(argv[i+1]);
+		}
+	}
+	return -1;
+}
+
 int main(int argc, char *argv[]) {
 
 	fprintf(stderr, "TraceFileSimulator Version: %s\n\n", VERSION);
@@ -147,7 +150,7 @@ int main(int argc, char *argv[]) {
 						"  --watermark x, -w x		uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
 						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
-						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, hierarchical, default: breadthFirst)\n" \
+						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
 						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
 						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
 						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
@@ -168,9 +171,10 @@ int main(int argc, char *argv[]) {
 	int allocator		= setArgs(argc, argv, "--allocator", "-a");
 	int writebarrier	= setArgs(argc, argv, "--writebarrier", "-wb");
 	int finalGC			= setArgs(argc, argv, "--finalGC", "-fGC");
-	hierDepth 			= setArgs(argc, argv, "--hierarchicalDepth", "-hd");
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
+	long long logIdentifier = setIdentifier(argc, argv);
+	
 
 	if (highWatermark == -1)
 		highWatermark = 90;
@@ -195,6 +199,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
+
 	
 	CREATE_GLOBAL_FILENAME((string)filename);
 	
@@ -216,6 +221,9 @@ int main(int argc, char *argv[]) {
 
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
+	if(logIdentifier!=-1){
+		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
+	}
 	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
