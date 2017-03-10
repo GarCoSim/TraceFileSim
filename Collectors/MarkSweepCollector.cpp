@@ -35,9 +35,12 @@ void MarkSweepCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
+
 	traversalDepth.clear();
-	fprintf(traversalDepthFile, "GC: %i\n", statGcNumber);
-	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
+	amountRootObjects = 0;
+	amountOtherObjects = 0;
+
+	fprintf(stderr, "GC #%d at %0.3fs at line %d", statGcNumber + 1, elapsed_secs, gLineInTrace);
 	preCollect();
 	mark();
 	sweep();
@@ -67,9 +70,7 @@ void MarkSweepCollector::mark() {
 	initializeMarkPhase();
 	enqueueAllRoots();
 
-	unsigned int rootObjects = traversalDepth.size();
-	fprintf(traversalDepthFile, "RootObjects: %u\n", rootObjects);
-	fflush(traversalDepthFile);
+	amountRootObjects = traversalDepth.size();
 
 	//breadth first through the tree
 	size_t i;
@@ -92,8 +93,7 @@ void MarkSweepCollector::mark() {
 			}
 		}
 	}
-	fprintf(traversalDepthFile, "OtherObjects: %zu\n", traversalDepth.size() - rootObjects);
-	fflush(traversalDepthFile);
+	amountOtherObjects = traversalDepth.size() - amountRootObjects;
 }
 
 /** Deletes all unmarked objects in all generations

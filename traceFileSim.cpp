@@ -356,6 +356,8 @@ int main(int argc, char *argv[]) {
 	string depthFileName = globalFilename + "TraversalDepth.log";
 	traversalDepthFile = fopen(depthFileName.c_str(), "w+");
 
+	fprintf(traversalDepthFile, "\n%8s | %8s | %14s | %10s | %14s \n", "GC", "AverageDepth", "DeepestDepth", "RootObjects", "OtherObjects");
+
 	//start measuring time
 	clock_t start = clock();
 

@@ -87,6 +87,8 @@ protected:
 	std::map<int, int> traversalDepth;
 	std::multimap<float,int> traversalDepthStats;
 	void printTraversalDepthStats();
+	int amountRootObjects;
+	int amountOtherObjects;
 };
 
 }
