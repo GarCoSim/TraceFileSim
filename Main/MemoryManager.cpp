@@ -617,8 +617,8 @@ bool MemoryManager::isAlreadyRoot(int thread, int id) {
  * @return 0
  */
 int MemoryManager::requestRootAdd(int thread, int id){
-	if (isAlreadyRoot(thread, id))
-		return -1;
+	//if (isAlreadyRoot(thread, id))
+	//	return -1;
 
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
 	if (obj)

@@ -52,7 +52,13 @@ int ObjectContainer::add(Object* newObject) {
 }
 
 int ObjectContainer::removeFromRoot(int thread, int objectID){
-	rootset[thread].erase(objectID);
+	//rootset[thread].erase(objectID);
+
+	std::multimap<int,Object*>::iterator it;
+	it = rootset[thread].find(objectID);
+    if (it!=rootset[thread].end()) 
+    	rootset[thread].erase(it);
+
 	rootCount--;
 	return -1;
 }
@@ -70,7 +76,8 @@ int ObjectContainer::addToRoot(Object* newObject, int thread) {
 	if (!doesObjectExistInList(newObject)) {
 		add(newObject);
 	}
-	rootset[thread][newObject->getID()] = newObject;
+	//rootset[thread][newObject->getID()] = newObject;
+	rootset[thread].insert( std::pair<int,Object*>(newObject->getID(),newObject) );
 	rootCount++;
 
 	return 0;
@@ -109,7 +116,11 @@ Object* ObjectContainer::getByID(int id) {
 }
 
 Object* ObjectContainer::getRoot(int thread, int objectID) {
-	return rootset[thread][objectID];
+	//return rootset[thread][objectID];
+
+	std::multimap<int,Object*>::iterator it = rootset[thread].find(objectID);
+
+	return it->second;
 }
 
 int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {

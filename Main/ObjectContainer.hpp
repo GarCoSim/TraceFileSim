@@ -37,8 +37,11 @@ private:
 	bool doesObjectExistInList(Object *queryObject);
 	Optional<size_t>* getRemSetSlot();
 
-	vector<std::map<int, Object*> > rootset;
-	std::map<int, Object*> objectMap;
+	vector<std::multimap<int, Object*> > rootset;
+	//vector<std::map<int, Object*> > rootset;
+
+    std::map<int, Object*> objectMap;
+
 	vector<Object*> remSet;
 	vector<std::map<int, Object*> > classReferences;
 
