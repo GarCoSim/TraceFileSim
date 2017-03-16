@@ -17,7 +17,10 @@ extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern int gAllocations;
 extern int forceAGCAfterEveryStep;
 
-extern int locking;
+extern FILE* zombieFile;
+extern int lockNumber;
+extern int catchZombies;
+extern int lockingStats;
 
 namespace traceFileSimulator {
 
@@ -63,7 +66,34 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, size_t maxHeapSize, i
 	counter = 0;
 	start = clock();
 	seconds = 0;
-	locking = 0;
+
+	amountAllocatedObjects = 0;
+	lockNumber = 0;
+
+	lockingCounter.resize(10);
+	for (unsigned int i = 0; i < lockingCounter.size(); i++) {
+		lockingCounter[i] = 0;
+	}
+	lockingCounter[0] = 1; //Tracefile starts unlocked
+	lockedLines = 0;
+	unlockedLines = 0;
+	lastLockLine = 0;
+}
+
+std::vector<int> Simulator::getLockingCounter(){
+	return lockingCounter;
+}
+
+int Simulator::getLockedLines(){
+	return lockedLines;
+}
+
+int Simulator::getUnlockedLines(){
+	return unlockedLines;
+}
+
+void Simulator::updateUnlockedLines() {
+	unlockedLines = unlockedLines + (gLineInTrace - lastLockLine) - 1;
 }
 
 /** Resets the contents of the line structure to unset optionals.
@@ -236,9 +266,7 @@ int Simulator::doNextStep(){
 				break;
 			case 'a':
 				allocateToRootset(line);
-				//next line is a '+', which we skip since it adds the newly created object
-				//to the rootset, which already happened in the simulator
-				//getNextLine(NULL);
+			    amountAllocatedObjects++;
 				break;
 			case '+':
 				addToRoot(line);
@@ -269,6 +297,25 @@ int Simulator::doNextStep(){
 		//Last line in traceFile reached
 		if (myFinalGC) {
 			myMemManager->forceGC();
+		}
+
+		//Last GC executed. Print all zombies:
+		if (catchZombies) {
+			std::map<int, int> zombies = myMemManager->getZombies();
+			std::map<int, int> allocateLines = myMemManager->getObjectsAllocateLines();
+			
+			std::map<int, int>::iterator it;
+			fprintf(zombieFile, "Amount of zombies: %lu\n", zombies.size());
+			fprintf(zombieFile, "Amount of allocated objects: %u\n", amountAllocatedObjects);
+			fprintf(zombieFile, "%.2f Percent of Objects are zombies.\n", (float)((zombies.size()*100)/(float)amountAllocatedObjects));
+
+			int allocateLine;
+			int zombieMinusAllocate;
+			for (it = zombies.begin(); it != zombies.end(); ++it) {	
+				allocateLine = allocateLines.find(it->first)->second;
+				zombieMinusAllocate = it->second - allocateLine;
+				fprintf(zombieFile, "O%i Lifetime: %i Allocated: %i Zombie: %i\n", it->first, zombieMinusAllocate, allocateLine, it->second);
+			}
 		}
 	}
 	// commented by mazder
@@ -358,18 +405,30 @@ void Simulator::referenceOperationClassField(TraceFileLine line){
 
 void Simulator::lockOperation(TraceFileLine line){
 
+	if (lockingStats) {
+		if (lockNumber == 0) 
+			unlockedLines = unlockedLines + (gLineInTrace - lastLockLine) - 1;
+		else 
+			lockedLines = lockedLines + (gLineInTrace - lastLockLine) - 1;
+	}
+
 	if (line.lockStatus == 1) {
-		locking = locking + 1;
+		lockNumber = lockNumber + 1;
 	}
 	else if (line.lockStatus == 0) {
-		locking = locking - 1;
+		lockNumber = lockNumber - 1;
 	}
 	else {
 		fprintf(stderr, "Invalid locking value\n");
 	}
 
-	if (locking < 0) {
-		fprintf(stderr, "Negative locking value at line: %i\n", gLineInTrace);
+	if (lockNumber < 0) {
+		fprintf(stderr, "Negative lockNumber at line: %i\n", gLineInTrace);
+	}
+
+	if (lockingStats) {
+		lockingCounter[lockNumber] = lockingCounter[lockNumber] + 1;
+		lastLockLine = gLineInTrace;
 	}
 }
 
@@ -379,7 +438,11 @@ void Simulator::lockOperation(TraceFileLine line){
  * @param line
  */
 void Simulator::readOperation(TraceFileLine line){
-	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field
+	//Check if object is already a zombie
+	if (catchZombies && line.objectID != -1)
+		myMemManager->readObject(line.objectID);
+
+	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
 	bool offsetFlag = false; 	 // to decide either offest or index is given
 
 	//fprintf(stderr, "Reading %i\n", line.objectID);
@@ -416,6 +479,10 @@ void Simulator::readOperation(TraceFileLine line){
  * @param line TraceFileLine structure containing the information from the line in the trace file.
  */
 void Simulator::storeOperation(TraceFileLine line){
+	//Check if object is already a zombie
+	if (catchZombies && line.objectID != -1)
+		myMemManager->readObject(line.objectID);
+
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field
 	bool offsetFlag = false; 	 // to decide either offest or index is given
 

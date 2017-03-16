@@ -30,6 +30,7 @@ private:
 	void deleteReference(Object *obj);
 	void release(Object *obj);
 	void candidate(Object *obj);
+	void alreadyDeadObject(Object *obj);
 };
 
 } 

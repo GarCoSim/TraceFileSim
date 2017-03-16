@@ -5,6 +5,7 @@
 #include <sstream>
 
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
+extern int catchZombies;
 
 namespace traceFileSimulator {
 
@@ -109,9 +110,11 @@ vector<Object*> ObjectContainer::getLiveObjects() {
 
 Object* ObjectContainer::getByID(int id) {
 	//fprintf(stderr, "Getting object %i by id. Dings = %li\n", id, (long)objectMap[id]);
-	if (objectMap.find(id) == objectMap.end())
-		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): object with this id (%d) was not found\n", gLineInTrace, id);
-	//fflush(stdin);
+	if (catchZombies != 1) {
+		if (objectMap.find(id) == objectMap.end())
+			fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): object with this id (%d) was not found\n", gLineInTrace, id);
+	}
+
 	return objectMap[id];
 }
 

@@ -28,6 +28,7 @@ public:
 	
 private:
 	void process(Object *oldChild, Object *child);
+	void alreadyDeadObject(Object *obj);
 	void deleteReference(Object *obj);
 };
 

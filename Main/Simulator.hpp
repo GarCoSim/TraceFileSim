@@ -11,6 +11,7 @@
 #include <fstream>
 #include <ctime>
 #include "Optional.cpp"
+#include <vector>
 
 #define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
 
@@ -48,6 +49,11 @@ public:
 	void printStats();
 	void lastStats();
 
+	std::vector<int> getLockingCounter();
+	int getLockedLines();
+	int getUnlockedLines();
+	void updateUnlockedLines();
+
 private:
 	void getNextLine(TraceFileLine *line);
 	void initializeTraceFileLine(TraceFileLine *line);
@@ -66,6 +72,12 @@ private:
 	int myLastStepWorked;
 	int myFinalGC;
 	MemoryManager* myMemManager;
+
+	unsigned int amountAllocatedObjects;
+	int lockedLines;
+	int unlockedLines;
+	int lastLockLine;
+	std::vector<int> lockingCounter;
 
 	//debug
 	int counter;

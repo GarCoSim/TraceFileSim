@@ -18,14 +18,20 @@ using namespace std;
 TRACE_FILE_LINE_SIZE gLineInTrace;
 int gAllocations;
 FILE* gLogFile;
-FILE* traversalDepthFile;
 FILE* gDetLog;
 FILE* balancedLogFile;
 int forceAGCAfterEveryStep = 0;
 string globalFilename;
 int hierDepth;
 
-int locking;
+FILE* zombieFile;
+FILE* lockingFile;
+FILE* traversalDepthFile;
+
+int catchZombies;
+int countTraversalDepth;
+int lockingStats;
+int lockNumber;
 
 size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
@@ -211,6 +217,24 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 				if (!strcmp(argv[i + 1], "enabled"))
 					return 1;
 				return -1;
+			} else if (!strcmp(option, "--catchZombies") || !strcmp(shortOption, "-cZ")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
+			} else if (!strcmp(option, "--countTraversalDepth") || !strcmp(shortOption, "-ctd")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
+			} else if (!strcmp(option, "--printLockingStats") || !strcmp(shortOption, "-pls")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
 			}
 		}
 	}
@@ -264,6 +288,10 @@ int main(int argc, char *argv[]) {
 	string logDirectory = setLogDirectory(argc, argv, "--directory", "-d");
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
+	catchZombies			= setArgs(argc, argv, "--catchZombies", "-cZ");
+	countTraversalDepth 	= setArgs(argc, argv, "--countTraversalDepth", "-ctd");
+	lockingStats 			= setArgs(argc, argv, "--printLockingStats", "-pls");
+
 	long long logIdentifier = setIdentifier(argc, argv);
 
 
@@ -279,6 +307,12 @@ int main(int argc, char *argv[]) {
 		writebarrier = (int)disabled;
 	if (finalGC == -1)
 		finalGC = FINAL_GC;
+	if (catchZombies == -1)
+		catchZombies = 0;
+	if (countTraversalDepth == -1)
+		countTraversalDepth = 0;
+	if (lockingStats == -1)
+		lockingStats = 0;
 	if (hierDepth == -1){
 		hierDepth = HIER_DEPTH_DEFAULT;
 	}
@@ -352,13 +386,30 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
 	fprintf(stderr, "The writebarrier is '%s'\n", WRITEBARRIER_STRING);
 	fprintf(stderr, "The final GC is '%s'\n", FINALGC_STRING);
+	fprintf(stderr, "Catching zombies is %i\n", catchZombies);
+	fprintf(stderr, "Locking stats is %i\n", lockingStats);
+	fprintf(stderr, "Counting traversal depth is %i\n", countTraversalDepth);
 	if (forceAGCAfterEveryStep)
 		fprintf(stderr, "Forcing a GC after every step\n");
 
-	string depthFileName = globalFilename + "TraversalDepth.log";
-	traversalDepthFile = fopen(depthFileName.c_str(), "w+");
 
-	fprintf(traversalDepthFile, "\n%8s | %8s | %14s | %10s | %14s \n", "GC", "AverageDepth", "DeepestDepth", "RootObjects", "OtherObjects");
+	if (countTraversalDepth) {
+		string depthFileName = globalFilename + "TraversalDepth.log";
+		traversalDepthFile = fopen(depthFileName.c_str(), "w+");
+		fprintf(traversalDepthFile, "\n%8s | %8s | %14s | %10s | %14s \n", "GC", "AverageDepth", "DeepestDepth", "RootObjects", "OtherObjects");
+	}
+
+	if (lockingStats) {
+		string lockingFileName;
+		lockingFileName = globalFilename + "locking.log";
+		lockingFile = fopen(lockingFileName.c_str(), "w+");
+	}
+
+	if (catchZombies) {
+		string zombieFileName;
+		zombieFileName = globalFilename + "Zombies.log";
+		zombieFile = fopen(zombieFileName.c_str(), "w+");
+	}
 
 	//start measuring time
 	clock_t start = clock();
@@ -388,12 +439,37 @@ int main(int argc, char *argv[]) {
 	simulator->printStats();
 	simulator->lastStats();
 
+	if (lockingStats) {
+		if (lockNumber == 0) {
+			simulator->updateUnlockedLines();
+		}
+		else {
+			fprintf(stderr, "Locking not zero at end of execution!\n");
+		}
+
+		fprintf(lockingFile,"UnLockedLines: %i\n", simulator->getUnlockedLines());
+		fprintf(lockingFile,"LockedLines: %i\n", simulator->getLockedLines());
+		std::vector<int> lockingCounter = simulator->getLockingCounter();
+		for (unsigned int p = 0 ; p < lockingCounter.size(); p++) {
+			fprintf(lockingFile,"%i %i\n", p, lockingCounter[p]);
+		}
+	}
+
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
 
 	printf("Simulation ended successfully, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
 	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
+
+	if (countTraversalDepth) 
+		fclose(traversalDepthFile);
+
+	if (lockingStats)
+		fclose(lockingFile);
+
+	if (catchZombies)
+		fclose(zombieFile);
 
 	fclose(gLogFile);
 

@@ -90,6 +90,11 @@ void RecyclerWriteBarrier::candidate(Object *obj) {
 	}
 }
 
+void RecyclerWriteBarrier::alreadyDeadObject(Object *obj) {
+	if (obj)
+		fprintf(stderr, "Function not implemented yet for the Recycler.\n");
+}
+
 RecyclerWriteBarrier::~RecyclerWriteBarrier() {
 }
 

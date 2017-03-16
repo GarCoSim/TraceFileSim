@@ -17,7 +17,7 @@ extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern FILE* traversalDepthFile;
-extern int locking;
+extern int lockNumber;
 
 FILE* gcFile;
 
@@ -32,8 +32,8 @@ MarkSweepCollector::MarkSweepCollector() {
  *
  */
 void MarkSweepCollector::collect(int reason) {
-	if (locking != 0) {
-		fprintf(stderr, "GC triggered and locking is not zero: %i\n", locking);
+	if (lockNumber != 0) {
+		fprintf(stderr, "GC triggered and lockNumber is not zero: %i\n", lockNumber);
 	} 
 	statCollectionReason = reason;
 	stop = clock();
