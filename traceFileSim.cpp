@@ -25,6 +25,8 @@ int forceAGCAfterEveryStep = 0;
 string globalFilename;
 int hierDepth;
 
+int locking;
+
 size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 

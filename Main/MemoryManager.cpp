@@ -37,6 +37,8 @@ extern FILE* balancedLogFile;
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern string globalFilename;
 
+extern int locking;
+
 namespace traceFileSimulator {
 
 int (MemoryManager::*preAllocateObject)(int,int,size_t,size_t,int) = NULL;
@@ -564,11 +566,21 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 	object = new Object(id, address, size, refCount, getClassName(classID), allocationTypeObject);
 
 	object->setGeneration(0);
-	//add to Containers
-	addRootToContainers(object, thread);
 
-	if (myWriteBarrier){
-		myWriteBarrier->process(NULL, object);
+	//add to Containers
+	//addRootToContainers(object, thread);
+
+	for (int i = 0; i < GENERATIONS; i++) {
+		myObjectContainers[i]->add(object);
+	}
+
+	//No referencechanges here!
+	//if (myWriteBarrier)
+	//	myWriteBarrier->process(NULL, object);
+
+	if (DEBUG_MODE == 1) {	
+		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
+		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 
 #if DEBUG_MODE == 1

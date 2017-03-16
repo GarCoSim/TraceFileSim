@@ -17,6 +17,8 @@ extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern int gAllocations;
 extern int forceAGCAfterEveryStep;
 
+extern int locking;
+
 namespace traceFileSimulator {
 
 void (Simulator::*operationReference)(TraceFileLine) = NULL;
@@ -61,6 +63,7 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, size_t maxHeapSize, i
 	counter = 0;
 	start = clock();
 	seconds = 0;
+	locking = 0;
 }
 
 /** Resets the contents of the line structure to unset optionals.
@@ -102,6 +105,7 @@ void Simulator::initializeTraceFileLine(TraceFileLine *line) {
 	line->maxPointers = Optional<size_t>();
 	line->size = Optional<size_t>();
 	line->threadID = Optional<int>();
+	line->lockStatus = -1;
 }
 
 /** Modifies the line to contain the correct contents based on the next line in the trace file.
@@ -196,8 +200,10 @@ void Simulator::getNextLine(TraceFileLine *line){
 				sstream >> tID;
 				line->threadID.setValue(tID);
 				break;
+			case ('L'):
+				line->lockStatus = val; break;
 			default:
-				fprintf(stderr, "Invalid form in getNextLine, execution should never reach this line\n");
+				fprintf(stderr, "Invalid form in getNextLine, execution should never reach this line. Line: %i . Attribute: %c\n", gLineInTrace, attributeID);
 				break;
 		}
 	}
@@ -232,7 +238,7 @@ int Simulator::doNextStep(){
 				allocateToRootset(line);
 				//next line is a '+', which we skip since it adds the newly created object
 				//to the rootset, which already happened in the simulator
-				getNextLine(NULL);
+				//getNextLine(NULL);
 				break;
 			case '+':
 				addToRoot(line);
@@ -250,7 +256,9 @@ int Simulator::doNextStep(){
 			case 's': // for now we ignore the class option
 				storeOperation(line);
 				break;
-
+			case 'x':
+				lockOperation(line);
+				break;
 			default:
 				//gLineInTrace++;
 			break;
@@ -346,6 +354,23 @@ void Simulator::referenceOperationClassField(TraceFileLine line){
 			line.classID.getValue(),
 			line.fieldOffset.getValue(),
 			line.objectID.getValue());
+}
+
+void Simulator::lockOperation(TraceFileLine line){
+
+	if (line.lockStatus == 1) {
+		locking = locking + 1;
+	}
+	else if (line.lockStatus == 0) {
+		locking = locking - 1;
+	}
+	else {
+		fprintf(stderr, "Invalid locking value\n");
+	}
+
+	if (locking < 0) {
+		fprintf(stderr, "Negative locking value at line: %i\n", gLineInTrace);
+	}
 }
 
 /** Used for read operations. Not implemented as of the below date

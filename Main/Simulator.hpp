@@ -36,6 +36,7 @@ typedef struct TraceFileLine {
 	Optional<size_t> maxPointers;
 	Optional<size_t> size;
 	Optional<int> threadID;
+	int lockStatus;
 } TraceFileLine;
 
 class Simulator {
@@ -58,6 +59,7 @@ private:
 	void referenceOperationClassField(TraceFileLine line);
 	void readOperation(TraceFileLine line);
 	void storeOperation(TraceFileLine line);
+	void lockOperation(TraceFileLine line);
 
 	ifstream myTraceFile;
 
