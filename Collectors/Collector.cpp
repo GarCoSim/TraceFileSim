@@ -317,6 +317,26 @@ bool Collector::candidatesNotContainObj(Object *obj) {
 	return false;
 }
 
+bool Collector::candidatesContainObj(Object *obj) {
+	return false;
+}
+
+void Collector::removeObjectFromCandidates(Object *obj) {
+	
+}
+
+std::set<Object *> Collector::getDeadObjectsLocked() {
+	return deadObjectsLocked;
+}
+
+void Collector::addDeadObjectLocked(Object *obj) {
+	deadObjectsLocked.insert(obj);
+}
+
+void Collector::clearDeadObjectsLocked() {
+	deadObjectsLocked.clear();
+}
+
 Collector::~Collector() {
 }
 

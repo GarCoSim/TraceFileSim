@@ -12,6 +12,7 @@
 #include <stack>
 #include <deque>
 #include <map>
+#include <set>
 #include "../defines.hpp"
 
 using namespace std;
@@ -47,6 +48,10 @@ public:
 	//Methods for the recycler
 	virtual void addCandidate(Object *obj);
 	virtual bool candidatesNotContainObj(Object *obj);
+
+	void addDeadObjectLocked(Object *obj);
+	std::set<Object *> getDeadObjectsLocked();
+	void clearDeadObjectsLocked();
 
 protected:
 	void postCollect();
@@ -89,6 +94,8 @@ protected:
 	void printTraversalDepthStats();
 	int amountRootObjects;
 	int amountOtherObjects;
+
+	std::set<Object *> deadObjectsLocked;
 };
 
 }

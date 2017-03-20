@@ -430,6 +430,10 @@ void Simulator::lockOperation(TraceFileLine line){
 		lockingCounter[lockNumber] = lockingCounter[lockNumber] + 1;
 		lastLockLine = gLineInTrace;
 	}
+
+	if (lockNumber == 0) {
+		myMemManager->checkForDeadObjects();
+	}
 }
 
 /** Used for read operations. Not implemented as of the below date

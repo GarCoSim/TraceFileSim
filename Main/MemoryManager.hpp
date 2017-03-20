@@ -56,6 +56,8 @@ public:
 	std::map<int, int> getZombies();
 	std::map<int, int> getObjectsAllocateLines();
 
+	void checkForDeadObjects();
+
 private:
 	bool isAlreadyRoot(int thread, int id);
 	size_t* computeHeapsizes(size_t heapSize);

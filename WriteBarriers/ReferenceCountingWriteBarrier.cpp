@@ -57,6 +57,9 @@ void ReferenceCountingWriteBarrier::deleteReference(Object *obj) {
 
 			myCollector->freeObject(obj);
 		}
+		else if ( (obj->getReferenceCount()) == 0 ) { //Reference count is zero but trace file locked.
+			myCollector->addDeadObjectLocked(obj);
+		}
 	}
 }
 
@@ -74,6 +77,9 @@ void ReferenceCountingWriteBarrier::alreadyDeadObject(Object *obj) {
 			}
 
 			myCollector->freeObject(obj);
+		}
+		else if ( (obj->getReferenceCount()) == 0 ) { //Reference count is zero but trace file locked.
+			myCollector->addDeadObjectLocked(obj);
 		}
 	}
 }

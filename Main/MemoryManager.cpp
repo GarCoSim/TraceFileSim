@@ -37,7 +37,7 @@ extern FILE* balancedLogFile;
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern string globalFilename;
 
-extern int lockNumber;
+//extern int lockNumber;
 extern int catchZombies;
 
 namespace traceFileSimulator {
@@ -91,6 +91,17 @@ std::map<int, int> MemoryManager::getObjectsAllocateLines(){
 	return objectsAllocateLines;
 }
 
+void MemoryManager::checkForDeadObjects() {
+	std::set<Object *> deadObjectsLocked = myGarbageCollectors[GENERATIONS-1]->getDeadObjectsLocked();
+
+	std::set<Object *>::iterator it;
+	for (it=deadObjectsLocked.begin(); it!=deadObjectsLocked.end(); ++it) {
+		if (myWriteBarrier && *it)
+			myWriteBarrier->alreadyDeadObject(*it);
+	}
+
+	myGarbageCollectors[GENERATIONS-1]->clearDeadObjectsLocked();	
+}
 
 bool MemoryManager::loadClassTable(string traceFilePath) {
 	ifstream classFile;
@@ -708,7 +719,7 @@ void MemoryManager::readObject(int id) {
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
 
 	//Check if obj should be dead. Only works if reference counting is used.
-	if (myWriteBarrier && lockNumber == 0 && obj) {
+	if (myWriteBarrier && obj) {
 		if (obj->getReferenceCount() == 0) {
 			myWriteBarrier->alreadyDeadObject(obj);
 			obj = myObjectContainers[GENERATIONS-1]->getByID(id);
