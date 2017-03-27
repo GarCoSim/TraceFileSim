@@ -78,6 +78,7 @@ private:
 	int unlockedLines;
 	int lastLockLine;
 	std::vector<int> lockingCounter;
+	std::vector<int> operationCounter;
 
 	//debug
 	int counter;

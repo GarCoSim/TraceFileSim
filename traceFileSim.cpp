@@ -235,7 +235,7 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 				if (!strcmp(argv[i + 1], "enabled"))
 					return 1;
 				return -1;
-			}
+			} 
 		}
 	}
 

@@ -16,6 +16,7 @@ using namespace std;
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern int gAllocations;
 extern int forceAGCAfterEveryStep;
+extern FILE* gLogFile;
 
 extern FILE* zombieFile;
 extern int lockNumber;
@@ -78,6 +79,11 @@ Simulator::Simulator(char* traceFilePath, size_t heapSize, size_t maxHeapSize, i
 	lockedLines = 0;
 	unlockedLines = 0;
 	lastLockLine = 0;
+
+	operationCounter.resize(10);
+	for (unsigned int i = 0; i < operationCounter.size(); i++) {
+		operationCounter[i] = 0;
+	}
 }
 
 std::vector<int> Simulator::getLockingCounter(){
@@ -244,6 +250,15 @@ void Simulator::getNextLine(TraceFileLine *line){
  */
 void Simulator::lastStats() {
 	myMemManager->lastStats();
+
+	fprintf(gLogFile, "\nWrite: %i\n", operationCounter[0]);
+	fprintf(gLogFile, "Allocate: %i\n", operationCounter[1]);
+	fprintf(gLogFile, "RootAddition: %i\n", operationCounter[2]);
+	fprintf(gLogFile, "RootRemove: %i\n", operationCounter[3]);
+	fprintf(gLogFile, "ReferenceClass: %i\n", operationCounter[4]);
+	fprintf(gLogFile, "Read: %i\n", operationCounter[5]);
+	fprintf(gLogFile, "Store: %i\n", operationCounter[6]);
+	fprintf(gLogFile, "Locking: %i\n\n", operationCounter[7]);
 }
 
 /** Creates a TraceFileLine and calls Simulator::getNextLine(TraceFileLine) on it.
@@ -263,30 +278,41 @@ int Simulator::doNextStep(){
 		switch(line.type.getValue()) {
 			case 'w':
 				(*this.*operationReference)(line);
+			    referenceOperation(line);
+			    operationCounter[0]++;
 				break;
 			case 'a':
 				allocateToRootset(line);
 			    amountAllocatedObjects++;
+			    operationCounter[1]++;
 				break;
 			case '+':
 				addToRoot(line);
+				operationCounter[2]++;
 				break;
 			case '-':
 				deleteRoot(line);
+				operationCounter[3]++;
 				break;
 			case 'c':
 				referenceOperationClassField(line);
+				operationCounter[4]++;
 				break;
 			case 'r': // for now we ignore the class option
 				// currently doesn't do anything
 				readOperation(line);
+				operationCounter[5]++;
 				break;
 			case 's': // for now we ignore the class option
 				storeOperation(line);
+				operationCounter[6]++;
 				break;
 			case 'x':
 				lockOperation(line);
-				break;
+				operationCounter[7]++;
+				break;	
+
+>>>>>>> Added an operation counter.
 			default:
 				//gLineInTrace++;
 			break;
