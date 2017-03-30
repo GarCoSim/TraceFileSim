@@ -13,6 +13,7 @@
 #include <deque>
 #include <map>
 #include <set>
+#include <vector>
 #include "../defines.hpp"
 
 using namespace std;

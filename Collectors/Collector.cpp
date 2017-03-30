@@ -22,6 +22,8 @@ extern FILE* gcFile;
 
 extern clock_t start, stop;
 
+extern int countTraversalDepth;
+
 namespace traceFileSimulator {
 
 /** Sets initial values for internal protected values which are independent of
@@ -260,37 +262,60 @@ void Collector::preCollect(){
 }
 
 void Collector::lastStats() {
-  	std::multimap<float,int>::iterator it;
-  	float totalAverageDepth = 0;
-  	int divider = 0;
 
-  	for (it=traversalDepthStats.begin(); it!=traversalDepthStats.end(); ++it) {
-  		totalAverageDepth = totalAverageDepth + (float)((*it).first * (float)(*it).second);
-  		divider += (*it).second;
+	if (countTraversalDepth) {
+		std::multimap<float,int>::iterator it;
+	  	float totalAverageDepth = 0;
+	  	int divider = 0;
 
-  	}
-  	
-  	totalAverageDepth = totalAverageDepth/(float)divider;
-  	fprintf(traversalDepthFile, "\n\nOverall AverageDepth: %.2f\n", (float)totalAverageDepth);
+	  	for (it=traversalDepthStats.begin(); it!=traversalDepthStats.end(); ++it) {
+	  		totalAverageDepth = totalAverageDepth + (float)((*it).first * (float)(*it).second);
+	  		divider += (*it).second;
 
+	  	}
+	  	
+	  	totalAverageDepth = totalAverageDepth/(float)divider;
+	  	fprintf(traversalDepthFile, "\n\nOverall AverageDepth: %.2f\n", (float)totalAverageDepth);
+	}
 
   	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
 }
 
 void Collector::printTraversalDepthStats() {
 	int totalTraversalDepth = 0;
-	int deepestDepth = 0;
+	unsigned int deepestDepth = 0;
+	unsigned int depth;
 
 	std::map<int,int>::iterator it;
+	std::vector<int> depths(100, 0);
 	for (it=traversalDepth.begin(); it!=traversalDepth.end(); ++it) {
-		totalTraversalDepth += it->second;
-		if (deepestDepth < it->second) {
-			deepestDepth = it->second;
+		depth = (unsigned int)it->second;
+		totalTraversalDepth += depth;
+		if (deepestDepth < depth) {
+			deepestDepth = depth;
+		}
+
+		if (depth < depths.size()) {
+			depths[depth] = depths[depth] + 1;
+		}
+		else {
+			depths.resize(depth);
+			depths[depth] = 1;
 		}
 	}
 	float averageDepth = (float)totalTraversalDepth/traversalDepth.size();
 
-	fprintf(traversalDepthFile, "%8d | %12.2f | %14i | %11i | %14i \n", statGcNumber, averageDepth, deepestDepth, amountRootObjects, amountOtherObjects);
+	fprintf(traversalDepthFile, "\nGC %i Stats:\n", statGcNumber);
+	fprintf(traversalDepthFile, "AverageDepth: %.2f  |  DeepestDepth: %u  |  RootObjects: %i  |  OtherObjcts: %i", averageDepth, deepestDepth, amountRootObjects, amountOtherObjects);
+
+	fprintf(traversalDepthFile, "\n\nTraversalDepth per level:\n");
+	for (unsigned int i = 0; i < depths.size(); i++) {
+		if (depths.at(i) != 0) {
+			fprintf(traversalDepthFile, "%i : %i \n", i, depths.at(i));
+		}
+	}
+	fprintf(traversalDepthFile, "\n------------------------------------------------------------------------------------\n");
+
 	fflush(traversalDepthFile);
 
 	traversalDepthStats.insert ( std::pair<float,int>(averageDepth, amountRootObjects+amountOtherObjects) );
