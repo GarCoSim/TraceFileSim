@@ -251,7 +251,8 @@ void Simulator::getNextLine(TraceFileLine *line){
 void Simulator::lastStats() {
 	myMemManager->lastStats();
 
-	fprintf(gLogFile, "\nWrite: %i\n", operationCounter[0]);
+	fprintf(gLogFile, "\nOperation Counts:\n");
+	fprintf(gLogFile, "Write: %i\n", operationCounter[0]);
 	fprintf(gLogFile, "Allocate: %i\n", operationCounter[1]);
 	fprintf(gLogFile, "RootAddition: %i\n", operationCounter[2]);
 	fprintf(gLogFile, "RootRemove: %i\n", operationCounter[3]);

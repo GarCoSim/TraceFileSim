@@ -369,13 +369,15 @@ int main(int argc, char *argv[]) {
 	if(logIdentifier!=-1){
 		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
 	}
+
 	balancedLogFile = fopen((logDirectory + balancedLogFileName).c_str(), "w+");
 	if(NULL == balancedLogFile){
 		const char* errorMsg = "Balanced Log File failed to open\n";
 		fprintf(stderr, errorMsg);
 	}
-	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nCatchZombies: %s\nLockingStats: %s\nCountTraversalDepth: %s\nWatermark: %d\n\n",
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, ZOMBIES_STRING, LOCKING_STRING, TRAVERSALDEPTH_STRING, highWatermark);
+
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s | %15s | %12s | %21s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed",
@@ -385,10 +387,10 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
 	fprintf(stderr, "The writebarrier is '%s'\n", WRITEBARRIER_STRING);
-	fprintf(stderr, "The final GC is '%s'\n", FINALGC_STRING);
-	fprintf(stderr, "Catching zombies is %i\n", catchZombies);
-	fprintf(stderr, "Locking stats is %i\n", lockingStats);
-	fprintf(stderr, "Counting traversal depth is %i\n", countTraversalDepth);
+	fprintf(stderr, "The finalGC is '%s'\n", FINALGC_STRING);
+	fprintf(stderr, "CatchZombies is '%s'\n", ZOMBIES_STRING);
+	fprintf(stderr, "LockingStats is '%s'\n", LOCKING_STRING);
+	fprintf(stderr, "CountTraversalDepth is '%s'\n", TRAVERSALDEPTH_STRING);
 	if (forceAGCAfterEveryStep)
 		fprintf(stderr, "Forcing a GC after every step\n");
 
