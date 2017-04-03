@@ -16,8 +16,9 @@
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
-extern FILE* traversalDepthFile;
 extern int lockNumber;
+extern int countRoots;
+extern int countTraversalDepth;
 
 FILE* gcFile;
 
@@ -41,6 +42,7 @@ void MarkSweepCollector::collect(int reason) {
 
 	traversalDepthObjects.clear();
 	traversalDepth.clear();
+	rootObjects.clear();
 	amountRootObjects = 0;
 	amountOtherObjects = 0;
 
@@ -48,7 +50,12 @@ void MarkSweepCollector::collect(int reason) {
 	preCollect();
 	mark();
 	sweep();
-	printTraversalDepthStats();
+
+	if (countTraversalDepth != 0)
+		printTraversalDepthStats();
+
+	if (countRoots != 0)
+		printRootCountStats();
 	/* Uncomment this to enable compaction
 	if (statFreedDuringThisGC > 0) {
 		compact();
@@ -94,12 +101,14 @@ void MarkSweepCollector::mark() {
 				child->setVisited(true);
 				myQueue.push(child);
 
-				childDepth = (traversalDepthObjects.find(currentObj->getID())->second) + 1;
-				traversalDepthObjects.insert( std::pair<int,int>(child->getID(), childDepth));
-				if (traversalDepth.find(childDepth) != traversalDepth.end())
-					traversalDepth.at(childDepth) = traversalDepth.at(childDepth) + 1;
-				else
-					traversalDepth.insert(std::pair<int, int>(childDepth, 1));
+				if (countTraversalDepth != 0) {
+					childDepth = (traversalDepthObjects.find(currentObj->getID())->second) + 1;
+					traversalDepthObjects.insert( std::pair<int,int>(child->getID(), childDepth));
+					if (traversalDepth.find(childDepth) != traversalDepth.end())
+						traversalDepth.at(childDepth) = traversalDepth.at(childDepth) + 1;
+					else
+						traversalDepth.insert(std::pair<int, int>(childDepth, 1));
+				}
 			}
 		}
 	}
@@ -166,6 +175,14 @@ void MarkSweepCollector::enqueueAllRoots() {
 			roots = myObjectContainer->getRoots(i);
 			for (j = 0; j < roots.size(); j++) {
 				currentObj = roots[j];
+
+				if (currentObj && (countRoots != 0) ) {
+					if (rootObjects.find(currentObj->getID()) != rootObjects.end())
+						rootObjects.at(currentObj->getID()) = rootObjects.at(currentObj->getID()) + 1;
+					else
+						rootObjects.insert(std::pair<int, int>(currentObj->getID(),1));
+				}
+
 				if (currentObj && !currentObj->getVisited()) {
 					currentObj->setVisited(true);
 					//add to rem set if the root is in a younger generation.
@@ -174,26 +191,38 @@ void MarkSweepCollector::enqueueAllRoots() {
 					}
 					myQueue.push(currentObj);
 
-					traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
-					if (traversalDepth.find(1) != traversalDepth.end())
-						traversalDepth.at(1) = traversalDepth.at(1) + 1;
-					else
-						traversalDepth.insert(std::pair<int, int>(1,1));
+					if (countTraversalDepth != 0) {
+						traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
+						if (traversalDepth.find(1) != traversalDepth.end())
+							traversalDepth.at(1) = traversalDepth.at(1) + 1;
+						else
+							traversalDepth.insert(std::pair<int, int>(1,1));
+					}
 				}
 			}
 		}
 	} else {
 		for (j = 0; j < myObjectContainer->getGenRootSize(); j++) {
 			currentObj = myObjectContainer->getGenRoot(j);
+
+			if (currentObj && (countRoots != 0) ) {
+				if (rootObjects.find(currentObj->getID()) != rootObjects.end())
+					rootObjects.at(currentObj->getID()) = rootObjects.at(currentObj->getID()) + 1;
+				else
+					rootObjects.insert(std::pair<int, int>(currentObj->getID(),1));
+			}
+
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
 				myQueue.push(currentObj);
 
-				traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
-				if (traversalDepth.find(1) != traversalDepth.end())
-					traversalDepth.at(1) = traversalDepth.at(1) + 1;
-				else
-					traversalDepth.insert(std::pair<int, int>(1,1));
+				if (countTraversalDepth != 0) {
+					traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
+					if (traversalDepth.find(1) != traversalDepth.end())
+						traversalDepth.at(1) = traversalDepth.at(1) + 1;
+					else
+						traversalDepth.insert(std::pair<int, int>(1,1));
+				}
 			}
 		}
 	}

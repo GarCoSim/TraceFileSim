@@ -27,9 +27,11 @@ int hierDepth;
 FILE* zombieFile;
 FILE* lockingFile;
 FILE* traversalDepthFile;
+FILE* rootCountFile;
 
 int catchZombies;
 int countTraversalDepth;
+int countRoots;
 int lockingStats;
 int lockNumber;
 
@@ -235,7 +237,13 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 				if (!strcmp(argv[i + 1], "enabled"))
 					return 1;
 				return -1;
-			} 
+			} else if (!strcmp(option, "--countRoots") || !strcmp(shortOption, "-cr")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
+			}
 		}
 	}
 
@@ -289,6 +297,7 @@ int main(int argc, char *argv[]) {
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 	catchZombies			= setArgs(argc, argv, "--catchZombies", "-cZ");
+	countRoots				= setArgs(argc, argv, "--countRoots", "-cr");
 	countTraversalDepth 	= setArgs(argc, argv, "--countTraversalDepth", "-ctd");
 	lockingStats 			= setArgs(argc, argv, "--printLockingStats", "-pls");
 
@@ -313,6 +322,8 @@ int main(int argc, char *argv[]) {
 		countTraversalDepth = 0;
 	if (lockingStats == -1)
 		lockingStats = 0;
+	if (countRoots == -1)
+		countRoots = 0;
 	if (hierDepth == -1){
 		hierDepth = HIER_DEPTH_DEFAULT;
 	}
@@ -391,6 +402,7 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "CatchZombies is '%s'\n", ZOMBIES_STRING);
 	fprintf(stderr, "LockingStats is '%s'\n", LOCKING_STRING);
 	fprintf(stderr, "CountTraversalDepth is '%s'\n", TRAVERSALDEPTH_STRING);
+	fprintf(stderr, "CountRoots is '%s'\n", COUNTROOTS_STRING);
 	if (forceAGCAfterEveryStep)
 		fprintf(stderr, "Forcing a GC after every step\n");
 
@@ -398,6 +410,11 @@ int main(int argc, char *argv[]) {
 	if (countTraversalDepth) {
 		string depthFileName = globalFilename + "TraversalDepth.log";
 		traversalDepthFile = fopen(depthFileName.c_str(), "w+");
+	}
+
+	if (countRoots) {
+		string countRootsFileName = globalFilename + "Roots.log";
+		rootCountFile = fopen(countRootsFileName.c_str(), "w+");
 	}
 
 	if (lockingStats) {
@@ -465,6 +482,9 @@ int main(int argc, char *argv[]) {
 
 	if (countTraversalDepth) 
 		fclose(traversalDepthFile);
+
+	if (countRoots) 
+		fclose(rootCountFile);
 
 	if (lockingStats)
 		fclose(lockingFile);

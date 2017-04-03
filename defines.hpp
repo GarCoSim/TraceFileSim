@@ -152,6 +152,7 @@ enum writebarriersEnum {
 #define ZOMBIES_STRING (catchZombies == 1 ? "enabled" : "disabled")
 #define TRAVERSALDEPTH_STRING (countTraversalDepth == 1 ? "enabled" : "disabled")
 #define LOCKING_STRING (lockingStats == 1 ? "enabled" : "disabled")
+#define COUNTROOTS_STRING (countRoots == 1 ? "enabled" : "disabled")
 
 //added by Tristan
 #define MAX64BIT 0xFFFFFFFFFFFFFFFF	//18446744073709551615

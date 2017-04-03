@@ -96,6 +96,9 @@ protected:
 	void printTraversalDepthStats();
 	int amountRootObjects;
 	int amountOtherObjects;
+	void printRootCountStats();
+	std::map<int, int> rootObjects; //To keep track of root count per object.
+	std::multimap<float,int> overallRootStats; //Average roots coupled with amount of obejcts. Used to calculate the final root stats.
 
 	std::set<Object *> deadObjectsLocked;
 };
