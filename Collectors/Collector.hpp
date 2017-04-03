@@ -90,8 +90,9 @@ protected:
 
 	traversalEnum order;
 
-	std::map<int, int> traversalDepth;
-	std::multimap<float,int> traversalDepthStats;
+	std::map<int, int> traversalDepthObjects; //To keep track of depth per object. Needed to determine depths for children.
+	std::map<int, int> traversalDepth; //Amount of objects per depth
+	std::multimap<float,int> overallTraversalDepthStats; //Average depth coupled with amount of obejcts. Used to calculate the final stats.
 	void printTraversalDepthStats();
 	int amountRootObjects;
 	int amountOtherObjects;

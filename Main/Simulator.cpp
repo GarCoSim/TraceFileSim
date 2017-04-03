@@ -470,7 +470,7 @@ void Simulator::lockOperation(TraceFileLine line){
  */
 void Simulator::readOperation(TraceFileLine line){
 	//Check if object is already a zombie
-	if (catchZombies && line.objectID != -1)
+	if (line.objectID != -1)
 		myMemManager->readObject(line.objectID);
 
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
@@ -511,7 +511,7 @@ void Simulator::readOperation(TraceFileLine line){
  */
 void Simulator::storeOperation(TraceFileLine line){
 	//Check if object is already a zombie
-	if (catchZombies && line.objectID != -1)
+	if (line.objectID != -1)
 		myMemManager->readObject(line.objectID);
 
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field

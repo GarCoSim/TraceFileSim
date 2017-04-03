@@ -268,9 +268,9 @@ void Collector::lastStats() {
 	  	float totalAverageDepth = 0;
 	  	int divider = 0;
 
-	  	for (it=traversalDepthStats.begin(); it!=traversalDepthStats.end(); ++it) {
-	  		totalAverageDepth = totalAverageDepth + (float)((*it).first * (float)(*it).second);
-	  		divider += (*it).second;
+	  	for (it=overallTraversalDepthStats.begin(); it!=overallTraversalDepthStats.end(); ++it) {
+	  		totalAverageDepth = totalAverageDepth + (float)(it->first * (float)it->second);
+	  		divider += it->second;
 
 	  	}
 	  	
@@ -283,42 +283,25 @@ void Collector::lastStats() {
 
 void Collector::printTraversalDepthStats() {
 	int totalTraversalDepth = 0;
-	unsigned int deepestDepth = 0;
-	unsigned int depth;
-
+	unsigned int deepestDepth = traversalDepth.rbegin()->first;
 	std::map<int,int>::iterator it;
-	std::vector<int> depths(100, 0);
+
+	fprintf(traversalDepthFile, "GC %i Stats:\n", statGcNumber);
+	fprintf(traversalDepthFile, "\nTraversalDepth per level:\n");
 	for (it=traversalDepth.begin(); it!=traversalDepth.end(); ++it) {
-		depth = (unsigned int)it->second;
-		totalTraversalDepth += depth;
-		if (deepestDepth < depth) {
-			deepestDepth = depth;
-		}
-
-		if (depth < depths.size()) {
-			depths[depth] = depths[depth] + 1;
-		}
-		else {
-			depths.resize(depth);
-			depths[depth] = 1;
-		}
+		fprintf(traversalDepthFile, "%i : %i \n", it->first, it->second);
+		totalTraversalDepth += it->first * it->second;
 	}
-	float averageDepth = (float)totalTraversalDepth/traversalDepth.size();
 
-	fprintf(traversalDepthFile, "\nGC %i Stats:\n", statGcNumber);
-	fprintf(traversalDepthFile, "AverageDepth: %.2f  |  DeepestDepth: %u  |  RootObjects: %i  |  OtherObjcts: %i", averageDepth, deepestDepth, amountRootObjects, amountOtherObjects);
+	float averageDepth = (float)totalTraversalDepth/(float)traversalDepthObjects.size();
 
-	fprintf(traversalDepthFile, "\n\nTraversalDepth per level:\n");
-	for (unsigned int i = 0; i < depths.size(); i++) {
-		if (depths.at(i) != 0) {
-			fprintf(traversalDepthFile, "%i : %i \n", i, depths.at(i));
-		}
-	}
-	fprintf(traversalDepthFile, "\n------------------------------------------------------------------------------------\n");
+	fprintf(traversalDepthFile, "\nAverageDepth: %.2f  |  DeepestDepth: %u  |  RootObjects: %i  |  OtherObjcts: %i", averageDepth, deepestDepth, amountRootObjects, amountOtherObjects);
 
+
+	fprintf(traversalDepthFile, "\n\n------------------------------------------------------------------------------------\n\n");
 	fflush(traversalDepthFile);
 
-	traversalDepthStats.insert ( std::pair<float,int>(averageDepth, amountRootObjects+amountOtherObjects) );
+	overallTraversalDepthStats.insert ( std::pair<float,int>(averageDepth, amountRootObjects+amountOtherObjects) );
 }
 
 /** Calls the MemoryManager::requestDelete(Object*, int) method on the object

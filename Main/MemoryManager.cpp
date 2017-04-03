@@ -677,6 +677,9 @@ int MemoryManager::requestRootDelete(int thread, int id){
 				zombies.insert( std::pair<int,int>(id, gLineInTrace) );
 			}
 		}
+		else {
+			fprintf(stderr, "Unable to remove Object %i to roots. Line: %d\n", id, gLineInTrace);
+		}
 	}
 
 	return 0;
@@ -708,7 +711,7 @@ int MemoryManager::requestRootAdd(int thread, int id){
 			zombies.insert( std::pair<int,int>(id, gLineInTrace) );
 		}
 		else {
-			printf("Unable to add Object %i to roots\n", id);
+			fprintf(stderr, "Unable to add Object %i to roots. Line: %d\n", id, gLineInTrace);
 		}
 	}
 
@@ -719,15 +722,22 @@ void MemoryManager::readObject(int id) {
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
 
 	//Check if obj should be dead. Only works if reference counting is used.
-	if (myWriteBarrier && obj) {
-		if (obj->getReferenceCount() == 0) {
-			myWriteBarrier->alreadyDeadObject(obj);
-			obj = myObjectContainers[GENERATIONS-1]->getByID(id);
+	if (catchZombies) {
+		if (myWriteBarrier && obj) {
+			if (obj->getReferenceCount() == 0) {
+				myWriteBarrier->alreadyDeadObject(obj);
+				obj = myObjectContainers[GENERATIONS-1]->getByID(id);
+			}
+		}
+
+		if (!obj) {
+			zombies.insert( std::pair<int,int>(id, gLineInTrace) );
 		}
 	}
-
-	if (!obj) {
-		zombies.insert( std::pair<int,int>(id, gLineInTrace) );
+	else {
+		if (!obj) {
+			fprintf(stderr, "Unable to read Object %i. Line: %d\n", id, gLineInTrace);
+		}
 	}
 }
 
@@ -930,7 +940,7 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 			}
 			else {
 				std::stringstream ss;
-				ss << "Child object " << childID << " does not exist. Ignoring trace file statement and continuing.\n";
+				ss << "Child object " << childID << " does not exist. Line: " << gLineInTrace << " Ignoring trace file statement and continuing.\n";
 				ERRMSG(ss.str().c_str());
 				throw 19;
 			}
@@ -1110,7 +1120,7 @@ int MemoryManager::setArrayletPointer(int thread, int parentID, size_t parentSlo
 		}
 		else {
 			std::stringstream ss;
-			ss << "Parent object " << parentID << " does not exist. Ignoring trace file statement and continuing.\n";
+			ss << "Parent object " << parentID << " does not exist. Line: " << gLineInTrace << " Ignoring trace file statement and continuing.\n";
 			ERRMSG(ss.str().c_str());
 			return 0;
 		}
@@ -1156,12 +1166,20 @@ int MemoryManager::regionSetPointer(int thread, int parentID, size_t parentSlot,
 void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
 	Object* myChild;
 	Object* myOldChild;
+	Object* obj;
+
+	if (objectID != 0)
+		obj = myObjectContainers[GENERATIONS-1]->getByID(objectID);
+	else
+		obj = NULL;
 
 	if (catchZombies && (objectID != 0) ) {
-		Object* obj = myObjectContainers[GENERATIONS-1]->getByID(objectID);
 		if ( !obj ) {
 			zombies.insert( std::pair<int,int>(objectID, gLineInTrace) );
 		}
+	}
+	else if ( (objectID != 0) && (!obj) ) {
+		fprintf(stderr, "Unable to set static pointer to Object %i. Line: %d\n", objectID, gLineInTrace);
 	}
 
 	myOldChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);

@@ -173,7 +173,7 @@ void ObjectContainer::setStaticReference(int classID, int fieldOffset, int objec
 	if (classReferences.size() <= (size_t) classID)
 		classReferences.resize((size_t)classID + 1);
 
-	if (objectID) {
+	if (objectID != 0) {
 		classReferences[classID][fieldOffset] = getByID(objectID);
 	}
 	else {

@@ -39,6 +39,7 @@ void MarkSweepCollector::collect(int reason) {
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 
+	traversalDepthObjects.clear();
 	traversalDepth.clear();
 	amountRootObjects = 0;
 	amountOtherObjects = 0;
@@ -73,10 +74,11 @@ void MarkSweepCollector::mark() {
 	initializeMarkPhase();
 	enqueueAllRoots();
 
-	amountRootObjects = traversalDepth.size();
+	amountRootObjects = traversalDepthObjects.size();
 
 	//breadth first through the tree
 	size_t i;
+	int childDepth;
 	while (!myQueue.empty()) {
 		Object* currentObj = myQueue.front();
 		myQueue.pop();
@@ -91,11 +93,17 @@ void MarkSweepCollector::mark() {
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 				child->setVisited(true);
 				myQueue.push(child);
-				traversalDepth.insert( std::pair<int,int>(child->getID(),  ((traversalDepth.find(currentObj->getID())->second) +1)   ) );
+
+				childDepth = (traversalDepthObjects.find(currentObj->getID())->second) + 1;
+				traversalDepthObjects.insert( std::pair<int,int>(child->getID(), childDepth));
+				if (traversalDepth.find(childDepth) != traversalDepth.end())
+					traversalDepth.at(childDepth) = traversalDepth.at(childDepth) + 1;
+				else
+					traversalDepth.insert(std::pair<int, int>(childDepth, 1));
 			}
 		}
 	}
-	amountOtherObjects = traversalDepth.size() - amountRootObjects;
+	amountOtherObjects = traversalDepthObjects.size() - amountRootObjects;
 }
 
 /** Deletes all unmarked objects in all generations
@@ -165,7 +173,12 @@ void MarkSweepCollector::enqueueAllRoots() {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
 					myQueue.push(currentObj);
-					traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
+
+					traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
+					if (traversalDepth.find(1) != traversalDepth.end())
+						traversalDepth.at(1) = traversalDepth.at(1) + 1;
+					else
+						traversalDepth.insert(std::pair<int, int>(1,1));
 				}
 			}
 		}
@@ -175,7 +188,12 @@ void MarkSweepCollector::enqueueAllRoots() {
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
 				myQueue.push(currentObj);
-				traversalDepth.insert( std::pair<int,int>(currentObj->getID(), 1) );
+
+				traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
+				if (traversalDepth.find(1) != traversalDepth.end())
+					traversalDepth.at(1) = traversalDepth.at(1) + 1;
+				else
+					traversalDepth.insert(std::pair<int, int>(1,1));
 			}
 		}
 	}
