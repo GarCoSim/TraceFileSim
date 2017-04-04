@@ -678,7 +678,7 @@ int MemoryManager::requestRootDelete(int thread, int id){
 			}
 		}
 		else {
-			fprintf(stderr, "Unable to remove Object %i to roots. Line: %d\n", id, gLineInTrace);
+			fprintf(stderr, "Unable to remove Object %i from roots. Line: %d\n", id, gLineInTrace);
 		}
 	}
 

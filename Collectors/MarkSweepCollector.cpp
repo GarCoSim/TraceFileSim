@@ -51,10 +51,10 @@ void MarkSweepCollector::collect(int reason) {
 	mark();
 	sweep();
 
-	if (countTraversalDepth != 0)
+	if (countTraversalDepth)
 		printTraversalDepthStats();
 
-	if (countRoots != 0)
+	if (countRoots)
 		printRootCountStats();
 	/* Uncomment this to enable compaction
 	if (statFreedDuringThisGC > 0) {
@@ -101,7 +101,7 @@ void MarkSweepCollector::mark() {
 				child->setVisited(true);
 				myQueue.push(child);
 
-				if (countTraversalDepth != 0) {
+				if (countTraversalDepth) {
 					childDepth = (traversalDepthObjects.find(currentObj->getID())->second) + 1;
 					traversalDepthObjects.insert( std::pair<int,int>(child->getID(), childDepth));
 					if (traversalDepth.find(childDepth) != traversalDepth.end())
@@ -176,7 +176,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 			for (j = 0; j < roots.size(); j++) {
 				currentObj = roots[j];
 
-				if (currentObj && (countRoots != 0) ) {
+				if (currentObj && (countRoots) ) {
 					if (rootObjects.find(currentObj->getID()) != rootObjects.end())
 						rootObjects.at(currentObj->getID()) = rootObjects.at(currentObj->getID()) + 1;
 					else
@@ -191,7 +191,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 					}
 					myQueue.push(currentObj);
 
-					if (countTraversalDepth != 0) {
+					if (countTraversalDepth) {
 						traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
 						if (traversalDepth.find(1) != traversalDepth.end())
 							traversalDepth.at(1) = traversalDepth.at(1) + 1;
@@ -205,7 +205,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 		for (j = 0; j < myObjectContainer->getGenRootSize(); j++) {
 			currentObj = myObjectContainer->getGenRoot(j);
 
-			if (currentObj && (countRoots != 0) ) {
+			if (currentObj && (countRoots) ) {
 				if (rootObjects.find(currentObj->getID()) != rootObjects.end())
 					rootObjects.at(currentObj->getID()) = rootObjects.at(currentObj->getID()) + 1;
 				else
@@ -216,7 +216,7 @@ void MarkSweepCollector::enqueueAllRoots() {
 				currentObj->setVisited(true);
 				myQueue.push(currentObj);
 
-				if (countTraversalDepth != 0) {
+				if (countTraversalDepth) {
 					traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
 					if (traversalDepth.find(1) != traversalDepth.end())
 						traversalDepth.at(1) = traversalDepth.at(1) + 1;
