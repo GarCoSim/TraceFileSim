@@ -11,7 +11,7 @@
 #include "../WriteBarriers/WriteBarrier.hpp"
 #include "../Main/MemoryManager.hpp"
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 
@@ -126,7 +126,7 @@ void Collector::printStats() {
 	allGCs += longestGC;
 
 	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8lld | %14s | %10zu | %14zu "
+	fprintf(gLogFile, "" TRACE_FILE_LINE_FORMAT " | %14s | %10zu | %14zu "
 			"| %13zu | %10zu | %10zu | %10d | %4.3f | %20zu | %12zu | %21zu\n", gLineInTrace,
 			statCollectionReasonString, statGcNumber, statFreedObjects,
 			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs, statFreedDuringThisGC, statCopiedObjects, statCopiedDuringThisGC);
@@ -219,7 +219,6 @@ int Collector::promotionPhase() {
 			if (age
 					>= PROMOTIONAGE + PROMOTIONAGE * myGeneration
 							/*+ currentObj->getGeneration() * PROMOTIONAGEFACTOR*/) {
-				//fprintf(stderr, "(%lld) promoting object of age %d\n",gLineInTrace, age);
 				if (currentObj->getGeneration() < GENERATIONS - 1) {
 					noSpaceUpstairs = myMemManager->requestPromotion(
 							currentObj);

@@ -9,7 +9,7 @@
 
 #include "BasicAllocator.hpp"
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 using namespace std;
 
 

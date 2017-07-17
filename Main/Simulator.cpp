@@ -13,7 +13,7 @@
 
 using namespace std;
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern int gAllocations;
 extern int forceAGCAfterEveryStep;
 
@@ -220,7 +220,7 @@ int Simulator::doNextStep(){
 	if (ONE_SECOND_PASSED) {
 		start = clock();
 		seconds++;
-		printf("[%3ds] Line in tracefile: %7lld\n", seconds, gLineInTrace);
+		printf("[%3ds] Line in tracefile: " TRACE_FILE_LINE_FORMAT "\n", seconds, gLineInTrace);
 	}
 	if(myLastStepWorked){
 		//if content exists, advice the MM(memory manager) to execute

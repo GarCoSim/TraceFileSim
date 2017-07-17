@@ -12,10 +12,10 @@
 #include "../Main/MemoryManager.hpp"
 #include <sstream>
 #include <cstdlib>
-extern LINESIZE gLineInTrace;
+
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
-
 
 FILE* gcFile;
 
@@ -104,7 +104,7 @@ void MarkSweepCollector::sweep() {
 				ERRMSG(ss.str().c_str());
 				exit(1);
 			}
-			
+
 			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
 			heapPosition += currentObj->getHeapSize();
 

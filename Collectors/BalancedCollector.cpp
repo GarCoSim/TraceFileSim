@@ -9,7 +9,7 @@
 #define MAXAGEP 10 //Probability of MAXAGE to be chosen in %
 #define COLLECTIONSETSIZE 0.5 //Absolute maximum size of collection set. default is 0.5 which means 50% of all regions
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern FILE* balancedLogFile;

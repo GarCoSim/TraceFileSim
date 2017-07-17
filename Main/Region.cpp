@@ -1,6 +1,6 @@
 #include "Region.hpp"
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* balancedLogFile;
 
 namespace traceFileSimulator {

@@ -8,7 +8,7 @@
 #include "Object.hpp"
 #include <stdio.h>
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 
 namespace traceFileSimulator {
 
@@ -92,7 +92,7 @@ Object* Object::getReferenceTo(size_t pointerNumber){
 int Object::setPointer(size_t pointerNumber, Object* target){
 	if(this->allocationType == allocationTypeObject){
 		if(pointerNumber >= myPointersMax){
-			fprintf(stderr, "ERROR (%lld) in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID());
+			fprintf(stderr, "ERROR (" TRACE_FILE_LINE_FORMAT ") in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID());
 			fflush(stdout);
 			return 0;
 		}

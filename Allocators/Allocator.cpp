@@ -12,7 +12,7 @@
 #include "../defines.hpp"
 #include <math.h>
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* balancedLogFile;
 
 using namespace std;
@@ -550,7 +550,7 @@ void Allocator::removeEdenRegion(size_t regionID){
  *
  */
 void Allocator::printMap() {
-	fprintf(heapMap, "%7lld", gLineInTrace);
+	fprintf(heapMap, "" TRACE_FILE_LINE_FORMAT "", gLineInTrace);
 
 	size_t i;
 	for (i = 0; i < overallHeapSize; i++) {
@@ -582,7 +582,7 @@ void Allocator::printMap() {
 void Allocator::setBitUsed(size_t heapIndex) {
 	if (heapIndex > (size_t) overallHeapSize) {
 		fprintf(stderr,
-				"ERROR(Line %lld): setBitUsed request to illegal slot %zu\n",
+				"ERROR(Line " TRACE_FILE_LINE_FORMAT "): setBitUsed request to illegal slot %zu\n",
 				gLineInTrace, heapIndex);
 		//exit(1);
 		throw 19; //With throw instead of exit: Stack is available for debugging!
@@ -620,7 +620,7 @@ void Allocator::printStats() {
 
 	size_t bytesAllocated = overallHeapSize - getFreeSize();
 
-	fprintf(allocLog, "%7lld: alloc: %zu obj: %7d\n", gLineInTrace,
+	fprintf(allocLog, "" TRACE_FILE_LINE_FORMAT ": alloc: %zu obj: %7d\n", gLineInTrace,
 			bytesAllocated, statLiveObjects);
 }
 

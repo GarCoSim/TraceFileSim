@@ -15,7 +15,7 @@
 using namespace traceFileSimulator;
 using namespace std;
 //logging vars
-int gLineInTrace;
+TRACE_FILE_LINE_SIZE gLineInTrace;
 int gAllocations;
 FILE* gLogFile;
 FILE* gDetLog;
@@ -302,10 +302,23 @@ int main(int argc, char *argv[]) {
 	Simulator* simulator = new Simulator(filename, heapSize, maxHeapSize, highWatermark, collector, traversal, allocator, writebarrier, finalGC);
 
 	while(simulator->lastStepWorked() == 1) {
-		simulator->doNextStep();
-		if(WRITE_DETAILED_LOG) {
-			fflush(gDetLog);
-		}
+        try {
+            simulator->doNextStep();
+#if WRITE_DETAILED_LOG
+            fflush(gDetLog);
+#endif
+        } catch(...){
+            simulator->lastStats();
+            clock_t end = clock();
+            double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
+            //double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
+            printf("Simulation ended with a thrown exception, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
+            fprintf(gLogFile,"Execution finished unsuccessfully after %0.3f seconds\n", elapsed_secs);
+            if(gLogFile) fclose(gLogFile);
+            if(balancedLogFile) fclose(balancedLogFile);
+            delete(simulator);
+            throw;
+        }
 	}
 
 	simulator->printStats();
@@ -314,8 +327,8 @@ int main(int argc, char *argv[]) {
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
-	printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
-	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
+	printf("Simulation ended successfully, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
+	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
 
 	fclose(gLogFile);
 	fclose(balancedLogFile);

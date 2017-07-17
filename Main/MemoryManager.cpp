@@ -32,7 +32,7 @@
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern FILE* balancedLogFile;
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern string globalFilename;
 
 namespace traceFileSimulator {
@@ -242,12 +242,12 @@ void *MemoryManager::shift(size_t size){
 	size_t spaceOnTop = myAllocators[GENERATIONS-1]->getFreeSize();
 	while(result == NULL && spaceOnTop >= size){
 #if WRITE_DETAILED_LOG==1
-			fprintf(gDetLog,"(%lld) SHIFTING for %zu\n",gLineInTrace,size);
+			fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") SHIFTING for %zu\n",gLineInTrace,size);
 #endif
 		myGarbageCollectors[GENERATIONS-1]->collect((int)reasonShift);
 		outOfMemory = myGarbageCollectors[GENERATIONS-1]->promotionPhase();
 		if(outOfMemory==-1){
-			fprintf(stderr,"(%lld) OUT OF MEMORY: (%zu)\n",gLineInTrace,size);
+			fprintf(stderr,"(" TRACE_FILE_LINE_FORMAT ") OUT OF MEMORY: (%zu)\n",gLineInTrace,size);
 			exit(1);
 		}
 		result = myAllocators[0]->gcAllocate(size);
@@ -266,7 +266,7 @@ void *MemoryManager::shift(size_t size){
 void *MemoryManager::allocate(size_t size, int generation) {
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
-		fprintf(stderr, "ERROR (Line %lld): allocate to illegal generation: %d\n",
+		fprintf(stderr, "ERROR (Line " TRACE_FILE_LINE_FORMAT "): allocate to illegal generation: %d\n",
 				gLineInTrace, generation);
 		exit(1);
 	}
@@ -277,7 +277,7 @@ void *MemoryManager::allocate(size_t size, int generation) {
 	while (result == NULL && gen < GENERATIONS) {
 #if WRITE_DETAILED_LOG == 1
 		fprintf(gDetLog,
-				"(%lld) Trigger Gc in generation %d.\n",
+				"(" TRACE_FILE_LINE_FORMAT ") Trigger Gc in generation %d.\n",
 				gLineInTrace, gen);
 #endif
 
@@ -347,17 +347,12 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
 	for (i = 0; i < GENERATIONS; i++) {
 		if (i == GENERATIONS - 1) {
 			myObjectContainers[i]->addToRoot(object, thread);
-			//fprintf(stderr,"(%lld)DEBUG: rootset %d\n",gLineInTrace, myObjectContainers[i]->getRootSize());
-			//if(myObjectContainers[1]->getRootSize() != myObjectContainers[0]->getGenRootCount()){
-				//exit(1);
-				//fprintf(stderr,"(%lld)DEBUG: EXIT\n",gLineInTrace);
-			//}
 		} //otherwise if there is more than one generation, add new object to remSets
 		else {
 			myObjectContainers[i]->add(object);
 			myObjectContainers[i]->addToGenRoot(object);
 #if WRITE_DETAILED_LOG == 1
-			fprintf(gDetLog, "(%lld) Adding %d to remset %d\n", gLineInTrace,
+			fprintf(gDetLog, "(" TRACE_FILE_LINE_FORMAT ") Adding %d to remset %d\n", gLineInTrace,
 					object->getID(), i);
 #endif
 		}
@@ -378,7 +373,7 @@ void MemoryManager::addRootToContainers(Object* object, int thread) {
  */
 int MemoryManager::preAllocateObjectDefault(int thread, int id, size_t size, size_t refCount, int classID) {
 #if WRITE_DETAILED_LOG == 1
-	fprintf(gDetLog, "(%lld) Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
+	fprintf(gDetLog, "(" TRACE_FILE_LINE_FORMAT ") Add Root to thread %d with id %d\n", gLineInTrace, thread, id);
 #endif
 	void *address = NULL;
 	size_t regionSize = myAllocators[GENERATIONS-1]->getRegionSize();
@@ -428,13 +423,13 @@ int MemoryManager::preAllocateObjectDefault(int thread, int id, size_t size, siz
 		}
 		else{
 			//TODO: Resize or Merge regions?
-
-			fprintf(gLogFile, "ERROR: Object of size %zu (Line: %lld) is too large for a single region of size %zu.\n", size, gLineInTrace, regionSize);
+			fprintf(stderr, "ERROR: Object of size %zu (Line: " TRACE_FILE_LINE_FORMAT ") is too large for a single region of size %zu.\n", size, gLineInTrace, regionSize);
+			fprintf(gLogFile, "ERROR: Object of size %zu (Line: " TRACE_FILE_LINE_FORMAT ") is too large for a single region of size %zu.\n", size, gLineInTrace, regionSize);
 			fclose(gLogFile);
 
 			if(_collector == balanced)
 			{
-				fprintf(balancedLogFile, "ERROR: Object of size %zu (Line: %lld) is too large for a single region of size %zu.\n", size, gLineInTrace, regionSize);
+				fprintf(balancedLogFile, "ERROR: Object of size %zu (Line: " TRACE_FILE_LINE_FORMAT ") is too large for a single region of size %zu.\n", size, gLineInTrace, regionSize);
 				fclose(balancedLogFile);
 			}
 
@@ -543,8 +538,8 @@ int MemoryManager::allocateObjectToRootset(int thread, int id, size_t size, size
  */
 inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t size, size_t refCount, int classID,void *address) {//post allocation; by Tristan
 	if (address == NULL) {
-		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line %lld.\n",size, gLineInTrace);
-		fprintf(stderr, "ERROR(Line %lld): Out of memory (%zu bytes)\n",gLineInTrace,size);
+		fprintf(gLogFile, "Failed to allocate %zu bytes in trace line " TRACE_FILE_LINE_FORMAT ".\n",size, gLineInTrace);
+		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): Out of memory (%zu bytes)\n",gLineInTrace,size);
 		myGarbageCollectors[GENERATIONS-1]->lastStats();
 		throw 19;
 	}
@@ -630,7 +625,7 @@ int MemoryManager::requestRootAdd(int thread, int id){
  */
 void MemoryManager::requestDelete(Object* object, int gGC) {
 #if WRITE_DETAILED_LOG == 1
-	fprintf(gDetLog, "(%lld) Delete object with id %d\n", gLineInTrace,
+	fprintf(gDetLog, "(" TRACE_FILE_LINE_FORMAT ") Delete object with id %d\n", gLineInTrace,
 			object->getID());
 #endif
 	int i;
@@ -640,7 +635,7 @@ void MemoryManager::requestDelete(Object* object, int gGC) {
 	for (i = objGeneration + 1; i < GENERATIONS; i++) {
 		int status = myObjectContainers[i]->removeReferenceTo(object);
 		if (status == -1) {
-			fprintf(stderr, "ERROR(Line %lld):Object %d(g%d) could not be removed from object container %d\n", gLineInTrace, object->getID(), objGeneration, i);
+			fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "):Object %d(g%d) could not be removed from object container %d\n", gLineInTrace, object->getID(), objGeneration, i);
 		}
 	}
 
@@ -683,7 +678,7 @@ void MemoryManager::requestDelete(Object* object, int gGC) {
 int MemoryManager::requestPromotion(Object* object) {
 	if (object->getGeneration() == GENERATIONS - 1) {
 #if WRITE_DETAILED_LOG == 1
-		fprintf(gDetLog,"(%lld) Request to promote %d, but as it is in maxGen, not granted.\n",gLineInTrace, object->getID());
+		fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Request to promote %d, but as it is in maxGen, not granted.\n",gLineInTrace, object->getID());
 #endif
 		return 0;
 	}
@@ -693,7 +688,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	size_t size = object->getHeapSize();
 
 #if WRITE_DETAILED_LOG == 1
-	fprintf(gDetLog, "(%lld) Request to promote %d from %d to %d\n",gLineInTrace, object->getID(), oldGen, newGen);
+	fprintf(gDetLog, "(" TRACE_FILE_LINE_FORMAT ") Request to promote %d from %d to %d\n",gLineInTrace, object->getID(), oldGen, newGen);
 #endif
 
 	void *address = myAllocators[newGen]->gcAllocate(size);
@@ -701,7 +696,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	if (address == NULL) {
 		//there is not enough space upstairs, stay where you are for a little longer
 #if WRITE_DETAILED_LOG == 1
-		fprintf(gDetLog,"(%lld) Request to promote %d from %d to %d not possible (no space)\n",gLineInTrace, object->getID(), oldGen, newGen);
+		fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Request to promote %d from %d to %d not possible (no space)\n",gLineInTrace, object->getID(), oldGen, newGen);
 #endif
 		//this line signalizes that there was an out of space error
 		return 1;
@@ -717,7 +712,7 @@ int MemoryManager::requestPromotion(Object* object) {
 	//remove all remSet entries
 	while (myObjectContainers[oldGen]->removeFromGenRoot(object) != -1) {
 #if WRITE_DETAILED_LOG == 1
-		fprintf(gDetLog,"(%lld) Removing myself %d from remset %d (promotion))\n",gLineInTrace, object->getID(), oldGen);
+		fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Removing myself %d from remset %d (promotion))\n",gLineInTrace, object->getID(), oldGen);
 #endif
 	}
 	//handle children
@@ -727,7 +722,7 @@ int MemoryManager::requestPromotion(Object* object) {
 		if (child && child->getGeneration() == oldGen) {
 			myObjectContainers[oldGen]->addToGenRoot(child);
 #if WRITE_DETAILED_LOG == 1
-			fprintf(gDetLog,"(%lld) Adding %d to remset %d (parent (%d) was promoted))\n",gLineInTrace, child->getID(), oldGen, object->getID());
+			fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Adding %d to remset %d (parent (%d) was promoted))\n",gLineInTrace, child->getID(), oldGen, object->getID());
 #endif
 		}
 	}
@@ -777,7 +772,7 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 	int parentGeneration;
 
 #if WRITE_DETAILED_LOG == 1
-	fprintf(gDetLog, "(%lld) Set object pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
+	fprintf(gDetLog, "(" TRACE_FILE_LINE_FORMAT ") Set object pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
 #endif
 
 	parent = myObjectContainers[GENERATIONS - 1]->getByID(parentID);
@@ -814,11 +809,11 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 		int i;
 		for (i = oldChild->getGeneration(); i < parentGeneration; i++) {
 #if WRITE_DETAILED_LOG == 1
-			fprintf(gDetLog,"(%lld) removing %d from remset %d (i am oldchild of (%d) in setObjectPointer)\n",gLineInTrace, child->getID(), i, parent->getID());
+			fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") removing %d from remset %d (i am oldchild of (%d) in setObjectPointer)\n",gLineInTrace, child->getID(), i, parent->getID());
 #endif
 			int status = myObjectContainers[i]->removeFromGenRoot(oldChild);
 			if (status == -1) {
-				fprintf(stderr,"ERROR (Line %lld): could not remove oldChild %d from remset %d\n",gLineInTrace, oldChild->getID(), i);
+				fprintf(stderr,"ERROR (Line " TRACE_FILE_LINE_FORMAT "): could not remove oldChild %d from remset %d\n",gLineInTrace, oldChild->getID(), i);
 				//TODO: shouldn't there be an exit/ return failure?
 			}
 		}
@@ -840,7 +835,7 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 			if (child)
 				myObjectContainers[i]->addToGenRoot(child);
 #if WRITE_DETAILED_LOG == 1
-			fprintf(gDetLog,"(%lld) Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
+			fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
 #endif
 		}
 	}
@@ -877,7 +872,7 @@ int MemoryManager::setArrayletPointer(int thread, int parentID, size_t parentSlo
 	size_t spineSlot = parentSlot / leafMaxPointers;
 
 #if WRITE_DETAILED_LOG == 1
-	fprintf(gDetLog, "(%lld) Set arraylet pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
+	fprintf(gDetLog, "(" TRACE_FILE_LINE_FORMAT ") Set arraylet pointer from %d(%d) to %d\n", gLineInTrace,parentID, parentSlot, childID);
 #endif
 
 	child = NULL;
@@ -905,11 +900,12 @@ int MemoryManager::setArrayletPointer(int thread, int parentID, size_t parentSlo
 		int i;
 		for (i = oldChild->getGeneration(); i < parentGeneration; i++){
 #if WRITE_DETAILED_LOG == 1
-			fprintf(gDetLog,"(%lld) removing %d from remset %d (i am oldchild of (%d) in setArrayletPointer)\n",gLineInTrace, child->getID(), i, parent->getID());
+			fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") removing %d from remset %d (i am oldchild of (%d) in setArrayletPointer)\n",gLineInTrace, child->getID(), i, parent->getID());
 #endif
 			int status = myObjectContainers[i]->removeFromGenRoot(oldChild);
-			if (status == -1){
-				fprintf(stderr,"ERROR (Line %lld): could not remove oldChild %d from remset %d\n",gLineInTrace, oldChild->getID(), i);
+			if (status == -1)
+			{
+				fprintf(stderr,"ERROR (Line " TRACE_FILE_LINE_FORMAT "): could not remove oldChild %d from remset %d\n",gLineInTrace, oldChild->getID(), i);
 				//TODO: shouldn't there be an exit/ return failure?
 			}
 		}
@@ -931,7 +927,7 @@ int MemoryManager::setArrayletPointer(int thread, int parentID, size_t parentSlo
 			if (child)
 				myObjectContainers[i]->addToGenRoot(child);
 #if WRITE_DETAILED_LOG == 1
-			fprintf(gDetLog,"(%lld) Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
+			fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
 #endif
 		}
 	}

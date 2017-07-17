@@ -11,7 +11,7 @@
 #include "../Main/Object.hpp"
 #include "../Main/MemoryManager.hpp"
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 

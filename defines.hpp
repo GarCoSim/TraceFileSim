@@ -56,11 +56,12 @@
 #endif
 //END DEBUGGING FLAGS
 
-//TYPES
-#ifndef LINESIZE
-#define LINESIZE unsigned long long
+//TRACE FILE LINE DEFINES
+#ifndef TRACE_FILE_LINE_SIZE
+#define TRACE_FILE_LINE_SIZE unsigned long long
+#define TRACE_FILE_LINE_FORMAT "%lld"
 #endif
-//END TYPES
+//END TRACE FILE LINE DEFINES
 
 //ERROR HANDLING
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)

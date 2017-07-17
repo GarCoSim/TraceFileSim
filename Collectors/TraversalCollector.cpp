@@ -12,7 +12,7 @@
 #include "../Main/MemoryManager.hpp"
 #include <sstream>
 #include <cstdlib>
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern FILE* balancedLogFile;

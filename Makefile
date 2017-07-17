@@ -5,7 +5,7 @@ COLLECTORS = Collectors/Collector.o Collectors/MarkSweepCollector.o Collectors/T
 MAIN = Main/Array.o Main/Optional.o Main/CardTable.o Main/Object.o Main/ObjectContainer.o Main/MemoryManager.o Main/Simulator.o Main/Region.o
 WRITEBARRIERS = WriteBarriers/WriteBarrier.o WriteBarriers/RecyclerWriteBarrier.o WriteBarriers/ReferenceCountingWriteBarrier.o
 
-all: traceFileSim
+all: traceFileSim clean_objects
 
 traceFileSim: $(ALLOCATORS) $(COLLECTORS) $(MAIN) $(WRITEBARRIERS)
 

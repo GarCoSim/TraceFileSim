@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <sstream>
 
-extern LINESIZE gLineInTrace;
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 
 namespace traceFileSimulator {
 
@@ -25,7 +25,7 @@ ObjectContainer::ObjectContainer() {
 void ObjectContainer::addToGenRoot(Object* object) {
 	Optional<size_t>* remSetSlot = getRemSetSlot();
 	if (!remSetSlot->isSet()) {
-		fprintf(stderr, "ERROR(Line %lld): no remSet slot found\n", gLineInTrace);
+		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): no remSet slot found\n", gLineInTrace);
 		throw 19;
 	}
 	remSet.at(remSetSlot->getValue()) = object;
@@ -103,7 +103,7 @@ vector<Object*> ObjectContainer::getLiveObjects() {
 Object* ObjectContainer::getByID(int id) {
 	//fprintf(stderr, "Getting object %i by id. Dings = %li\n", id, (long)objectMap[id]);
 	if (objectMap.find(id) == objectMap.end())
-		fprintf(stderr, "ERROR(Line %lld): object with this id (%d) was not found\n", gLineInTrace, id);
+		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): object with this id (%d) was not found\n", gLineInTrace, id);
 	//fflush(stdin);
 	return objectMap[id];
 }
@@ -114,7 +114,7 @@ Object* ObjectContainer::getRoot(int thread, int objectID) {
 
 int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
 	if (!object){
-		fprintf(stderr, "ERROR(Line %lld): trying to delete a non existing object\n", gLineInTrace);
+		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): trying to delete a non existing object\n", gLineInTrace);
 		std::stringstream ss;
 		ss << "ERROR(Line"<< gLineInTrace << "): trying to delete an object that doesn't exist\n";
 		ERRMSG(ss.str().c_str());
@@ -133,7 +133,7 @@ int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
 int ObjectContainer::deleteObject(int objectID, bool deleteFlag) {
 	Object *object = objectMap[objectID];
 	if (!object) {
-		fprintf(stderr, "ERROR(Line %lld): object to delete not found. id: %d\n", gLineInTrace, objectID);
+		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): object to delete not found. id: %d\n", gLineInTrace, objectID);
 		return -1;
 	}
 	objectMap.erase(objectID);
