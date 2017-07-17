@@ -37,7 +37,7 @@ public:
 
 private:
 	void *allocate(size_t size, size_t lower, size_t upper);
-	size_t getHeapIndex(Object *object);
+	Optional<size_t>* getHeapIndex(Object *object);
 
 	//unsigned char *heap; //now in Allocator.hpp
 };

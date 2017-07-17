@@ -6,7 +6,6 @@
 #Allocation tests
 HelloWorld basic; ./../../traceFileSim "/team/Andrii/Tracefiles for Sam/HelloWorld.trace" -h 500000 -c markSweep -a basic -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
 HelloWorld nextFit; ./../../traceFileSim "/team/Andrii/Tracefiles for Sam/HelloWorld.trace" -h 500000 -c markSweep -a nextFit -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 4; 330816; Statistics
-HelloWorld real; ./../../traceFileSim "/team/Andrii/Tracefiles for Sam/HelloWorld.trace" -h 500000 -c markSweep -a real -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
 #Collector tests
 HelloWorld traversal; ./../../traceFileSim "/team/Andrii/Tracefiles for Sam/HelloWorld.trace" -h 1000000 -c traversal -a nextFit -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics
 HelloWorld recycler; ./../../traceFileSim "/team/Andrii/Tracefiles for Sam/HelloWorld.trace" -h 500000 -c recycler -wb recycler -a nextFit -fGC enabled -l ../ExternalLogs/HelloWorld; ../ExternalLogs/HelloWorld.log; 3; 330816; Statistics

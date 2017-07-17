@@ -26,12 +26,16 @@ namespace traceFileSimulator {
 
 class MemoryManager;
 
+/** Collector simulating the IBM Balanced GC policy
+ *
+ */
 class BalancedCollector : public Collector {
 public:
 	BalancedCollector();
 	virtual ~BalancedCollector();
 	void collect(int reason);
 	void initializeHeap();
+	void addObjectToSpineRemset(Object* spine);
 
 private:
 	std::vector<unsigned int> myCollectionSet;
@@ -48,13 +52,11 @@ private:
 	void getRootObjects();
 	void copyObjectsInQueues();
 	void getRemsetObjects();
-	void copyObject(Object* object, int regionAge);
 	int copyAndForwardObject(Object *obj);
 	void updatePointers();
 	void emptyHelpers();
 	void removeObjects();
 	void updateRemsetPointers();
-	void printObjects(); //Good function to get stats from runs with Aaaron's Test Tracefiles
 	void printObjectInfo(Object *obj);
 	void reOrganizeRegions();
 	void printFinalStats();
@@ -65,17 +67,17 @@ private:
 	std::vector<unsigned int> copyToRegionsTB[NUM_THREADS];
 
 	void buildCollectionSet(int thread);
-	int  copy(int thread);
-	int  copyObjectsInQueues(int thread);
-	int  copyAndForwardObject(Object *obj,int thread);
+	int copy(int thread);
+	int copyObjectsInQueues(int thread);
+	int copyAndForwardObject(Object *obj,int thread);
 	void emptyHelpers(int thread);
 	void removeObjects(int regionIdx);
 	void reOrganizeRegions(int regionIdx);
-	int regionsInSet;
-	int regionsReclaimed; 
+	size_t regionsInSet;
+	size_t regionsReclaimed;
 
 	typedef struct deadObjectStats{
-		unsigned int regionID;
+		size_t regionID;
 		size_t percentDead; //percentage of the region occupied by dead objects
 	} deadObjectStats;
 	std::vector<deadObjectStats> deadSpace;

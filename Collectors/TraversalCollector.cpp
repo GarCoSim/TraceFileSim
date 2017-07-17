@@ -12,7 +12,7 @@
 #include "../Main/MemoryManager.hpp"
 #include <sstream>
 #include <cstdlib>
-extern int gLineInTrace;
+extern LINESIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 extern FILE* balancedLogFile;
@@ -33,7 +33,7 @@ void TraversalCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
+	fprintf(stderr, "GC #%zu at %0.3fs", statGcNumber + 1, elapsed_secs);
 	preCollect();
 
 	copy();
@@ -49,21 +49,22 @@ void TraversalCollector::collect(int reason) {
 	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
 }
 
+/** Swaps the two heap spaces.
+ * We need to do this step because we are simulating everything by maintaining
+ * an object list if we use a real allocator we do not delete the object,
+ * we just remove it from the object list it will then by overwritten afterwards.
+ * The real allocator just removes it from the object list
+ */
 void TraversalCollector::swap() {
-	/*
-	 * we need to do this step because we are simulating everything by maintaining an object list
-	 * if we use a real allocator we do not delete the object, we just remove it from the object list
-	 * it will then by overwritten afterwards. the real allocator just removes it from the object list
-	 */
-	size_t heapPosition= myAllocator->getOldSpaceStartHeapIndex();
+	size_t heapPosition= 0;
 	Object *currentObj;
 	RawObject* raw;
-	while(heapPosition<myAllocator->getOldSpaceEndHeapIndex()){
+	while(heapPosition < myAllocator->getOldSpaceEndHeapIndex()){
 
 		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
 
 		if(raw!=NULL){
-			currentObj = (Object *)raw->associatedObject;
+			currentObj = raw->associatedObject;
 			if(!currentObj){
 				std::stringstream ss;
 				ss << "Object does not exist at heap position " << heapPosition << ". The algorithm for stepping through the heap has failed.\n";
@@ -95,10 +96,16 @@ void TraversalCollector::swap() {
 	myAllocator->swapHeaps();
 }
 
+/** Sets the heap as a half heap split.
+ *
+ */
 void TraversalCollector::initializeHeap() {
 	myAllocator->setHalfHeapSize(true); //false for region-based; Tristan
 }
 
+/** Clears all data structures used to order operations.
+ *
+ */
 void TraversalCollector::emptyHelpers() {
 	while (!myQueue.empty())
 		myQueue.pop();
@@ -106,8 +113,13 @@ void TraversalCollector::emptyHelpers() {
 		myStack.pop();
 }
 
+/** Moves all objects to the copy space.
+ * Calls either TraversalCollector::breadthFirstCopying() or
+ * TraversalCollector::depthFirstCopying() depending on which
+ * order is set.
+ */
 void TraversalCollector::copy() {
-	//set all objects to dead and not visible firs
+	//set all objects to dead and not visible first
 	initializeMarkPhase();
 
 	emptyHelpers();
@@ -129,9 +141,13 @@ void TraversalCollector::copy() {
 	}
 }
 
+/** Puts all root objects in the appropriate helper structure depending on
+ * the set order. Also modifies the remset.
+ *
+ */
 void TraversalCollector::getAllRoots() {
 	Object* currentObj;
-	int i, j;
+	size_t i, j;
 	if (myGeneration == GENERATIONS - 1) {
 		//we are performing a glolab GC and can use it to fix possible rem set problems
 		//we clear all rem sets and fill them again while performing the marking
@@ -142,7 +158,7 @@ void TraversalCollector::getAllRoots() {
 		if(order==breadthFirst){
 			for (i = 0; i < NUM_THREADS; i++) {
 				roots = myObjectContainer->getRoots(i);
-				for (j = 0; j < (int)roots.size(); j++) {
+				for (j = 0; j < roots.size(); j++) {
 					currentObj = roots[j];
 					if (currentObj && !currentObj->getVisited()) {
 						currentObj->setVisited(true);
@@ -199,18 +215,25 @@ void TraversalCollector::getAllRoots() {
 	}
 }
 
+/** Moves an object to the copy space and adds a forward pointer.
+ *
+ * @param o Object to be moved.
+ */
 void TraversalCollector::copyAndForwardObject(Object *o) {
 	statCopiedDuringThisGC++;
 	statCopiedObjects++;
 	void *addressBefore, *addressAfter;
-	addressBefore = (void *) o->getAddress();
+	addressBefore = o->getAddress();
 	myAllocator->moveObject(o);
-	addressAfter = (void *) o->getAddress();
+	addressAfter = o->getAddress();
 	addForwardingEntry(addressBefore, addressAfter);
 }
 
+/** Copies the objects from the queue helper data structure
+ * to the copy space.
+ */
 void TraversalCollector::breadthFirstCopying() {
-	int i;
+	size_t i;
 	Object* currentObj;
 	Object* child;
 
@@ -218,7 +241,7 @@ void TraversalCollector::breadthFirstCopying() {
 	while (!myQueue.empty()) {
 		currentObj = myQueue.front();
 		myQueue.pop();
-		int kids = currentObj->getPointersMax();
+		size_t kids = currentObj->getPointersMax();
 		copyAndForwardObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
@@ -236,8 +259,11 @@ void TraversalCollector::breadthFirstCopying() {
 	}
 }
 
+/** Copies the objects from the stack helper data structure
+ * to the copy space.
+ */
 void TraversalCollector::depthFirstCopying() {
-	int i;
+	size_t i;
 	Object* currentObj;
 	Object* child;
 
@@ -251,7 +277,8 @@ void TraversalCollector::depthFirstCopying() {
 		else{
 			continue;
 		}
-		int kids = currentObj->getPointersMax();
+		size_t kids = currentObj->getPointersMax();
+
 		copyAndForwardObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = kids-1; i >=0; i--) {

@@ -4,11 +4,18 @@ traceFileSim
 # Ignore Build Artifacts
 **.o
 **.log
+**.log.sh
 **.trace
 **.cls
 **.td
 **.cachelog
 Debug/*
+*.o
+arrayletTest/**
+
+traceFileSim
+.idea/
+cmake-build-debug/
 
 # Ignore Eclipse Project Files
 .cproject

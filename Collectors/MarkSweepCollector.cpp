@@ -12,7 +12,7 @@
 #include "../Main/MemoryManager.hpp"
 #include <sstream>
 #include <cstdlib>
-extern int gLineInTrace;
+extern LINESIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 
@@ -26,14 +26,14 @@ namespace traceFileSimulator {
 MarkSweepCollector::MarkSweepCollector() {
 }
 
-/**
- * Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
+/** Argument indicates the reason for collection: 0 - unknown, 1 - failed alloc, 2 - high watermark
+ *
  */
 void MarkSweepCollector::collect(int reason) {
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	fprintf(stderr, "GC #%d at %0.3fs", statGcNumber + 1, elapsed_secs);
+	fprintf(stderr, "GC #%zu at %0.3fs", statGcNumber + 1, elapsed_secs);
 	preCollect();
 	mark();
 	sweep();
@@ -45,7 +45,7 @@ void MarkSweepCollector::collect(int reason) {
 	*/
 
 	postCollect();
-	
+
 	stop = clock();
 	elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
 	fprintf(stderr, " took %0.3fs\n", elapsed_secs);
@@ -55,17 +55,20 @@ void MarkSweepCollector::initializeHeap() {
 	myAllocator->setHalfHeapSize(false);
 }
 
+/** Marks all objects, starting at the root set
+ *
+ */
 void MarkSweepCollector::mark() {
 	initializeMarkPhase();
 	enqueueAllRoots();
 
 	//breadth first through the tree
-	int i;
+	size_t i;
 	while (!myQueue.empty()) {
 		Object* currentObj = myQueue.front();
 		myQueue.pop();
 		Object* child;
-		int kids = currentObj->getPointersMax();
+		size_t kids = currentObj->getPointersMax();
 		currentObj->setAge(currentObj->getAge() + 1);
 		for (i = 0; i < kids; i++) {
 			child = currentObj->getReferenceTo(i);
@@ -80,34 +83,39 @@ void MarkSweepCollector::mark() {
 	}
 }
 
+/** Deletes all unmarked objects in all generations
+ *
+ */
 void MarkSweepCollector::sweep() {
 	Object* currentObj;
 	int gGC;
 	size_t heapPosition= 0;
 	RawObject* raw;
-	
-	while(heapPosition<myAllocator->getHeapSize()){
-		
+
+	while(heapPosition < myAllocator->getHeapSize()){
+
 		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
-		
+
 		if(raw!=NULL){
-			currentObj = (Object *)raw->associatedObject;
+			currentObj = raw->associatedObject;
 			if(!currentObj){
 				std::stringstream ss;
 				ss << "Object does not exist at heap position " << heapPosition << ". The algorithm for stepping through the heap has failed.\n";
 				ERRMSG(ss.str().c_str());
 				exit(1);
 			}
-			//currentObj = *(Object **)(objAddress+sizeof(Object *));
+			
 			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);
 			heapPosition += currentObj->getHeapSize();
-				
+
 			if(myGeneration == GENERATIONS -1){
 				gGC = 1;
 			} else {
 				gGC = 0;
 			}
-			if (!currentObj->getVisited()) {
+
+			//TODO: remove null checks and test if the code still passes tests. IDE says it will never be null;
+			if (currentObj && !currentObj->getVisited()) {
 				myMemManager->requestDelete(currentObj, gGC);
 				statFreedObjects++;
 				statFreedDuringThisGC++;
@@ -119,19 +127,21 @@ void MarkSweepCollector::sweep() {
 	}
 }
 
-
+/** Adds all objects from all roots to the queue
+ *
+ */
 void MarkSweepCollector::enqueueAllRoots() {
 	Object* currentObj;
-	int i, j;
+	size_t i, j;
 	if (myGeneration == GENERATIONS - 1) {
-		//we are performing a glolab GC and can use it to fix possible rem set problems
+		//we are performing a global GC and can use it to fix possible rem set problems
 		//we clear all rem sets and fill them again while performing the marking
 		myMemManager->clearRemSets();
 
 		vector<Object*> roots;
 		for (i = 0; i < NUM_THREADS; i++) {
 			roots = myObjectContainer->getRoots(i);
-			for (j = 0; j < (int)roots.size(); j++) {
+			for (j = 0; j < roots.size(); j++) {
 				currentObj = roots[j];
 				if (currentObj && !currentObj->getVisited()) {
 					currentObj->setVisited(true);
@@ -165,4 +175,4 @@ void MarkSweepCollector::enqueueAllRoots() {
 MarkSweepCollector::~MarkSweepCollector() {
 }
 
-} 
+}

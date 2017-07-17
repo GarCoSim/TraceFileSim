@@ -9,6 +9,8 @@
 #define SIMULATOR_HPP_
 
 #include <fstream>
+#include <ctime>
+#include "Optional.cpp"
 
 #define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
 
@@ -18,19 +20,22 @@ namespace traceFileSimulator {
 
 class MemoryManager;
 
+/** Structure which stores information parsed from reading a line in a trace file
+ *
+ */
 typedef struct TraceFileLine {
-	char type;
-	int classID;
-	int fieldIndex;
-	int fieldOffset;
-	int fieldSize;
-	int fieldType;
-	int objectID;
-	int parentID;
-	int parentSlot;
-	int maxPointers;
-	int size;
-	int threadID;
+	Optional<char> type;
+	Optional<int> classID;
+	Optional<int> fieldIndex;
+	Optional<int> fieldOffset;
+	Optional<int> fieldSize;
+	Optional<int> fieldType;
+	Optional<int> objectID;
+	Optional<int> parentID;
+	Optional<size_t> parentSlot;
+	Optional<size_t> maxPointers;
+	Optional<size_t> size;
+	Optional<int> threadID;
 } TraceFileLine;
 
 class Simulator {

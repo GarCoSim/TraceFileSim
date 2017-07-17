@@ -8,17 +8,22 @@
 #ifndef _ALLOCATOR_HPP_
 #define _ALLOCATOR_HPP_
 #include <stdio.h>
+#include "../Main/Region.hpp"
+#include "../Main/Optional.cpp"
 
 namespace traceFileSimulator {
 
 class Object;
 
+/** Abstract Allocator, requires specific implementation to use.
+ * Allocators find places in the heap for objects to be place.
+ */
 class Allocator {
 public:
 	Allocator();
 	virtual ~Allocator();
 
-    void *gcAllocate(size_t size);
+	void *gcAllocate(size_t size);
 	virtual void gcFree(Object* object);
 
 	void setAllocated(size_t heapIndex, size_t size);
@@ -29,27 +34,26 @@ public:
 	size_t getHeapSize();
 	size_t getRegionSize();
 	void resetRememberedAllocationSearchPoint();
-	void setNumberOfRegionsHeap(int value);
+	void setNumberOfRegionsHeap(size_t value);
 	std::vector<Region*> getRegions();
 	std::vector<unsigned int> getEdenRegions();
 	std::vector<unsigned int> getFreeRegions();
 	unsigned int getNextFreeRegionID();
-	unsigned int getObjectRegion(Object* object);
-	unsigned int getObjectRegionByRawObject(void* object);
+	size_t getObjectRegion(Object* object);
+	size_t getObjectRegionByRawObject(void* object);
 	unsigned char *getHeap();
-	void addNewFreeRegion(unsigned int regionID);
-	void removeEdenRegion(unsigned int regionID);
+	void addNewFreeRegion(size_t regionID);
+	void removeEdenRegion(size_t regionID);
 	virtual size_t getSpaceToNextObject(size_t start);
 	virtual unsigned char *getNextObjectAddress(size_t start);
 
 	//stats
 	void printMap();
 	void printStats();
-	virtual void freeAllSectors();
 	virtual void freeOldSpace();
 	void setRegionFree(Region* region);
 
-	size_t getRegionIndex(Region* region);
+	Optional<size_t>* getRegionIndex(Region* region);
 
 	void setHalfHeapSize(bool value);
 	virtual void moveObject(Object *object);
@@ -75,8 +79,7 @@ protected:
 	void setBitUnused(size_t heapIndex);
 	size_t getHeapIndex(Object *object);
 
-    virtual void *allocate(size_t size, size_t lower, size_t upper) = 0;
-
+	virtual void *allocate(size_t size, size_t lower, size_t upper);
 
 	bool isSplitHeap;
 	char* myHeapBitMap;
@@ -85,10 +88,10 @@ protected:
 	std::vector<unsigned int> edenRegions;
 	std::vector<unsigned int> freeRegions;
 
-	unsigned int numberOfRegions;
+	size_t numberOfRegions;
 	size_t regionSize;
-	unsigned int maxNumberOfEdenRegions;
-	unsigned int maximumMerges;
+	size_t maxNumberOfEdenRegions;
+	size_t maximumMerges;
 
 	size_t overallHeapSize;
 	size_t maximumHeapSize;
@@ -98,6 +101,12 @@ protected:
 	size_t newSpaceEndHeapIndex;
 	size_t newSpaceRememberedHeapIndex;
 	size_t oldSpaceRememberedHeapIndex;
+
+	typedef struct heapStats{
+		unsigned char *heapStart;
+		unsigned char *heapEnd;
+		size_t firstRegion; //ID of first region in heap
+	} heapStats;
 
 	unsigned char *heap;
 	std::vector<unsigned char*> allHeaps; //vector containing start and end pointers for all heaps (region-based)

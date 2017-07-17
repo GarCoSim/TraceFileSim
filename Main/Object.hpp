@@ -8,6 +8,7 @@
 #ifndef OBJECT_HPP_
 #define OBJECT_HPP_
 
+#include "../defines.hpp"
 #include <vector>
 #include <string.h> //added by Tristan; for memset in setArgs()
 
@@ -24,22 +25,23 @@ typedef struct RawObject {
 
 class Object {
 public:
-
-	Object(int id, void *address, size_t size, int numberOfPointers, char *className);
+	allocationTypeEnum allocationType;
+	Object(int id, void *address, size_t size, size_t numberOfPointers, char *className, allocationTypeEnum _allocationType);
+	// modified by mazder, constructor overloading with thread id
+	//Object(int tid, int id, void *address, size_t size, int maxPointers, char *className);
 	void setArgs(int id, size_t payloadSize, int maxPointers, char *className);
 	virtual ~Object();
-	void*   getAddress();
+	void*	getAddress();
 	void 	updateAddress(void *newAddress);
 	int 	getID();
-	size_t 	getPayloadSize();
 	size_t 	getHeapSize();
-	int 	getPointersMax();
-	Object* getReferenceTo(int pointerNumber);
-	int 	setPointer(int pointerNumber, Object* target);
-	void *getRawPointerAddress(int pointerNumber);
-	void setRawPointerAddress(int pointerNumber, void *address);
+	size_t 	getPointersMax();
+	Object* getReferenceTo(size_t pointerNumber);
+	int 	setPointer(size_t pointerNumber, Object* target);
+	void*	getRawPointerAddress(size_t pointerNumber);
+	void	setRawPointerAddress(size_t pointerNumber, void *address);
 	void 	setForwardedPointer(void* address);
-	void* getForwardedPointer();
+	void*	getForwardedPointer();
 
 	bool 	getVisited();
 	void	setVisited(bool value);
@@ -55,19 +57,7 @@ public:
 		myAge = age;
 	}
 	void setGeneration(int generation);
-	int  getGeneration();
-
-	int getFreed() const {
-		return freed;
-	}
-
-	const char *getClassName() {
-		return myName;
-	}
-
-	void setFreed(int freed) {
-		this->freed = freed;
-	}
+	int getGeneration();
 
 	bool isForwarded() {
 		return forwarded;
@@ -85,38 +75,47 @@ public:
 		return forwardedPointer;
 	}
 
-	size_t getRegion(size_t heap, size_t regionSize); //get the region where the object belongs to
-
-	int getReferenceCount();
+	size_t getReferenceCount();
 	void increaseReferenceCount();
 	void decreaseReferenceCount();
 
 	int getColor();
 	void setColor(int color);
 
+	// The following three fields are added to:
+	// do escape analysis
+	// find object longevity
+	// see the thread realtionships
+	// calculate life time
+	//int myTid;
+	//bool escaped;
+	//unsigned long born;
+
 private:
 	RawObject *rawObject;
-	int 	   myId;
-	int        freed;
+	int myId;
+	int freed;
 
-	size_t     mySize;
+	size_t mySize;
 
 	// How many pointer slots do I have?
-	int 	   myPointersMax;
+	size_t myPointersMax;
 
 	//garbage collector stuff
-	bool       isVisited;
+	bool isVisited;
 	int depth;
 
 	//genCon
-	int        myAge;
-    int	       myGeneration;
+	int myAge;
+	int myGeneration;
 
-    char      *myName;
-    bool       forwarded;
+	char *myName;
+	bool forwarded;
 
-    int referenceCount;
-    int color;
+	void *forwardedPointer;
+
+	size_t referenceCount;
+	int color;
 
     void *forwardedPointer;
 

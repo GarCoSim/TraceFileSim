@@ -17,6 +17,10 @@ namespace traceFileSimulator {
 
 class Collector;
 
+/** Standard implementation of the reference counting write barrier.
+ * Implements the WriteBarrier class.
+ *
+ */
 class ReferenceCountingWriteBarrier : public WriteBarrier {
 public:
 	ReferenceCountingWriteBarrier();

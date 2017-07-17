@@ -1,10 +1,3 @@
-/*
- * Region.hpp
- *
- *  Created on: September 1, 2015
- *      Author: Tristan
- */
-
 #ifndef REGION_HPP_
 #define REGION_HPP_
 
@@ -16,73 +9,65 @@
 #include <math.h>
 #include "Object.hpp"
 
-#define REGIONSIZE 4194304//524288 //From Tristan
-
 using std::vector;
 namespace traceFileSimulator {
 
+/** Class for containing meta data about a region in
+ * a region based heap.
+ */
 class Region {
 public:
 	virtual ~Region();	
 	Region(void *address, size_t size, unsigned char* heapAddress);
 	
-    void setSize(size_t size);
-    size_t  getSize();
+	void	setSize(size_t size);
 
-    void  setAddress(void* address);
-    void* getAddress();
+	void*	getAddress();
 
-	unsigned char* getHeapAddress();
-         
-    void setCurrFree(size_t free); 
-    size_t  getCurrFree(); 
+	unsigned char* getHeapAddress(); // real address
+	 
+	void	setCurrFree(size_t free); 
+	size_t	getCurrFree();
 
-    void incrementObjectCount(); 
-    int  getNumObj(); 
-	void setNumObj(int objects);
+	void	incrementObjectCount(); 
+	int		getNumObj(); 
+	void	setNumObj(int objects);
 
-    void  setCurrFreeAddr(void* addr); 
-    void* getCurrFreeAddr(); 
+	void	setCurrFreeAddr(void* addr); 
+	void*	getCurrFreeAddr(); //virtuel address
 
-    void  appendObj(long obj); 
-    char* getObjects(); 
+	void	setAge(int age);
+	int		getAge();
 
-    void  setAge(int age);
-    void  incAge();
-    int   getAge();
+	std::set<void*> getRemset();
 
-    std::set<void*> getRemset();
+	void	insertObjectReference(void* address);
+	void	eraseObjectReferenceWithoutCheck(void* address);
 
-    void  insertObjectReference(void* address);
-    void  eraseObjectReference(void* address);
-    void  eraseObjectReferenceWithoutCheck(void* address);
+	void	setIsLeaf(bool isLeaf);
+	bool	getIsLeaf();
 
-    void reset();
+	void reset();
+
+	std::set<Object*> spineRemset; //list of all spines in this region
+	bool isArrayletleaf;
+	Object *associatedSpine; //if the region is a Arrayletleaf we need to check the associated spine if we can free this region
 
 protected:
-	size_t   mySize;
+	size_t mySize;
 	unsigned char* myHeapAddress;
 	void* myAddress;
-    int   myAge;
-    std::set<void*> myRemset; //remembered set 
+	int myAge;
+	std::set<void*> myRemset; //remembered set 
 
-    int   numObj;        //how many objects in the region
-	size_t   currFree;      //how much free space in a region
-	void  *currFreeAddr; //address of the free area in the region
+	int numObj;			//how many objects in the region
+	size_t currFree;	//how much free space in a region
+	void *currFreeAddr;	//address of the free area in the region
+
+	
+	bool isArrayletLeaf;
+	size_t ref_count;
 };
-
-//From Tristan
-extern int numRegions;
-extern size_t heapAddr;
-
-extern std::vector<int> freeList;
-extern std::vector<int> edenList;
-
-extern size_t sumObj;
-extern size_t sumFree;
-extern int  trigReason;
-
-extern Region** regions;
 
 }
 #endif /* REGION_HPP_ */

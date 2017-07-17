@@ -100,10 +100,7 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 
 string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-<<<<<<< HEAD
 
-=======
->>>>>>> isolated my changes from the noncompiling head verssion - including arraylet stuf and whitespace clean up
 	for (i = 1; i < argc; i++){
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--logLocation") || !strcmp(shortOption, "-l")) {

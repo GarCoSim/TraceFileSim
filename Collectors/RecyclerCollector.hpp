@@ -17,6 +17,10 @@ namespace traceFileSimulator {
 
 class MemoryManager;
 
+/** Implements the Recycler Collector used to supplement reference counting
+ * to ensure correctness of algorithm.
+ *
+ */
 class RecyclerCollector : public Collector {
 public:
 	RecyclerCollector();
@@ -25,8 +29,6 @@ public:
 	void initializeHeap();
 	void addCandidate(Object *obj);
 	bool candidatesNotContainObj(Object *obj);
-	bool candidatesContainObj(Object *obj);
-	void removeObjectFromCandidates(Object *obj);
 
 
 private:

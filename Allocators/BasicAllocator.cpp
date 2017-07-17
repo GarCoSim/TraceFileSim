@@ -9,7 +9,7 @@
 
 #include "BasicAllocator.hpp"
 
-extern int gLineInTrace;
+extern LINESIZE gLineInTrace;
 using namespace std;
 
 
@@ -37,7 +37,7 @@ void *BasicAllocator::allocate(size_t size, size_t lower, size_t upper) {
 				break;
 			}
 		}
-		if (contiguous == size && bitSet == false) { // found a free slot big enough
+		if (contiguous == size && !bitSet) { // found a free slot big enough
 			setAllocated(potentialStart, size);
 			return &heap[potentialStart];
 		}

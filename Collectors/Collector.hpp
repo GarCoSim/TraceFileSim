@@ -24,10 +24,14 @@ class ObjectContainer;
 class Object;
 class WriteBarrier;
 
+/** Abstract Class for collectors. Provides an implementable interface
+ * for new collection algorithms.
+ *
+ */
 class Collector {
 public:
 	Collector();
-	void setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation, int traversal);
+	void setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, size_t watermark, int generation, int traversal);
 	virtual ~Collector();
 	virtual void collect(int reason) = 0;
 	virtual void checkWatermark();
@@ -43,16 +47,11 @@ public:
 	//Methods for the recycler
 	virtual void addCandidate(Object *obj);
 	virtual bool candidatesNotContainObj(Object *obj);
-	virtual bool candidatesContainObj(Object *obj);
-	virtual void removeObjectFromCandidates(Object *obj);
 
 protected:
 	void postCollect();
 	void preCollect();
-	void compact();
 	void initializeMarkPhase();
-	void freeAllLiveObjects();
-	void reallocateAllLiveObjects();
 
 	Allocator* myAllocator;
 	ObjectContainer* myObjectContainer;
@@ -62,29 +61,29 @@ protected:
 	map<void *, void *> forwardPointers;
 
 	WriteBarrier* myWriteBarrier;
-	
-	int statGcNumber;
-	int statFreedObjects;
-	int statLiveObjectCount;
-	int statFreeSpaceOnHeap;
-	int statFreeSpaceFragmentCount;
+
+	size_t statGcNumber;
+	size_t statFreedObjects;
+	size_t statLiveObjectCount;
+	size_t statFreeSpaceOnHeap;
+	size_t statFreeSpaceFragmentCount;
 	int statCollectionReason;
 	size_t myWatermark;
 	int myGeneration;
-	int statFreedDuringThisGC;
-	int statCopiedDuringThisGC;
-	int statCopiedObjects;
-	int gcsSinceLastPromotionPhase;
+	size_t statFreedDuringThisGC;
+	size_t statCopiedDuringThisGC;
+	size_t statCopiedObjects;
+	size_t gcsSinceLastPromotionPhase;
 	int myTraversal;
 	int statHeapSide;
 	double shortestGC;
 	double longestGC;
 	double allGCs;
-	
+
 	MemoryManager* myMemManager;
 
 	traversalEnum order;
 };
 
-} 
+}
 #endif /* COLLECTOR_HPP_ */

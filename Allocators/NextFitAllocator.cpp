@@ -9,7 +9,7 @@
 
 #include "NextFitAllocator.hpp"
 
-extern int gLineInTrace;
+extern LINESIZE gLineInTrace;
 using namespace std;
 
 
@@ -47,7 +47,6 @@ void *NextFitAllocator::allocate(size_t size, size_t lower, size_t upper) {
 		if (potentialStart > upper) {
 			hasWrappedAround = true;
 			potentialStart = lower;
-			contiguous = 0;
 		}
 
 		bool bitSet = false;
@@ -61,7 +60,7 @@ void *NextFitAllocator::allocate(size_t size, size_t lower, size_t upper) {
 				break;
 			}
 		}
-		if (contiguous == size && bitSet == false && potentialStart+contiguous<=upper) { // found a free slot big enough
+		if (contiguous == size && !bitSet && potentialStart+contiguous<=upper) { // found a free slot big enough
 			oldSpaceRememberedHeapIndex = potentialStart;
 			setAllocated(potentialStart, size);
 			return &heap[potentialStart];

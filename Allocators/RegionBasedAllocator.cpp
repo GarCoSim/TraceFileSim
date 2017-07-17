@@ -8,7 +8,7 @@
 
 #include "RegionBasedAllocator.hpp"
 
-extern int gLineInTrace;
+extern LINESIZE gLineInTrace;
 extern FILE* balancedLogFile;
 using namespace std;
 
@@ -29,15 +29,12 @@ void RegionBasedAllocator::initializeHeap(size_t heapSize, size_t maxHeapSize) {
 	statLiveObjects = 0;
 	resetRememberedAllocationSearchPoint();
 
-	if (DEBUG_MODE && WRITE_ALLOCATION_INFO) {
-		allocLog = fopen("alloc.log", "w+");
-	}
-	if (DEBUG_MODE && WRITE_HEAPMAP) {
-		heapMap = fopen("heapmap.log", "w+");
-	}
-	fprintf(stderr, "heap size %zd\n", overallHeapSize);
-	allHeaps.push_back(heap);
-	allHeaps.push_back(heap + overallHeapSize);
+#if DEBUG_MODE && WRITE_ALLOCATION_INFO
+	allocLog = fopen("alloc.log", "w+");
+#endif
+#if DEBUG_MODE && WRITE_HEAPMAP
+	heapMap = fopen("heapmap.log", "w+");
+#endif
 }
 
 void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
@@ -45,7 +42,7 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 	if (size <= 0)
 		return NULL;
 
-	unsigned int i, currentNumberEdenRegions, edenRegionID;
+	size_t i, currentNumberEdenRegions, edenRegionID;
 	size_t currentFreeSpace;
 	void *currentFreeAddress;
 	unsigned char *currentHeap;
@@ -59,18 +56,18 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 		if (size <= currentFreeSpace) {
 			currentHeap = balancedRegions[edenRegionID]->getHeapAddress();
 			currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();
-			balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
+			balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((size_t)currentFreeAddress+(size_t)size));
 			//fprintf(balancedLogFile, "Bla: %zu\n", currentFreeSpace-size);
 			balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
 			balancedRegions[edenRegionID]->incrementObjectCount();
 
-			setAllocated(currentHeap, (long)currentFreeAddress, size);
+			setAllocated(currentHeap, (size_t)currentFreeAddress, size);
 
-			//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld. currentFreeSpace = %zu \n", size, edenRegionID, (long)currentFreeAddress, currentFreeSpace);
+			fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %zu at address %zu. currentFreeSpace = %zu \n", size, edenRegionID, (size_t)currentFreeAddress, currentFreeSpace);
 			//fprintf(balancedLogFile, "Allocated to: %i. ", edenRegionID);
 
 
-			return &currentHeap[(long)currentFreeAddress];
+			return &currentHeap[(size_t)currentFreeAddress];
 		}
 	}
 
@@ -83,20 +80,20 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 			if (size <= currentFreeSpace) {
 				currentHeap = balancedRegions[edenRegionID]->getHeapAddress();
 				currentFreeAddress = balancedRegions[edenRegionID]->getCurrFreeAddr();
-				balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((long)currentFreeAddress+(long)size));
+				balancedRegions[edenRegionID]->setCurrFreeAddr((void*)((size_t)currentFreeAddress+(size_t)size));
 				balancedRegions[edenRegionID]->setCurrFree(currentFreeSpace-size);
 				balancedRegions[edenRegionID]->incrementObjectCount();
 
 				freeRegions.erase(freeRegions.begin());
 				edenRegions.push_back(edenRegionID);
 
-				setAllocated(currentHeap, (long)currentFreeAddress, size);
+				setAllocated(currentHeap, (size_t)currentFreeAddress, size);
 
-				//fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %i at address %ld\n", size, edenRegionID, (long)currentFreeAddress);
+				fprintf(balancedLogFile, "Allocated %zu bytes to Eden Region %zu at address %zu\n", size, edenRegionID, (size_t)currentFreeAddress);
 				//fprintf(balancedLogFile, "Allocated to: %i\n", edenRegionID);
 
 
-				return &currentHeap[(long)currentFreeAddress];
+				return &currentHeap[(size_t)currentFreeAddress];
 			}
 			else if (size > currentFreeSpace) {
 				fprintf(stderr, "Allocation for arraylets not yet implemented!\n");
@@ -110,7 +107,7 @@ void *RegionBasedAllocator::allocate(size_t size, size_t lower, size_t upper) {
 // Attempt to add more regions when no more free regions exist
 int RegionBasedAllocator::addRegions(){
 	size_t newHeapSize;
-	unsigned int i, newNumberOfRegions;
+	size_t i, newNumberOfRegions;
 	unsigned char *newHeap;
 	Region* balancedRegion;
 	size_t currentAddress = 0;
@@ -160,21 +157,21 @@ int RegionBasedAllocator::addRegions(){
 
 	// Increase bitmap
 	newHeapBitMap = new char[(size_t)ceil((overallHeapSize + newHeapSize)/8.0)];
-	memcpy(newHeapBitMap, myHeapBitMap, ceil(overallHeapSize/8.0));
+	memcpy(newHeapBitMap, myHeapBitMap, (size_t)ceil(overallHeapSize/8.0));
 	delete(myHeapBitMap);
 	myHeapBitMap = newHeapBitMap;
 
 	// Update statistics
 	overallHeapSize += newHeapSize;
 	numberOfRegions = newNumberOfRegions;
-	maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
+	maxNumberOfEdenRegions = (size_t)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
 
 	fprintf(stdout, "New heap size: %zd\n", overallHeapSize);
 	fprintf(balancedLogFile, "\nStatistics After Adding Regions:\n\n");
 	fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
 	fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
-	fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
-	fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
+	fprintf(balancedLogFile, "Number of Regions = %zu\n", numberOfRegions);
+	fprintf(balancedLogFile, "Maximum number of Eden Regions = %zu\n\n", maxNumberOfEdenRegions);
 
 	return 0;
 }
@@ -210,7 +207,7 @@ int RegionBasedAllocator::mergeRegions(){
 
 	// Update statistics
 	numberOfRegions = numberOfRegions/2;
-	maxNumberOfEdenRegions = (int)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
+	maxNumberOfEdenRegions = (size_t)(ceil((EDENREGIONS * (double)numberOfRegions)/100));
 	regionSize = regionSize * 2;
 	printf("New region size: %zu\n", regionSize);
 
@@ -260,15 +257,15 @@ int RegionBasedAllocator::mergeRegions(){
 	fprintf(balancedLogFile, "\nStatistics After Merging:\n\n");
 	fprintf(balancedLogFile, "Heap Size = %zu\n", overallHeapSize);
 	fprintf(balancedLogFile, "Region Size = %zu\n", regionSize);
-	fprintf(balancedLogFile, "Number of Regions = %i\n", numberOfRegions);
-	fprintf(balancedLogFile, "Maximum number of Eden Regions = %i\n\n", maxNumberOfEdenRegions);
+	fprintf(balancedLogFile, "Number of Regions = %zu\n", numberOfRegions);
+	fprintf(balancedLogFile, "Maximum number of Eden Regions = %zu\n\n", maxNumberOfEdenRegions);
 
 	maximumMerges--;
 	return 0;
 }
 
 // Updated for multiple heaps
-size_t RegionBasedAllocator::getHeapIndex(Object *object) {
+Optional<size_t>* RegionBasedAllocator::getHeapIndex(Object *object) {
 	// This conversion is only valid because the heap is an array of bytes.
 	void *objectAddress = object->getAddress();
 	std::vector<heapStats>::iterator it;
@@ -277,20 +274,21 @@ size_t RegionBasedAllocator::getHeapIndex(Object *object) {
 	for(it = allHeaps.begin(); it != allHeaps.end(); ++it){
 		currentHeap = *it;
 		if(objectAddress >= currentHeap.heapStart && objectAddress < currentHeap.heapEnd){
-			return (size_t)((char *)objectAddress - (char *)currentHeap.heapStart + (regionSize * currentHeap.firstRegion));
+			return new Optional<size_t>((size_t)((char *)objectAddress - (char *)currentHeap.heapStart + (regionSize * currentHeap.firstRegion)));
 		}
 	}
-	return -1;
 
+	return new Optional<size_t>();
 }
 
 
 void RegionBasedAllocator::gcFree(Object* object) {
 	size_t size = object->getHeapSize();
-	size_t heapIndex = getHeapIndex(object);
+	Optional<size_t>* heapIndex = getHeapIndex(object);
 
-	setFree(heapIndex, size);
+	setFree(heapIndex->getValue(), size);
 	statLiveObjects--;
+	delete(heapIndex);
 }
 
 
@@ -319,7 +317,6 @@ unsigned char *RegionBasedAllocator::getNextObjectAddress(size_t start){
 
 
 size_t RegionBasedAllocator::getSpaceToNextObject(size_t start){
-	std::vector<heapStats>::iterator it;
 	size_t regionID, i, end;
 
 	regionID = start/regionSize;
