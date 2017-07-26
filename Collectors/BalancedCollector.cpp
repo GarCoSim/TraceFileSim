@@ -248,6 +248,8 @@ void BalancedCollector::mark(Object* currentObject){
  *
  */
 void BalancedCollector::buildCollectionSet() {
+	fprintf(balancedLogFile, "\n\nBuilding collection set\n");
+
 	Region* currentRegion;
 	size_t setSize = (size_t)(COLLECTIONSETSIZE*allRegions.size());
 
@@ -266,7 +268,7 @@ void BalancedCollector::buildCollectionSet() {
 				myCollectionSet[i] = 1;
 				currentRegion = allRegions[i];
 				totalObjectsInCollectionSet += currentRegion->getNumObj();
-				fprintf(balancedLogFile, "Added eden region %zu to collection set\n", i);
+				//fprintf(balancedLogFile, "Added eden region %zu to collection set\n", i);
 			}
 		}
 	}
@@ -287,9 +289,8 @@ void BalancedCollector::buildCollectionSet() {
 				dice = rand()%100+1;
 				if (dice<=probability) {
 					myCollectionSet[i] = 1;
-					fprintf(stderr, "Added region %i of age %i to collection set\n", i, regionAge);
-					fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
-					fprintf(balancedLogFile, "Added region %i of age %i and with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, regionAge, (deadSpace.at(i)).percentDead);
+					//fprintf(balancedLogFile, "Added region %i of age %i to collection set\n", i, regionAge);
+					//fprintf(balancedLogFile, "Added region %i of age %i and with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, regionAge, (deadSpace.at(i)).percentDead);
 					regionsInSet++;
 					totalObjectsInCollectionSet += currentRegion->getNumObj();
 				}
@@ -314,10 +315,10 @@ void BalancedCollector::buildCollectionSet() {
 			myCollectionSet[(deadSpace.at(i)).regionID] = 1;
 			regionsInSet++;
 			totalObjectsInCollectionSet += allRegions[(deadSpace.at(i)).regionID]->getNumObj();
-			//fprintf(stderr, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
-			fprintf(balancedLogFile, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
+			//fprintf(balancedLogFile, "Added region %i with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
 		}
 	}
+
 #else
 	// Add more regions with percent dead meeting the minimum threshold
 	for(i = 0; (i < allRegions.size() && regionsInSet<=setSize); i++) {
@@ -326,8 +327,7 @@ void BalancedCollector::buildCollectionSet() {
 				myCollectionSet[i] = 1;
 				regionsInSet++;
 				totalObjectsInCollectionSet += allRegions[i]->getNumObj();
-				//fprintf(stderr, "Added region %i with %zu percent dead space to collection set\n", i, (deadSpace.at(i)).percentDead);
-				fprintf(balancedLogFile, "Added region %zu with %zu percent dead space to collection set\n", i, (deadSpace.at(i)).percentDead);
+				//fprintf(balancedLogFile, "Added region %zu with %zu percent dead space to collection set\n", i, (deadSpace.at(i)).percentDead);
 			}
 		}
 	}
@@ -355,7 +355,7 @@ void BalancedCollector::buildFinalCollectionSet(){
 			myCollectionSet[i] = 1;
 			regionsInSet++;
 			totalObjectsInCollectionSet += currentRegion->getNumObj();
-			fprintf(balancedLogFile, "Added region %zu with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
+			//fprintf(balancedLogFile, "Added region %zu with %zu percent dead space to collection set\n", (deadSpace.at(i)).regionID, (deadSpace.at(i)).percentDead);
 		}
 	}
 	regionsReclaimed = regionsInSet;
@@ -553,7 +553,7 @@ int BalancedCollector::copyObjectsInQueues() {
 					for(j = 0; j < children; j++){
 						child = currentObj->getReferenceTo(i)->getReferenceTo(j);
 						if(child && !child->getVisited()){
-							fprintf(balancedLogFile, "Found child: %i. Address: %zu\n", child->getID(), (size_t)child->getAddress());
+							//fprintf(balancedLogFile, "Found child: %i. Address: %zu\n", child->getID(), (size_t)child->getAddress());
 
 							childRegion = myAllocator->getObjectRegion(child);
 							if (myCollectionSet[childRegion] == 1) {
@@ -578,7 +578,7 @@ int BalancedCollector::copyObjectsInQueues() {
 			for (i = 0; i < children; i++) {
 				child = currentObj->getReferenceTo(i);
 				if (child && !child->getVisited()) {
-					fprintf(balancedLogFile, "Found child: %i. Address: %zu\n", child->getID(), (size_t)child->getAddress());
+					//fprintf(balancedLogFile, "Found child: %i. Address: %zu\n", child->getID(), (size_t)child->getAddress());
 
 					childRegion = myAllocator->getObjectRegion(child);
 					if (myCollectionSet[childRegion] == 1) {
@@ -645,7 +645,8 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 			if(obj->allocationType == allocationTypeDiscontiguousIndexable){
 				this->addObjectToSpineRemset(obj);
 			}
-			fprintf(balancedLogFile, "Copied object %i from region %zu to region %u. Address before: %zu. Address after: %zu\n", obj->getID(), objRegionID, currentCopyToRegionID, (size_t)addressBefore, (size_t)addressAfter);
+
+			//fprintf(balancedLogFile, "Copied object %i from region %zu to region %u. Address before: %zu. Address after: %zu\n", obj->getID(), objRegionID, currentCopyToRegionID, (size_t)addressBefore, (size_t)addressAfter);
 
 			return 0;
 		}
@@ -768,7 +769,7 @@ void BalancedCollector::updateRemsetPointers() {
 		if (myCollectionSet[i] == 0) { //Not from collection set
 			currentRemset = allRegions[i]->getRemset();
 
-			fprintf(balancedLogFile, "Region = %u. Remset size = %zu\n", i, currentRemset.size());
+			//fprintf(balancedLogFile, "Region = %u. Remset size = %zu\n", i, currentRemset.size());
 			for (remsetIterator = currentRemset.begin(); remsetIterator != currentRemset.end(); ++remsetIterator) {
 				remsetPointer = *remsetIterator;
 				//fprintf(balancedLogFile, "remsetPointer = %zu\n", (size_t)remsetPointer);
@@ -780,6 +781,7 @@ void BalancedCollector::updateRemsetPointers() {
 					forwardPointer = obj->getForwardedPointer();
 
 					//fprintf(balancedLogFile, "forwardPointer for object %i = %zu\n", obj->getID(), (size_t)forwardPointer);
+
 					objectRegion = myAllocator->getObjectRegionByRawObject(forwardPointer);
 					//fprintf(balancedLogFile, "objectRegion = %u\n", objectRegion);
 
@@ -824,7 +826,7 @@ void BalancedCollector::updatePointers() {
 	while (!myUpdatePointerQueue.empty()) {
 		currentObj = myUpdatePointerQueue.front();
 		myUpdatePointerQueue.pop();
-		printObjectInfo(currentObj);
+		//printObjectInfo(currentObj);
 		if(currentObj->allocationType == allocationTypeDiscontiguousIndexable && currentObj->getID() != -1){
 			//continue;
 			leaves = currentObj->getPointersMax();

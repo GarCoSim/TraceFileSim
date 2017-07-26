@@ -378,19 +378,32 @@ int MemoryManager::preAllocateObjectDefault(int thread, int id, size_t size, siz
 	void *address = NULL;
 	size_t regionSize = myAllocators[GENERATIONS-1]->getRegionSize();
 
-	if(size > regionSize){ //If object won't fit in a region, check if it can be allocaed as arraylet
+	if(size > regionSize){ //If object won't fit in a region, check if it can be allocated as arraylet
 		if(isArray(classID) && _collector == balanced){ //Can allocate as an arraylet
-            size_t fullLeaves = size / regionSize; //TODO: is it possible that this will cause a split through a field?
-			size_t lastLeaf = size % regionSize;
-			size_t leaves = (lastLeaf > 0 ? fullLeaves + 1 : fullLeaves); //Number of poiners to leaf objects
-			size_t spineSize = sizeof(void*) + sizeof(Object*) + leaves * sizeof(RawObject*);
-			size_t numberOfObjectsPerLeaf = regionSize/sizeof(RawObject*) - 1; //TODO: is this correct?
-			size_t finalLeafObjects = lastLeaf/sizeof(RawObject*) - 1;
-				if(spineSize > regionSize){ //Spine does not fit in one region
+			size_t spineSize, fullLeaves, numberOfObjectsPerLeaf, finalLeafObjects, lastLeaf, leaves;
+
+			if(refCount == 0){
+				numberOfObjectsPerLeaf = 0;
+				fullLeaves = size/regionSize;
+				finalLeafObjects = 0;
+				lastLeaf = size%regionSize;
+				leaves = (lastLeaf > 0 ? fullLeaves + 1 : fullLeaves);
+				spineSize = sizeof(void*) + sizeof(Object*) + leaves * sizeof(RawObject*);
+			}
+			else{
+				numberOfObjectsPerLeaf = (regionSize/sizeof(RawObject*)) - 1;
+				fullLeaves = refCount/numberOfObjectsPerLeaf;
+				finalLeafObjects = refCount - numberOfObjectsPerLeaf*fullLeaves;
+				leaves = (finalLeafObjects > 0 ? fullLeaves + 1 : fullLeaves);
+				spineSize = sizeof(void*) + sizeof(Object*) + leaves * sizeof(RawObject*);
+				lastLeaf = finalLeafObjects*sizeof(RawObject*) + sizeof(RawObject*);
+			}
+
+			if(spineSize > regionSize){ //Spine does not fit in one region
 				fprintf(stderr, "[MemoryManager::preAllocateObjectDefault][arraylet] The final spine allocation size must fit into a region. spineSize (%zu) > regionSize(%zu)\n", spineSize, regionSize);
 				return postAllocateObjectToRootset(thread,id,size,refCount,classID,NULL); //call for consitent error message
 			}
-				address = allocate(spineSize, 0);
+			address = allocate(spineSize, 0);
 			if(address == NULL){
 				return postAllocateObjectToRootset(thread,id,size,refCount,classID,NULL); //call for consitent error message
 			}
@@ -968,7 +981,7 @@ int MemoryManager::regionSetPointer(int thread, int parentID, size_t parentSlot,
 
 		if (parentRegion != childRegion) {
 			myAllocators[0]->getRegions()[childRegion]->insertObjectReference(parent->getAddress());
-			fprintf(balancedLogFile, "Added remset entry from parent %i in region %zu to child %i in region %zu\n", parentID, parentRegion, childID, childRegion);
+			//fprintf(balancedLogFile, "Added remset entry from parent %i in region %zu to child %i in region %zu\n", parentID, parentRegion, childID, childRegion);
 		}
 	}
 

@@ -90,21 +90,17 @@ Object* Object::getReferenceTo(size_t pointerNumber){
  * @return
  */
 int Object::setPointer(size_t pointerNumber, Object* target){
-	if(this->allocationType == allocationTypeObject){
-		if(pointerNumber >= myPointersMax){
-			fprintf(stderr, "ERROR (" TRACE_FILE_LINE_FORMAT ") in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID());
-			fflush(stdout);
-			return 0;
-		}
+	if(pointerNumber >= myPointersMax){
+		fprintf(stderr, "ERROR (" TRACE_FILE_LINE_FORMAT ") in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID());
+		fflush(stdout);
+		return 0;
+	}
 
-		if (target)
-			rawObject->pointers[pointerNumber] = target->rawObject;
-		else
-			rawObject->pointers[pointerNumber] = NULL;
-	}
-	else if(this->allocationType == allocationTypeDiscontiguousIndexable){
+	if (target)
 		rawObject->pointers[pointerNumber] = target->rawObject;
-	}
+	else
+		rawObject->pointers[pointerNumber] = NULL;
+
 	return 1;
 }
 

@@ -248,20 +248,27 @@ int main(int argc, char *argv[]) {
 	CREATE_GLOBAL_FILENAME((string)filename);
 
 	string logFileName;
+	string balancedLogFileName;
 	char *customLogChar = &customLog[0u];
 	if(strcmp(customLogChar, "")){
 		string theWordLog="log";
 		if(customLog.substr(customLog.length()-3, 3).compare(theWordLog)==0){
 			logFileName = customLog;
+			balancedLogFileName ="Balanced" + customLog;
 		}
 		else{
 			logFileName = customLog + ".log";
+			balancedLogFileName = customLog + "Balanced.log";
 		}
 	}
 	else if (forceAGCAfterEveryStep)
 		logFileName = globalFilename + "Forced.log";
-	else
+		balancedLogFileName = globalFilename + "Balanced.log";
+	}
+	else{
 		logFileName = globalFilename + ".log";
+		balancedLogFileName = globalFilename + "Balanced.log";
+	}
 
 	if(escapeAnalysis == -1){
 		escapeAnalysis = 0;
@@ -270,9 +277,6 @@ int main(int argc, char *argv[]) {
 	if(clsInfo == -1){
 		clsInfo = 0;
 	}
-
-	string balancedLogFileName;
-	balancedLogFileName = globalFilename + "Balanced.log";
 
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
