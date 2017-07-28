@@ -109,7 +109,7 @@ protected:
 	} heapStats;
 
 	unsigned char *heap;
-	std::vector<unsigned char*> allHeaps; //vector containing start and end pointers for all heaps (region-based)
+	std::vector<heapStats> allHeaps; //vector containing start and end pointers for all heaps (region-based)
 
 	int statLiveObjects;
 	FILE* allocLog;

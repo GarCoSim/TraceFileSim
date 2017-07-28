@@ -67,14 +67,6 @@ public:
 		forwarded = value;
 	}
 
-	void setForwardedPointer (RawObject* target){
-		rawObject = target;
-	}
-
-	RawObject* getForwardedPointer (){
-		return forwardedPointer;
-	}
-
 	size_t getReferenceCount();
 	void increaseReferenceCount();
 	void decreaseReferenceCount();
@@ -116,8 +108,6 @@ private:
 
 	size_t referenceCount;
 	int color;
-
-    void *forwardedPointer;
 
 };
 

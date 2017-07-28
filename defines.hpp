@@ -8,13 +8,9 @@
 #ifndef _DEFINES_HPP_
 #define _DEFINES_HPP_
 
-<<<<<<< HEAD
-#define VERSION "3.0.1"
-=======
 #ifndef VERSION
-#define VERSION 3.01
+#define VERSION "3.0.1"
 #endif
->>>>>>> Adding Arraylet Functionality to the BalancedGC
 
 #ifndef NUM_THREADS
 #define NUM_THREADS		50

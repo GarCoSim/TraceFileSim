@@ -11,10 +11,12 @@
 #include "../Allocators/Allocator.hpp"
 #include "../Allocators/BasicAllocator.hpp"
 #include "../Allocators/NextFitAllocator.hpp"
+#include "../Allocators/RegionBasedAllocator.hpp"
 #include "../Collectors/Collector.hpp"
 #include "../Collectors/MarkSweepCollector.hpp"
 #include "../Collectors/TraversalCollector.hpp"
 #include "../Collectors/RecyclerCollector.hpp"
+#include "../Collectors/BalancedCollector.hpp"
 #include "../WriteBarriers/WriteBarrier.hpp"
 #include "../WriteBarriers/RecyclerWriteBarrier.hpp"
 #include "../WriteBarriers/ReferenceCountingWriteBarrier.hpp"
@@ -299,10 +301,10 @@ void *MemoryManager::allocate(size_t size, int generation) {
 	return result;
 }
 
-void *MemoryManager::allocate(size_t size, int generation, int thread) { //if region-based; by Tristan
+/*void *MemoryManager::allocate(size_t size, int generation, int thread) { //if region-based; by Tristan
 	//check if legal generation
 	if (generation < 0 || generation > GENERATIONS - 1) {
-		fprintf(stderr, "ERROR (Line %d): allocate to illegal generation: %d\n",
+		fprintf(stderr, "ERROR (Line %lld): allocate to illegal generation: %d\n",
 				gLineInTrace, generation);
 		exit(1);
 	}
@@ -334,6 +336,7 @@ void *MemoryManager::allocate(size_t size, int generation, int thread) { //if re
 
 	return result;
 }
+*/
 
 /** Add object to correct container and add reference to
  *  remember sets where required.
@@ -740,6 +743,31 @@ int MemoryManager::requestPromotion(Object* object) {
 		}
 	}
 	return 0;
+}
+
+void MemoryManager::requestReallocate(Object* object) {
+#if WRITE_DETAILED_LOG == 1
+//		fprintf(gDetLog, "(%d) Reallocate request for id %d\n", gLineInTrace,
+//				object->getID());
+#endif
+
+	if (object) {
+		int gen = object->getGeneration();
+		size_t size = object->getHeapSize();
+		void *address = myAllocators[gen]->gcAllocate(size);
+		memcpy(address, object->getAddress(), size);
+		if (address == NULL) {
+			fprintf(stderr,"ERROR(Line %lld):Could not reallocate Object %d to gen %d\n",gLineInTrace, object->getID(), gen);
+			exit(1);
+		}
+		object->updateAddress(address);
+		//TODO what about the old RawObject? How does it get freed?
+		// In markSweep collection, the entire heap is explicitly freed (but no
+		// objects are deleted) during the compaction phase.
+
+		//object->setFreed(0);
+
+	}
 }
 
 /** Determines Parent Type and call appropriate delegate function.

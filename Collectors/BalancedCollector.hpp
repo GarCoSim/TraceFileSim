@@ -50,7 +50,7 @@ private:
 	void mark(Object* currentObject);
 	int copy();
 	void getRootObjects();
-	void copyObjectsInQueues();
+	int copyObjectsInQueues();
 	void getRemsetObjects();
 	int copyAndForwardObject(Object *obj);
 	void updatePointers();

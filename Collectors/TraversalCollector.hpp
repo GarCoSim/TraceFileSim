@@ -35,7 +35,8 @@ private:
 	void emptyHelpers();
 	void swap();
 	void copyAndForwardObject(Object *o);
+	void reallocateAllLiveObjects();
 };
 
-} 
+}
 #endif /* TRAVERSALCOLLECTOR_HPP_ */

@@ -59,7 +59,7 @@ void TraversalCollector::swap() {
 	size_t heapPosition= 0;
 	Object *currentObj;
 	RawObject* raw;
-	while(heapPosition < myAllocator->getOldSpaceEndHeapIndex()){
+	while(heapPosition < myAllocator->getHeapSize()){
 
 		raw = (RawObject *)myAllocator->getNextObjectAddress(heapPosition);
 
@@ -174,7 +174,7 @@ void TraversalCollector::getAllRoots() {
 		else if(order==depthFirst){
 			for (i=NUM_THREADS-1; i >= 0; i--) {
 				roots = myObjectContainer->getRoots(i);
-				for (j=(int)roots.size()-1; j >= 0; j--) {
+				for (j = roots.size()-1; j >= 0; j--) {
 					currentObj = roots[j];
 					if (currentObj) {
 						//add to rem set if the root is in a younger generation.
@@ -189,7 +189,7 @@ void TraversalCollector::getAllRoots() {
 		else if(order==hierarchical){
 			for (i = 0; i < NUM_THREADS; i++) {
 				roots = myObjectContainer->getRoots(i);
-				for (j = 0; j < (int)roots.size(); j++) {
+				for (j = 0; j < roots.size(); j++) {
 					currentObj = roots[j];
 					if (currentObj) {
 						//add to rem set if the root is in a younger generation.

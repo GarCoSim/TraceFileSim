@@ -138,8 +138,6 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)depthFirst;
 				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
-				if (!strcmp(argv[i + 1], "real"))
-					return (int)realAlloc;
 				if (!strcmp(argv[i + 1], "basic"))
 					return (int)basicAlloc;
 				if (!strcmp(argv[i + 1], "nextFit"))
@@ -199,11 +197,9 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	fprintf(stderr, "TraceFileSimulator v%lf\n\n", VERSION);
-
-	if(WRITE_DETAILED_LOG) {
+#if WRITE_DETAILED_LOG
 		gDetLog = fopen("detailed.log","w+");
-	}
+#endif
 
 	char *filename		= argv[1];
 	size_t heapSize		= setHeapSize(argc, argv, "--heapsize",  "-h");
@@ -261,7 +257,7 @@ int main(int argc, char *argv[]) {
 			balancedLogFileName = customLog + "Balanced.log";
 		}
 	}
-	else if (forceAGCAfterEveryStep)
+	else if (forceAGCAfterEveryStep){
 		logFileName = globalFilename + "Forced.log";
 		balancedLogFileName = globalFilename + "Balanced.log";
 	}
@@ -270,14 +266,14 @@ int main(int argc, char *argv[]) {
 		balancedLogFileName = globalFilename + "Balanced.log";
 	}
 
-	if(escapeAnalysis == -1){
+/*	if(escapeAnalysis == -1){
 		escapeAnalysis = 0;
 	}
 
 	if(clsInfo == -1){
 		clsInfo = 0;
 	}
-
+*/
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
 	if(logIdentifier!=-1){

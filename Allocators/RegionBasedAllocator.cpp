@@ -141,8 +141,11 @@ int RegionBasedAllocator::addRegions(){
 		return -1;
 	}
 
-	allHeaps.push_back(newHeap);
-	allHeaps.push_back(newHeap + newHeapSize);
+	// Add newly created heap to vector allHeaps
+	currentHeap.heapStart = newHeap;
+	currentHeap.heapEnd = newHeap + newHeapSize;
+	currentHeap.firstRegion = numberOfRegions;
+	allHeaps.push_back(currentHeap);
 
 	// Initialize new regions
 	newNumberOfRegions += numberOfRegions;

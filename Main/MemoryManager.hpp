@@ -31,6 +31,7 @@ public:
 	inline int postAllocateObjectToRootset(int thread, int id,size_t size, size_t refCount, int classID,void *address);
 	int requestRootDelete(int thread, int id);
 	int requestRootAdd(int thread, int id);
+	void requestReallocate(Object* object);
 	int setPointer(int thread, int parentID, size_t parentSlot, int childID);
 	int setObjectPointer(int thread, int parentID, size_t parentSlot, int childID);
 	int setArrayletPointer(int thread, int parentID, size_t parentSlot, int childID);
@@ -58,6 +59,7 @@ private:
 	void initGarbageCollectors(size_t highWatermark);
 	void initWritebarrier();
 	void *allocate(size_t size, int generation);
+	//void *allocate(size_t size, int generation, int thread);
 	void addRootToContainers(Object* object, int thread);
 	void *shift(size_t size);
 

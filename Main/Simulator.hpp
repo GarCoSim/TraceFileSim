@@ -52,6 +52,7 @@ private:
 	void initializeTraceFileLine(TraceFileLine *line);
 	void allocateToRootset(TraceFileLine line);
 	void referenceOperation(TraceFileLine line);
+	void regionReferenceOperation(TraceFileLine line);
 	void deleteRoot(TraceFileLine line);
 	void addToRoot(TraceFileLine line);
 	void referenceOperationClassField(TraceFileLine line);

@@ -11,4 +11,4 @@ traceFileSim: $(ALLOCATORS) $(COLLECTORS) $(MAIN) $(WRITEBARRIERS)
 
 clean: ; rm -f traceFileSim Allocators/*.o Collectors/*.o Main/*.o WriteBarriers/*.o
 
-clear_objects: ; rm -f Allocators/*.o Collectors/*.o Main/*.o WriteBarriers/*.o
+clean_objects: ; rm -f Allocators/*.o Collectors/*.o Main/*.o WriteBarriers/*.o
