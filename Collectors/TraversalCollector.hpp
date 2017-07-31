@@ -15,7 +15,9 @@ namespace traceFileSimulator {
 
 class MemoryManager;
 
-// This collector immplements a split-heap copying collection policy
+/** This collector immplements a split-heap copying collection policy
+ *
+ */
 class TraversalCollector : public Collector {
 public:
 	TraversalCollector();
@@ -36,5 +38,5 @@ private:
 	void reallocateAllLiveObjects();
 };
 
-} 
+}
 #endif /* TRAVERSALCOLLECTOR_HPP_ */

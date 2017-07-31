@@ -16,6 +16,10 @@ WriteBarrier::WriteBarrier() {
 
 }
 
+/** Sets the backup collector for the reference count algorithm.
+ *
+ * @param collector Collector implementation to be used for collections
+ */
 void WriteBarrier::setEnvironment(Collector* collector) {
 	myCollector = collector;
 }

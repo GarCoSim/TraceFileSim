@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #For each line in TestInputs.txt file, execute simulator based on line's contents
 #And compare output log file to various expected outputs in line's contents.
 PRINT_FAILS_ONLY=1
 RC=0 # Return Code (0 == success; 1 == failure)
-if [ -n $2 ] 
+if [ -n $2 ]
 then
 	if [ "-all" == "$2" ]
 	then
@@ -12,7 +12,7 @@ then
 fi
 TOLERANCE=0
 
-if [ -z $1 ] || [ ! -f $1 ] 
+if [ -z $1 ] || [ ! -f $1 ]
 then
 	echo "Invalid input file."
 	RC=1
@@ -23,12 +23,12 @@ fi
 emptyLog (){
 	local NUMLINES=0
 	while read -r OUTPUT_LINE; do
-		case ${OUTPUT_LINE} in 
+		case ${OUTPUT_LINE} in
 			[0-9]*)
 			((NUMLINES++))
 		esac
 	done < $1
-	
+
 	if [ $NUMLINES -eq 0 ]
 	then
 		echo 1
@@ -40,7 +40,7 @@ emptyLog (){
 numGC () {
 	local NUMLINES=0
 	while read -r OUTPUT_LINE; do
-		case ${OUTPUT_LINE} in 
+		case ${OUTPUT_LINE} in
 			[0-9]*)
 			((NUMLINES++))
 		esac
@@ -62,7 +62,7 @@ numGC () {
 memUsed (){
 	local finalFree
 	finalFree=$(removeNonDataLines $2 | sed -r 's/\s+//g' | awk -F'\\|' '{} END{print $6}')
-	
+
 	local returnVal=$(compare $3 $finalFree)
 	if [ $returnVal -eq -1 ]
 	then
@@ -108,7 +108,7 @@ compare(){
 	local tol=$(echo "$expectedVal * $TOLERANCE" | bc -l)
 	local lowerBound=$(echo "$expectedVal-$tol" | bc -l)
 	local upperBound=$(echo "$expectedVal+$tol" | bc -l)
-	
+
 	local lowerCompare=$(echo "$experimentalVal < $lowerBound" | bc -l)
 	local upperCompare=$(echo "$experimentalVal > $upperBound" | bc -l)
 	if [ $lowerCompare = 1 ] || [ $upperCompare = 1 ]
@@ -126,8 +126,8 @@ function removeNonDataLines() {
 
 #Elements of LINE: (trialNum, commandLine, logLocation, [various tests])
 while IFS=';' read -ra LINE; do
-	case "${LINE[0]}" in 
-		\#*) continue ;; 
+	case "${LINE[0]}" in
+		\#*) continue ;;
 		"") continue ;;
 	esac
 
@@ -135,7 +135,7 @@ while IFS=';' read -ra LINE; do
 	uniqueID=$(($(date +%s%N)/1000000))
 	simCall="${LINE[1]} -li $uniqueID"
 	eval $simCall &> /dev/null
-	
+
 #Check if log file exists, and if unique identifier on first line matches
 	if [ ! -e ${LINE[2]} ]
 	then
@@ -143,7 +143,7 @@ while IFS=';' read -ra LINE; do
 		RC=1
 		continue;
 	fi
-
+	
 	logEmpty=$(emptyLog ${LINE[2]})
 	if [ $logEmpty -eq 1 ]
 	then
@@ -151,7 +151,7 @@ while IFS=';' read -ra LINE; do
 		RC=1
 		continue
 	fi
-	
+
 	idLine=$(head -n 1 ${LINE[2]})
 	logID=$(echo $idLine | awk '{print $2}')
 	if [ $logID -ne $uniqueID ]
@@ -160,7 +160,7 @@ while IFS=';' read -ra LINE; do
 		RC=1
 		continue
 	fi
-	
+
 #NEW TEST CALLS SHOULD GO HERE
 	numGC "${LINE[0]}" ${LINE[2]} ${LINE[3]}
 	memUsed "${LINE[0]}" ${LINE[2]} ${LINE[4]}

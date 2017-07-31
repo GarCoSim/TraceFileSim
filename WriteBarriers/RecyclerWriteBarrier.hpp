@@ -17,6 +17,9 @@ namespace traceFileSimulator {
 
 class Collector;
 
+/** A recycler implementation of the WriteBarrier class
+ *
+ */
 class RecyclerWriteBarrier : public WriteBarrier {
 public:
 	RecyclerWriteBarrier();

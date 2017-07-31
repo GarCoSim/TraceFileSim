@@ -15,24 +15,25 @@
 using namespace traceFileSimulator;
 using namespace std;
 //logging vars
-int gLineInTrace;
+TRACE_FILE_LINE_SIZE gLineInTrace;
 int gAllocations;
 FILE* gLogFile;
 FILE* gDetLog;
+FILE* balancedLogFile;
 int forceAGCAfterEveryStep = 0;
 string globalFilename;
 int hierDepth;
 
 size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-	
+
 	for (i = 1; i < argc; i++) {
 		if ((!strcmp("--force", option) || !strcmp("-f", shortOption)) && (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption))) {
 			return 1;
 		}
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--heapsize") || !strcmp(shortOption, "-h")) {
-				
+
 				char suffix;
 				char *arg = argv[i + 1];
 
@@ -59,7 +60,38 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 					default:
 						return (size_t)strtoul (arg, NULL, 0);
 				}
-			} 
+			}
+		}
+		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
+			if (!strcmp(option, "--maxheapsize") || !strcmp(shortOption, "-m")) {
+
+				char suffix;
+				char *arg = argv[i + 1];
+
+				// if we have no suffix we can skip this check
+				if (isdigit(arg[strlen(arg) - 1]))
+					return (size_t)strtoul (arg, NULL, 0);
+
+				suffix = arg[strlen(arg) - 1];
+
+				// get rid of a trailing b/B
+				if (suffix == 'B' || suffix == 'b')
+					suffix = arg[strlen(arg) - 2];
+
+				switch(suffix) {
+					case 'K':
+					case 'k':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION;
+					case 'M':
+					case 'm':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION;
+					case 'G':
+					case 'g':
+						return (size_t)strtoul (arg, NULL, 0) * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION * MAGNITUDE_CONVERSION;
+					default:
+						return (size_t)strtoul (arg, NULL, 0);
+				}
+			}
 		}
 	}
 
@@ -68,7 +100,7 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 
 string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-	
+
 	for (i = 1; i < argc; i++){
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--logLocation") || !strcmp(shortOption, "-l")) {
@@ -82,7 +114,6 @@ string setLogLocation(int argc, char *argv[], const char *option, const char *sh
 
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
-
 	for (i = 1; i < argc; i++) {
 		if ((!strcmp("--force", option) || !strcmp("-f", shortOption)) && (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption))) {
 			return 1;
@@ -95,6 +126,10 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)traversalGC;
 				if (!strcmp(argv[i + 1], "recycler"))
 					return (int)recyclerGC;
+				if (!strcmp(argv[i + 1], "balanced"))
+					return (int)balanced;
+				if (!strcmp(argv[i + 1], "markSweepTB"))
+					return (int)markSweepTB;
 				return -1;
 			} else if (!strcmp(option, "--traversal") || !strcmp(shortOption, "-t")) {
 				if (!strcmp(argv[i + 1], "breadthFirst"))
@@ -103,12 +138,14 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)depthFirst;
 				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
-				if (!strcmp(argv[i + 1], "real"))
-					return (int)realAlloc;
 				if (!strcmp(argv[i + 1], "basic"))
 					return (int)basicAlloc;
 				if (!strcmp(argv[i + 1], "nextFit"))
 					return (int)nextFitAlloc;
+				if (!strcmp(argv[i + 1], "regionBased"))
+					return (int)regionBased;
+				if (!strcmp(argv[i + 1], "threadBased"))
+					return (int)threadBased;
 				return -1;
 			} else if (!strcmp(option, "--writebarrier") || !strcmp(shortOption, "-wb")) {
 				if (!strcmp(argv[i + 1], "disabled"))
@@ -149,9 +186,10 @@ int main(int argc, char *argv[]) {
 						"Options:\n" \
 						"  --watermark x, -w x		uses x percent as the high watermark (default: 90)\n" \
 						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
-						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
+						"  --maxheapsize x, -m x    uses x bytes for the maximum heap size (default: heapsize)\n"\
+						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, balanced, default: traversal)\n" \
 						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
-						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
+						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit, regionBased, default: nextFit)\n" \
 						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
 						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
 						"  --logLocation x, -l x	uses x as the location and filename to print the log file (default: trace file's location and name)"
@@ -159,12 +197,13 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if(WRITE_DETAILED_LOG) {
+#if WRITE_DETAILED_LOG
 		gDetLog = fopen("detailed.log","w+");
-	}
+#endif
 
 	char *filename		= argv[1];
 	size_t heapSize		= setHeapSize(argc, argv, "--heapsize",  "-h");
+	size_t maxHeapSize = setHeapSize(argc, argv, "--maxheapsize", "-m");
 	int highWatermark	= setArgs(argc, argv, "--watermark", "-w");
 	int traversal		= setArgs(argc, argv, "--traversal", "-t");
 	int collector		= setArgs(argc, argv, "--collector", "-c");
@@ -174,7 +213,7 @@ int main(int argc, char *argv[]) {
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 	long long logIdentifier = setIdentifier(argc, argv);
-	
+
 
 	if (highWatermark == -1)
 		highWatermark = 90;
@@ -197,39 +236,57 @@ int main(int argc, char *argv[]) {
 		else
 			heapSize = 600000;
 	}
+	if (maxHeapSize == 0 || maxHeapSize < heapSize)
+		maxHeapSize = heapSize;
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
 
-	
 	CREATE_GLOBAL_FILENAME((string)filename);
-	
+
 	string logFileName;
+	string balancedLogFileName;
 	char *customLogChar = &customLog[0u];
 	if(strcmp(customLogChar, "")){
 		string theWordLog="log";
 		if(customLog.substr(customLog.length()-3, 3).compare(theWordLog)==0){
 			logFileName = customLog;
+			balancedLogFileName ="Balanced" + customLog;
 		}
 		else{
 			logFileName = customLog + ".log";
+			balancedLogFileName = customLog + "Balanced.log";
 		}
 	}
-	else if (forceAGCAfterEveryStep)
+	else if (forceAGCAfterEveryStep){
 		logFileName = globalFilename + "Forced.log";
-	else
+		balancedLogFileName = globalFilename + "Balanced.log";
+	}
+	else{
 		logFileName = globalFilename + ".log";
+		balancedLogFileName = globalFilename + "Balanced.log";
+	}
 
+/*	if(escapeAnalysis == -1){
+		escapeAnalysis = 0;
+	}
+
+	if(clsInfo == -1){
+		clsInfo = 0;
+	}
+*/
 	//set up global logfile
 	gLogFile = fopen(logFileName.c_str(), "w+");
 	if(logIdentifier!=-1){
 		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
 	}
-	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
+	balancedLogFile = fopen(balancedLogFileName.c_str(), "w+");
+
+	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
-			"| %13s | %10s | %10s | %10s | %7s\n",
-			"Line", "GC Reason", "Total GCs", "Objects Freed", "Live Objects",
-			"Heap Used", "Free Heap", "Generation", "GC Time");
+			"| %13s | %10s | %10s | %10s | %7s | %15s | %12s | %21s\n",
+			"Line", "GC Reason", "Total GCs", "Objects Freed",
+			"Live Objects", "Heap Used", "Free Heap", "Generation", "GC Time", "Objs freed during GC", "Objs Copied", "Objs Copied during GC");
 
 	fprintf(stderr, "Using tracefile '%s' with a heap size of %zu bytes and a high watermark of %d\n", filename, heapSize, highWatermark);
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
@@ -242,26 +299,41 @@ int main(int argc, char *argv[]) {
 	//start measuring time
 	clock_t start = clock();
 
-	Simulator* simulator = new Simulator(filename, heapSize, highWatermark, collector, traversal, allocator, writebarrier, finalGC);
+	Simulator* simulator = new Simulator(filename, heapSize, maxHeapSize, highWatermark, collector, traversal, allocator, writebarrier, finalGC);
 
 	while(simulator->lastStepWorked() == 1) {
-		simulator->doNextStep();
-		if(WRITE_DETAILED_LOG) {
-			fflush(gDetLog);
-		}
+        try {
+            simulator->doNextStep();
+#if WRITE_DETAILED_LOG
+            fflush(gDetLog);
+#endif
+        } catch(...){
+            simulator->lastStats();
+            clock_t end = clock();
+            double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
+            //double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
+            printf("Simulation ended with a thrown exception, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
+            fprintf(gLogFile,"Execution finished unsuccessfully after %0.3f seconds\n", elapsed_secs);
+            if(gLogFile) fclose(gLogFile);
+            if(balancedLogFile) fclose(balancedLogFile);
+            delete(simulator);
+            throw;
+        }
 	}
+
 	simulator->printStats();
 	simulator->lastStats();
 
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
-	printf("Simulation ended successfully, execution took %0.3f seconds\n", elapsed_secs);
-	fprintf(gLogFile,"Execution finished after %0.3f seconds\n", elapsed_secs);
+	printf("Simulation ended successfully, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
+	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
 
 	fclose(gLogFile);
+	fclose(balancedLogFile);
+
 	delete(simulator);
+
 	return EXIT_SUCCESS;
 }
-
-

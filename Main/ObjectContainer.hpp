@@ -1,17 +1,11 @@
-/*
- * ObjectContainer.hpp
- *
- *  Created on: 2013-09-03
- *      Author: GarCoSim
- */
-
 #ifndef OBJECTCONTAINER_HPP_
 #define OBJECTCONTAINER_HPP_
 
 #include "Object.hpp"
 #include <vector>
 #include <map>
- 
+
+#include "Optional.cpp"
 namespace traceFileSimulator {
 
 class ObjectContainer {
@@ -29,28 +23,22 @@ public:
 	vector<Object*> getAllStaticReferences();
 	Object* getByID(int id);
 	Object* getRoot(int thread, int objectID);
-	int getSize();
 	int deleteObject(Object* object, bool deleteFlag);
 	int deleteObject(int objectID, bool deleteFlag);
-	int getGenRootSize();
-	int getGenRootCount();
-	int getRootSize();
-	Object* getGenRoot(int slot);
+	size_t getGenRootSize();
+	Object* getGenRoot(size_t slot);
 	void clearRemSet();
-	vector<Object*> getRoots(int thread);
+	vector<Object*> getRoots(size_t thread);
 	vector<Object*> getLiveObjects();
-	vector<Object*> getLiveObjectsInHeapOrder();
-	int getRootsetSize(int thread);
 //	void visualizeState(char* filename);
-	int countElements();
+	size_t countElements();
 	bool isAlreadyRoot(int thread, int objectID);
-	void dumpHeap();
 private:
 	bool doesObjectExistInList(Object *queryObject);
-	int getRemSetSlot();
+	Optional<size_t>* getRemSetSlot();
 
 	vector<std::map<int, Object*> > rootset;
-    std::map<int, Object*> objectMap;
+	std::map<int, Object*> objectMap;
 	vector<Object*> remSet;
 	vector<std::map<int, Object*> > classReferences;
 

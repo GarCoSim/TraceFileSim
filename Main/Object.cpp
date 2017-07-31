@@ -5,21 +5,30 @@
  *      Author: GarCoSim
  */
 
-#include "../defines.hpp"
 #include "Object.hpp"
 #include <stdio.h>
 
-extern int gLineInTrace; //added by Tristan
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 
 namespace traceFileSimulator {
 
-Object::Object(int id, void *address, size_t size, int maxPointers, char *className) {
+/** Class containing metadata about objects
+ *
+ * @param id ID of allocated object
+ * @param address Address of allocated object in the heap
+ * @param size Size of allocated object in the heap (including object header size)
+ * @param maxPointers Number of references the object has
+ * @param className Name of the class of the object
+ * @param _allocationType Used to determine child pointer semantics
+ */
+Object::Object(int id, void *address, size_t size, size_t maxPointers, char *className, allocationTypeEnum _allocationType) {
 	myId = id;
+	allocationType = _allocationType;
 	rawObject = (RawObject *) address;
 	rawObject->associatedObject = this;
 	mySize = size;
 	myPointersMax = maxPointers;
-	for (int i=0; i<myPointersMax; i++)
+	for (size_t i=0; i<myPointersMax; i++)
 		rawObject->pointers[i] = NULL;
 	myGeneration = 0;
 	myAge = 0;
@@ -29,6 +38,8 @@ Object::Object(int id, void *address, size_t size, int maxPointers, char *classN
 	isVisited = false;
 	freed = 0;
 	forwarded = false;
+
+	forwardedPointer = rawObject;
 
 	referenceCount = 0;
 	color = BLACK;
@@ -50,28 +61,37 @@ int Object::getID(){
 	return this->myId;
 }
 
-size_t Object::getPayloadSize(){
-	return mySize - OBJECT_HEADER_SIZE;
-}
-
 size_t Object::getHeapSize(){
 	return mySize;
 }
 
-int Object::getPointersMax(){
+size_t Object::getPointersMax(){
 	return myPointersMax;
 }
-Object* Object::getReferenceTo(int pointerNumber){
+
+/** Gets the address in this objects slot
+ *
+ * @param pointerNumber Slot to get the address of
+ * @return
+ */
+Object* Object::getReferenceTo(size_t pointerNumber){
 	RawObject *target = rawObject->pointers[pointerNumber];
 	if (target)
+	{
 		return target->associatedObject;
+	}
 	return NULL;
 }
 
-int Object::setPointer(int pointerNumber, Object* target){
-
+/** Sets this object's pointer in slot pointerNumber to the value of target
+ *
+ * @param pointerNumber Slot in this object to set
+ * @param target Object to be pointed to
+ * @return
+ */
+int Object::setPointer(size_t pointerNumber, Object* target){
 	if(pointerNumber >= myPointersMax){
-		fprintf(stderr, "ERROR (%d) in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID()); //modified by Tristan; added line number and object ID
+		fprintf(stderr, "ERROR (" TRACE_FILE_LINE_FORMAT ") in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID());
 		fflush(stdout);
 		return 0;
 	}
@@ -80,14 +100,23 @@ int Object::setPointer(int pointerNumber, Object* target){
 		rawObject->pointers[pointerNumber] = target->rawObject;
 	else
 		rawObject->pointers[pointerNumber] = NULL;
+
 	return 1;
 }
 
-void *Object::getRawPointerAddress(int pointerNumber) {
+void Object::setForwardedPointer (void* address){
+	forwardedPointer = address;
+}
+
+void* Object::getForwardedPointer (){
+	return forwardedPointer;
+}
+
+void *Object::getRawPointerAddress(size_t pointerNumber) {
 	return (void *) rawObject->pointers[pointerNumber];
 }
 
-void Object::setRawPointerAddress(int pointerNumber, void *address) {
+void Object::setRawPointerAddress(size_t pointerNumber, void *address) {
 	rawObject->pointers[pointerNumber] = (RawObject *) address;
 }
 
@@ -111,7 +140,7 @@ void Object::setDepth(int d){
 	depth = d;
 }
 
-int Object::getReferenceCount() {
+size_t Object::getReferenceCount() {
 	return referenceCount;
 }
 
@@ -120,11 +149,7 @@ void Object::increaseReferenceCount() {
 }
 
 void Object::decreaseReferenceCount() {
-	//if (referenceCount > 0) 
-		referenceCount--;
-
-	//if (referenceCount == 0)
-	//	fprintf(stderr, "RC dropped to zero\n");
+	referenceCount--;
 }
 
 int Object::getColor() {
@@ -136,7 +161,7 @@ void Object::setColor(int color) {
 }
 
 Object::~Object() {
-	
+
 }
-	
+
 }

@@ -11,7 +11,9 @@
 #include "../WriteBarriers/WriteBarrier.hpp"
 #include "../Main/MemoryManager.hpp"
 
-extern int gLineInTrace;
+#include <ctime>
+
+extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
 
@@ -21,13 +23,28 @@ extern clock_t start, stop;
 
 namespace traceFileSimulator {
 
+/** Sets initial values for internal protected values which are independent of
+ * any environment options.
+ *
+ */
 Collector::Collector() {
 	shortestGC = 999999999;
 	longestGC = 0;
 	allGCs = 0;
 }
 
-void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, int watermark, int generation, int traversal) {
+/** Sets environment variables that can be dependant on other operations after
+ * the collector has been created.
+ *
+ * @param allocator A pointer to the chosen collector
+ * @param container A pointer to the memory manager's object container
+ * @param memManager A pointer to the calling memory manager
+ * @param watermark A value used to determine if a call the collector
+ *        before a failed allocation is required
+ * @param generation Used for creating multiple collectors
+ * @param traversal Used to chose the traversal pattern
+ */
+void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container, MemoryManager* memManager, size_t watermark, int generation, int traversal) {
 	myAllocator = allocator;
 	myObjectContainer = container;
 	myWatermark = watermark;
@@ -44,6 +61,9 @@ void Collector::setEnvironment(Allocator* allocator, ObjectContainer* container,
 	statCollectionReason = (int)reasonStatistics;
 	statFreedDuringThisGC = 0;
 
+	statCopiedDuringThisGC = 0;
+	statCopiedObjects = 0;
+
 	order = (traversalEnum)traversal;
 }
 
@@ -56,6 +76,17 @@ void Collector::checkWatermark() {
 	}
 }
 
+/** The method used to collect garbage.
+ * Must be implemented by subclass
+ *
+ * @param reason Converted to an enum and used to call the correct implementation
+ */
+void Collector::collect(int reason) {
+}
+
+/** Prints statistical information about the collector
+ *
+ */
 void Collector::printStats() {
 	statFreeSpaceOnHeap = myAllocator->getFreeSize();
 	size_t heapUsed = myAllocator->getHeapSize() - statFreeSpaceOnHeap;
@@ -97,13 +128,23 @@ void Collector::printStats() {
 	allGCs += longestGC;
 
 	statLiveObjectCount = myObjectContainer->countElements();
-	fprintf(gLogFile, "%8d | %14s | %10d | %14d "
-			"| %13d | %10zu | %10d | %10d | %4.3f\n", gLineInTrace,
+	fprintf(gLogFile, "" TRACE_FILE_LINE_FORMAT " | %14s | %10zu | %14zu "
+			"| %13zu | %10zu | %10zu | %10d | %4.3f | %20zu | %12zu | %21zu\n", gLineInTrace,
 			statCollectionReasonString, statGcNumber, statFreedObjects,
-			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs);
+			statLiveObjectCount, heapUsed, statFreeSpaceOnHeap, myGeneration, elapsed_secs, statFreedDuringThisGC, statCopiedObjects, statCopiedDuringThisGC);
 	fflush(gLogFile);
-	if (DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1) {
-		myAllocator->printStats();
+
+#if DEBUG_MODE == 1 && WRITE_ALLOCATION_INFO == 1
+	myAllocator->printStats();
+#endif
+	if(statCollectionReason == (int)reasonStatistics){
+		char fl[80];
+		sprintf(fl, "gen%d.log",myGeneration);
+		FILE* genfile = fopen(fl,"a");
+
+		fprintf(genfile,"%zu\n",heapUsed);
+		fflush(genfile);
+		fclose(genfile);
 	}
 	statCollectionReason = (int)reasonStatistics;
 }
@@ -116,13 +157,17 @@ void Collector::clearForwardingEntries() {
 	forwardPointers.clear();
 }
 
+/** Updates the meta data of all moved objects
+ * and clears their entries
+ *
+ */
 void Collector::updatePointers() {
-	int i, j;
+	size_t i, j;
 	void *pointerAddress;
 	Object *currentObj;
 
 	vector<Object *> objects = myObjectContainer->getLiveObjects();
-	for (i=0; i<(int)objects.size(); i++) {
+	for (i=0; i<objects.size(); i++) {
 		currentObj = objects[i];
 		for (j=0; j<currentObj->getPointersMax(); j++) {
 			pointerAddress = currentObj->getRawPointerAddress(j);
@@ -135,11 +180,14 @@ void Collector::updatePointers() {
 	clearForwardingEntries();
 }
 
+/** Marks all live objects. The collector knows all live objects in advance
+ *
+ */
 void Collector::initializeMarkPhase() {
 	Object* currentObj;
-	int i;
+	size_t i;
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (i = 0; i < (int)objects.size(); i++) {
+	for (i = 0; i < objects.size(); i++) {
 		currentObj = objects[i];
 		if (currentObj) {
 			currentObj->setVisited(false);
@@ -147,29 +195,22 @@ void Collector::initializeMarkPhase() {
 	}
 }
 
-void Collector::compact() {
-	/*only alive objects are left in the container. If I traverse
-	 through the live list, I get all elements*/
-	//free everything.
-	myMemManager->statBeforeCompact(myGeneration);
-	freeAllLiveObjects();
-	//allocate everything back.
-	myMemManager->requestResetAllocationPointer(myGeneration);
-	reallocateAllLiveObjects();
-	myMemManager->statAfterCompact(myGeneration);
-}
 
+/** Moves objects to the next generation.
+ *
+ * @return 0 on success; 1 on failure
+ */
 int Collector::promotionPhase() {
 	if (gcsSinceLastPromotionPhase == 0) {
 		//nothing to do here
 		return 0;
 	}
-	int g, oldi;
+	size_t g, oldi;
 	//in case the next generation is too full, a flag to wait
 	int noSpaceUpstairs = 0;
-	oldi = -1;
+	oldi = 0;
 	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (g = 0; g < (int)objects.size(); g++) {
+	for (g = 0; g < objects.size(); g++) {
 		Object* currentObj = objects[g];
 		if (g < oldi) {
 			printf("oO\n");
@@ -180,7 +221,6 @@ int Collector::promotionPhase() {
 			if (age
 					>= PROMOTIONAGE + PROMOTIONAGE * myGeneration
 							/*+ currentObj->getGeneration() * PROMOTIONAGEFACTOR*/) {
-				//fprintf(stderr, "(%d) promoting object of age %d\n",gLineInTrace, age);
 				if (currentObj->getGeneration() < GENERATIONS - 1) {
 					noSpaceUpstairs = myMemManager->requestPromotion(
 							currentObj);
@@ -201,11 +241,17 @@ int Collector::promotionPhase() {
 void Collector::initializeHeap() {
 }
 
+/** Prints stats and increments the post collection stats
+ *
+ */
 void Collector::postCollect() {
 	printStats();
 	gcsSinceLastPromotionPhase++;
 }
 
+/** Resets some collection values and increments pre collection stats
+ *
+ */
 void Collector::preCollect(){
 	start = clock();
 	statFreedDuringThisGC = 0;
@@ -213,41 +259,19 @@ void Collector::preCollect(){
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));   
+	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (allGCs / (statGcNumber + 1)));
 }
 
+/** Calls the MemoryManager::requestDelete(Object*, int) method on the object
+ * pointer with a gGC of 0
+ *
+ * @param obj A pointer to the object we wish to free
+ */
 void Collector::freeObject(Object *obj) {
 	if (obj) {
-		//fprintf(stderr, "Freeing %i in freeObject\n", obj->getID());
 		myMemManager->requestDelete(obj, 0);
 		statFreedObjects++;
 		statFreedDuringThisGC++;
-	}
-}
-void Collector::freeAllLiveObjects(){
-	int i;
-	vector<Object*> objects = myObjectContainer->getLiveObjects();
-	for (i = 0; i < (int)objects.size(); i++) {
-		Object* currentObj = objects[i];
-		if (currentObj) {
-			myMemManager->requestFree(currentObj);
-		}
-	}
-}
-
-void Collector::reallocateAllLiveObjects() {
-	int i;
-	void *addressBefore, *addressAfter;
-	// the ordering ensures that we don't overwrite an object we have yet to visit
-	vector<Object*> objects = myObjectContainer->getLiveObjectsInHeapOrder();
-	for (i = 0; i < (int)objects.size(); i++) {
-		Object* currentObj = objects[i];
-		if (currentObj) {
-			addressBefore = currentObj->getAddress();
-			myMemManager->requestReallocate(currentObj);
-			addressAfter = currentObj->getAddress();
-			addForwardingEntry(addressBefore, addressAfter);
-		}
 	}
 }
 
@@ -259,15 +283,7 @@ bool Collector::candidatesNotContainObj(Object *obj) {
 	return false;
 }
 
-bool Collector::candidatesContainObj(Object *obj) {
-	return false;
-}
-
-void Collector::removeObjectFromCandidates(Object *obj) {
-	
-}
-
 Collector::~Collector() {
 }
 
-} 
+}
