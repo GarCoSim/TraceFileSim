@@ -11,7 +11,7 @@
 #include "../Main/ObjectContainer.hpp"
 #include "../Main/MemoryManager.hpp"
 #include <sstream>
-#include <cstdlib>
+#include <ctime>
 
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;

@@ -5,11 +5,12 @@
  *      Author: Johannes
  */
 
+#include <ctime>
 #include "Collector.hpp"
 #include "RecyclerCollector.hpp"
 #include "../Allocators/Allocator.hpp"
-#include "../Main/Object.hpp"
 #include "../Main/MemoryManager.hpp"
+
 
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;

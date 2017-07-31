@@ -11,6 +11,8 @@
 #include "../WriteBarriers/WriteBarrier.hpp"
 #include "../Main/MemoryManager.hpp"
 
+#include <ctime>
+
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;

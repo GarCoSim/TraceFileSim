@@ -11,7 +11,8 @@
 #include "../Main/ObjectContainer.hpp"
 #include "../Main/MemoryManager.hpp"
 #include <sstream>
-#include <cstdlib>
+#include <ctime>
+
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
@@ -172,9 +173,19 @@ void TraversalCollector::getAllRoots() {
 			}
 		}
 		else if(order==depthFirst){
-			for (i=NUM_THREADS-1; i >= 0; i--) {
+			/* Do not replace these while loops with for loop!
+			 * We start at the largest index and decrement down
+			 * to 0, but we use size_t so we can't check for negative.
+			 * This while loop will do the same thing,
+			 * but will never have to allow fo negative values.
+			 */
+			i = NUM_THREADS;
+			while (i > 0) {
+				i--;
 				roots = myObjectContainer->getRoots(i);
-				for (j = roots.size()-1; j >= 0; j--) {
+				j = roots.size();
+				while(j > 0) {
+					j--;
 					currentObj = roots[j];
 					if (currentObj) {
 						//add to rem set if the root is in a younger generation.
@@ -281,7 +292,15 @@ void TraversalCollector::depthFirstCopying() {
 
 		copyAndForwardObject(currentObj);
 		currentObj->setAge(currentObj->getAge() + 1);
-		for (i = kids-1; i >=0; i--) {
+		/* Do not replace this while loop with a for loop!
+		 * We start at the largest index and decrement down
+		 * to 0, but we use size_t so we can't check for negative.
+		 * This while loop will do the same thing,
+		 * but will never have to allow fo negative values.
+		 */
+		i = kids;
+		while (i >0) {
+			i--;
 			child = currentObj->getReferenceTo(i);
 			//no matter if the child was processed before or not, add it to the rem set.
 			if(child && child->getGeneration() < currentObj->getGeneration()){
