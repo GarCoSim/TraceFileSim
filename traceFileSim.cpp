@@ -103,8 +103,6 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 					return (int)depthFirst;
 				return -1;
 			} else if (!strcmp(option, "--allocator") || !strcmp(shortOption, "-a")) {
-				if (!strcmp(argv[i + 1], "real"))
-					return (int)realAlloc;
 				if (!strcmp(argv[i + 1], "basic"))
 					return (int)basicAlloc;
 				if (!strcmp(argv[i + 1], "nextFit"))
@@ -151,7 +149,7 @@ int main(int argc, char *argv[]) {
 						"  --heapsize x,  -h x		uses x bytes for the heap size (default: Traversal-600000, markSweep-350000)\n" \
 						"  --collector x, -c x		uses x as the garbage collector (valid: markSweep, traversal, recycler, default: traversal)\n" \
 						"  --traversal x, -t x		uses x as the traversal algorithm (valid: breadthFirst depthFirst, default: breadthFirst)\n" \
-						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit default: nextFit)\n" \
+						"  --allocator x, -a x		uses x as the allocator (valid: basic, nextFit default: nextFit)\n" \
 						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
 						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
 						"  --logLocation x, -l x	uses x as the location and filename to print the log file (default: trace file's location and name)"

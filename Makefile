@@ -1,8 +1,8 @@
 CXXFLAGS = -Wall -g
 
-ALLOCATORS = Allocators/Allocator.o Allocators/BasicAllocator.o Allocators/NextFitAllocator.o Allocators/RealAllocator.o
+ALLOCATORS = Allocators/Allocator.o Allocators/BasicAllocator.o Allocators/NextFitAllocator.o
 COLLECTORS = Collectors/Collector.o Collectors/MarkSweepCollector.o Collectors/TraversalCollector.o Collectors/RecyclerCollector.o
-MAIN = Main/CardTable.o Main/Object.o Main/ObjectContainer.o Main/MemoryManager.o Main/Simulator.o
+MAIN = Main/Object.o Main/ObjectContainer.o Main/MemoryManager.o Main/Simulator.o
 WRITEBARRIERS = WriteBarriers/WriteBarrier.o WriteBarriers/RecyclerWriteBarrier.o WriteBarriers/ReferenceCountingWriteBarrier.o
 
 all: traceFileSim

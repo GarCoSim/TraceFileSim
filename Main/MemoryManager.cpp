@@ -9,7 +9,6 @@
 #include "Object.hpp"
 #include "ObjectContainer.hpp"
 #include "../Allocators/Allocator.hpp"
-#include "../Allocators/RealAllocator.hpp"
 #include "../Allocators/BasicAllocator.hpp"
 #include "../Allocators/NextFitAllocator.hpp"
 #include "../Collectors/Collector.hpp"
@@ -95,9 +94,6 @@ void MemoryManager::initAllocators(size_t heapsize) {
 	size_t* genSizes = computeHeapsizes(heapsize);
 	for (i = 0; i < GENERATIONS; i++) {
 		switch (_allocator) {
-			case realAlloc:
-				myAllocators[i] = new RealAllocator();
-				break;
 			case basicAlloc:
 				myAllocators[i] = new BasicAllocator();
 				break;

@@ -78,7 +78,6 @@ void TraversalCollector::swap() {
 					statFreedDuringThisGC++;
 				}
 				myMemManager->requestDelete(currentObj, myGeneration == GENERATIONS - 1 ? 1 : 0);
-				//myObjectContainer->deleteObject(currentObj, !myAllocator->isRealAllocator());
 			}
 
 		}

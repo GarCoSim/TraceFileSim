@@ -66,8 +66,7 @@ enum collectorEnum {
 #define HIER_DEPTH_DEFAULT 2
 
 enum allocatorEnum {
-						realAlloc = 0,
-						basicAlloc,
+						basicAlloc = 0,
 						nextFitAlloc
 				};
 
@@ -90,7 +89,7 @@ enum writebarriersEnum {
 // create some fancy strings for debug output
 #define TRAVERSAL_STRING (traversal == (int)breadthFirst ? "breadthFirst" : "depthFirst")
 #define COLLECTOR_STRING (collector == (int)traversalGC ? "traversal" : (collector == (int)markSweepGC ? "markSweep" : (collector == (int)recyclerGC ? "recycler" : "copying")))
-#define ALLOCATOR_STRING (allocator == (int)realAlloc ? "real" : (allocator == (int)basicAlloc ? "basic" : "nextFit"))
+#define ALLOCATOR_STRING (allocator == (int)allocator == (int)basicAlloc ? "basic" : "nextFit")
 #define WRITEBARRIER_STRING (writebarrier == (int)recycler ? "recycler" : (writebarrier == (int)referenceCounting ? "referenceCounting" : "disabled"))
 #define FINALGC_STRING (finalGC == 1 ? "enabled" : "disabled")
 
