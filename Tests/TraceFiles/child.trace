@@ -1,0 +1,10 @@
+a T1 O1 S1024 N1
++ T1 O1
+a T1 O2 S1024 N0
++ T1 O2 
+w T1 P1 #0 O2 S8 V0
+- T1 O2
+- T1 O1
+a T1 O3 S1024 N0
++ T1 O3
+- T1 O3

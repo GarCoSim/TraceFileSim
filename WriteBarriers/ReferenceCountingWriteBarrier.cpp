@@ -15,7 +15,13 @@ ReferenceCountingWriteBarrier::ReferenceCountingWriteBarrier() {
 
 }
 
-
+/** Increases the reference count of the new object reference and calls
+ * ReferenceCountingWriteBarrier::deleteReference(Object*) on the
+ * old child object reference.
+ *
+ * @param oldChild Previous value of the reference.
+ * @param child New value of the reference.
+ */
 void ReferenceCountingWriteBarrier::process(Object *oldChild, Object *child) {
 
 	if (child) {
@@ -27,6 +33,13 @@ void ReferenceCountingWriteBarrier::process(Object *oldChild, Object *child) {
 	}
 }
 
+/** Decreases the reference count of the object. If the count becomes 0
+ * due to this decrement then the method will recursively call itself on
+ * all children of the supplied object and then call
+ * Collector::freeObject(Object*)
+ *
+ * @param obj Object to have a reference deleted
+ */
 void ReferenceCountingWriteBarrier::deleteReference(Object *obj) {
 	if (obj) {
 		obj->decreaseReferenceCount();

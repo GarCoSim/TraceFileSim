@@ -17,6 +17,9 @@ namespace traceFileSimulator {
 
 class MemoryManager;
 
+/** A Mark and Sweep Implementation of Collector
+ *
+ */
 class MarkSweepCollector : public Collector {
 public:
 	MarkSweepCollector();
