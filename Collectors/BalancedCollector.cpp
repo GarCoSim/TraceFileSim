@@ -607,8 +607,6 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 	size_t currentFreeSpace, objectSize, objRegionID;
 	void *currentFreeAddress, *addressAfter;
 	int objRegionAge, returnVal;
-	void *addressBefore;
-	addressBefore = obj->getAddress();
 	objRegionID = myAllocator->getObjectRegion(obj);
 	objRegionAge = allRegions[objRegionID]->getAge();
 	if(objRegionAge >= MAXREGIONAGE){ //If object is at maximum age, copy it into a region of the same age
@@ -646,7 +644,7 @@ int BalancedCollector::copyAndForwardObject(Object *obj) {
 				this->addObjectToSpineRemset(obj);
 			}
 
-			//fprintf(balancedLogFile, "Copied object %i from region %zu to region %u. Address before: %zu. Address after: %zu\n", obj->getID(), objRegionID, currentCopyToRegionID, (size_t)addressBefore, (size_t)addressAfter);
+			//fprintf(balancedLogFile, "Copied object %i from region %zu to region %u. Address after: %zu\n", obj->getID(), objRegionID, currentCopyToRegionID, (size_t)addressAfter);
 
 			return 0;
 		}
