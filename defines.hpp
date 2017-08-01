@@ -9,7 +9,7 @@
 #define _DEFINES_HPP_
 
 #ifndef VERSION
-#define VERSION "3.0.1"
+#define VERSION "4.0.0"
 #endif
 
 #ifndef NUM_THREADS
