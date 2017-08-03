@@ -1,22 +1,28 @@
 # Ignore executable
 traceFileSim
 
-# Ignore Build Artifacts
-**.o
-**.log
-**.log.sh
+# Ignore TraceFiles Unless Explicitly Included
 **.trace
 **.cls
 **.td
-**.cachelog
+
+# Ignore Build Artifacts
+**.o
 Debug/*
 *.o
 arrayletTest/**
 
-traceFileSim
+# Ignore Log Files
+**.log
+**.log.sh
+**.cachelog
+
+# Ignore IDE Artifacts
 .idea/
 cmake-build-debug/
-
-# Ignore Eclipse Project Files
 .cproject
 .project
+
+# Ignore Coverity Artifacts
+cov-int/
+TraceFileSim.tgz
