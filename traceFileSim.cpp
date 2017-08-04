@@ -103,8 +103,30 @@ string setLogLocation(int argc, char *argv[], const char *option, const char *sh
 
 	for (i = 1; i < argc; i++){
 		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
+			if (!strcmp(option, "--directory") || !strcmp(shortOption, "-d")) {
+				string arg = (string)argv[i + 1];
+				return arg;
+			}
+		}
+	}
+	return "";
+}
+
+string setLogDirectory(int argc, char *argv[], const char *option, const char *shortOption) {
+	int i;
+
+	for (i = 1; i < argc; i++){
+		if (!strcmp(argv[i], option) || !strcmp(argv[i], shortOption)) {
 			if (!strcmp(option, "--logLocation") || !strcmp(shortOption, "-l")) {
 				string arg = (string)argv[i + 1];
+				bool containsIllegalChar  = string::npos != arg.find('/')
+											|| string::npos != arg.find('\\');
+				if(containsIllegalChar){
+					const char* errorMsg =
+							"File name is a path, use the -d /path/to/directory option to specify a directory for log files.";
+					fprintf(stderr, errorMsg);
+					throw;
+				}
 				return arg;
 			}
 		}
@@ -210,6 +232,7 @@ int main(int argc, char *argv[]) {
 	int allocator		= setArgs(argc, argv, "--allocator", "-a");
 	int writebarrier	= setArgs(argc, argv, "--writebarrier", "-wb");
 	int finalGC			= setArgs(argc, argv, "--finalGC", "-fGC");
+	string logDirectory = setLogDirectory(argc, argv, "--directory", "-d");
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
 	long long logIdentifier = setIdentifier(argc, argv);
@@ -275,12 +298,19 @@ int main(int argc, char *argv[]) {
 	}
 */
 	//set up global logfile
-	gLogFile = fopen(logFileName.c_str(), "w+");
+	gLogFile = fopen((logDirectory + logFileName).c_str(), "w+");
+	if(NULL == gLogFile){
+		const char* errorMsg = "Log File failed to open";
+		fprintf(stderr, errorMsg);
+	}
 	if(logIdentifier!=-1){
 		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
 	}
-	balancedLogFile = fopen(balancedLogFileName.c_str(), "w+");
-
+	balancedLogFile = fopen((logDirectory + balancedLogFileName).c_str(), "w+");
+	if(NULL == balancedLogFile){
+		const char* errorMsg = "Balanced Log File failed to open";
+		fprintf(stderr, errorMsg);
+	}
 	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
