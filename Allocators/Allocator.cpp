@@ -183,7 +183,7 @@ size_t Allocator::getSpaceToNextObject(size_t start){
 		}
 	}
 	ERRMSG("Object found in getNextObjectAddress(), but here it doesn't exist.\n");
-	exit (1);
+	throw 19;
 }
 
 /** Gets a pointer to the first object after the given address.
@@ -602,6 +602,7 @@ void Allocator::setBitUnused(size_t heapIndex) {
 	if (heapIndex > (size_t) overallHeapSize) {
 		fprintf(stderr, "add %zu heap %zu\n", heapIndex, overallHeapSize);
 		fprintf(stderr, "ERROR: setBitUnused request to illegal slot\n");
+		throw 19;
 	}
 
 	size_t byte = heapIndex / 8;

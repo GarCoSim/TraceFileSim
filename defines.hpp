@@ -150,8 +150,6 @@ enum writebarriersEnum {
 #define WRITEBARRIER_STRING (writebarrier == (int)recycler ? "recycler" : (writebarrier == (int)referenceCounting ? "referenceCounting" : "disabled"))
 #define FINALGC_STRING (finalGC == 1 ? "enabled" : "disabled")
 
-#define CREATE_GLOBAL_FILENAME(name) (globalFilename = (name).substr(0, (name).find(".trace")))
-
 //added by Tristan
 #define MAX64BIT 0xFFFFFFFFFFFFFFFF	//18446744073709551615
 #define MAX32BIT 0xFFFFFFFF			//4294967295

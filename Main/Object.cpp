@@ -93,7 +93,7 @@ int Object::setPointer(size_t pointerNumber, Object* target){
 	if(pointerNumber >= myPointersMax){
 		fprintf(stderr, "ERROR (" TRACE_FILE_LINE_FORMAT ") in Object (%d): set Pointer to impossible slot\n",gLineInTrace,target->getID());
 		fflush(stdout);
-		return 0;
+		throw 19;
 	}
 
 	if (target)

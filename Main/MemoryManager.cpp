@@ -829,7 +829,7 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 			std::stringstream ss;
 			ss << "Child object " << childID << " does not exist. Ignoring trace file statement and continuing.\n"; //TODO: shouldn't there be an exit/ return failure?
 			ERRMSG(ss.str().c_str());
-			return 0;
+			throw 19;
 		}
 	}
 
@@ -842,7 +842,7 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 		std::stringstream ss;
 		ss << "Parent object " << parentID << " does not exist. Ignoring trace file statement and continuing.\n"; //TODO: shouldn't there be an exit/ return failure?
 		ERRMSG(ss.str().c_str());
-		return 0;
+		throw 19;
 	}
 
 	//check old child, if it has remSet entries then delete them

@@ -102,7 +102,7 @@ void MarkSweepCollector::sweep() {
 				std::stringstream ss;
 				ss << "Object does not exist at heap position " << heapPosition << ". The algorithm for stepping through the heap has failed.\n";
 				ERRMSG(ss.str().c_str());
-				exit(1);
+				throw 19;
 			}
 
 			heapPosition += myAllocator->getSpaceToNextObject(heapPosition);

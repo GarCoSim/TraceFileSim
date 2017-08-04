@@ -98,7 +98,7 @@ size_t setHeapSize(int argc, char *argv[], const char *option, const char *short
 	return 0;
 }
 
-string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
+string setLogDirectory(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 
 	for (i = 1; i < argc; i++){
@@ -112,7 +112,7 @@ string setLogLocation(int argc, char *argv[], const char *option, const char *sh
 	return "";
 }
 
-string setLogDirectory(int argc, char *argv[], const char *option, const char *shortOption) {
+string setLogLocation(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 
 	for (i = 1; i < argc; i++){
@@ -132,6 +132,31 @@ string setLogDirectory(int argc, char *argv[], const char *option, const char *s
 		}
 	}
 	return "";
+}
+
+string getGlobalFileName(string filename){
+	string name = filename;
+	size_t pos = (string::npos != name.find("/")) ? name.find("/") : name.find('\\');
+	while(string::npos != pos) {
+		name = name.substr(pos+1);
+		pos = (string::npos != name.find("/")) ? name.find("/") : name.find('\\');
+	}
+	return name.substr(0, name.find(".trace"));
+}
+
+string getDefaultLogDirectory(string filename){
+	string name = filename;
+	size_t pos = (string::npos != name.find("/")) ? name.find("/") : name.find('\\');
+	if(string::npos == pos){
+		return "./";
+	}
+	size_t end = 0;
+	while(string::npos != pos){
+		end += pos+1;
+		name = name.substr(pos+1);
+		pos = (string::npos != name.find("/")) ? name.find("/") : name.find('\\');
+	}
+	return filename.substr(0, end);
 }
 
 int setArgs(int argc, char *argv[], const char *option, const char *shortOption) {
@@ -214,7 +239,8 @@ int main(int argc, char *argv[]) {
 						"  --allocator x, -a x		uses x as the allocator (valid: real, basic, nextFit, regionBased, default: nextFit)\n" \
 						"  --writebarrier x, -wb x	uses x as the write Barrier (valid: referenceCounting, recycler, disabled, default: disabled)\n" \
 						"  --finalGC x, -fGC x		uses x as the final GC (valid: disabled, enabled, default: disabled)\n" \
-						"  --logLocation x, -l x	uses x as the location and filename to print the log file (default: trace file's location and name)"
+						"  --logLocation x, -l x	uses x as the filename to print the log file (default: trace file's location and name)" \
+						"  --directory x, -d x	    uses x as the location to print the log file (default: trace file's location and name)"
 						);
 		exit(1);
 	}
@@ -264,29 +290,29 @@ int main(int argc, char *argv[]) {
 	if (forceAGCAfterEveryStep == -1)
 		forceAGCAfterEveryStep = 0;
 
-	CREATE_GLOBAL_FILENAME((string)filename);
+	globalFilename = getGlobalFileName(filename);
 
 	string logFileName;
 	string balancedLogFileName;
-	char *customLogChar = &customLog[0u];
-	if(strcmp(customLogChar, "")){
+	if(customLog != ""){
 		string theWordLog="log";
-		if(customLog.substr(customLog.length()-3, 3).compare(theWordLog)==0){
+		if(customLog.substr(customLog.length()-3, 3) == theWordLog){
 			logFileName = customLog;
-			balancedLogFileName ="Balanced" + customLog;
 		}
 		else{
 			logFileName = customLog + ".log";
-			balancedLogFileName = customLog + "Balanced.log";
 		}
 	}
 	else if (forceAGCAfterEveryStep){
 		logFileName = globalFilename + "Forced.log";
-		balancedLogFileName = globalFilename + "Balanced.log";
 	}
 	else{
 		logFileName = globalFilename + ".log";
-		balancedLogFileName = globalFilename + "Balanced.log";
+	}
+	balancedLogFileName = "Balanced" + logFileName;
+
+	if(logDirectory == ""){
+		logDirectory = getDefaultLogDirectory(filename);
 	}
 
 /*	if(escapeAnalysis == -1){
@@ -300,7 +326,7 @@ int main(int argc, char *argv[]) {
 	//set up global logfile
 	gLogFile = fopen((logDirectory + logFileName).c_str(), "w+");
 	if(NULL == gLogFile){
-		const char* errorMsg = "Log File failed to open";
+		const char* errorMsg = "Log File failed to open\n";
 		fprintf(stderr, errorMsg);
 	}
 	if(logIdentifier!=-1){
@@ -308,7 +334,7 @@ int main(int argc, char *argv[]) {
 	}
 	balancedLogFile = fopen((logDirectory + balancedLogFileName).c_str(), "w+");
 	if(NULL == balancedLogFile){
-		const char* errorMsg = "Balanced Log File failed to open";
+		const char* errorMsg = "Balanced Log File failed to open\n";
 		fprintf(stderr, errorMsg);
 	}
 	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
