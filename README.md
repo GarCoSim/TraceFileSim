@@ -1,5 +1,14 @@
 # Trace File Simulator
 
+![](doc/logo/tracefilesim.png)
+
+[![Release version](https://img.shields.io/badge/release-v4.0.0-blue.svg)](https://github.com/GarCoSim/TraceFileSim/releases)
+
+[![Latest Tag](https://img.shields.io/github/tag/GarCoSim/TraceFileSim.svg)](https://github.com/GarCoSim/TraceFileSim/tags)
+
+[![Coverity Coverage](https://img.shields.io/coverity/scan/10105.svg)](https://scan.coverity.com/projects/tracefilesim)
+
+[![Downloads](https://img.shields.io/github/downloads/GarCoSim/TraceFileSim/total.svg)](https://codeload.github.com/GarCoSim/TraceFileSim/legacy.tar.gz/master)
 
 ## Introduction
 
