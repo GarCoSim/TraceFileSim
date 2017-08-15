@@ -84,9 +84,9 @@
 	Similarly, to specify a particular collection policy:
 
 		* ./traceFileSim <path/to/tracefile> --collector <policyname>
-	
+
 	To specify the size (in bytes) of the heap used during simulation:
-	
+
 		* ./traceFileSim <path/to/tracefile> --tracefile <size>
 
 
@@ -103,7 +103,7 @@
 	management operation carried out by a particular thread of execution. Memory
 	management operations are defined at the granularity of objects. Some
 	examples of memory management operations are:
-	
+
 	* allocating a new object to heap
 	* adding an object to a thread's root set
 	* updating an object reference field within an existing object
@@ -111,7 +111,7 @@
 	* removing an object from heap
 
 	Trace files can be created in several ways:
-	
+
 	* writing them by hand
 		* For trivial examples, or to gain a better understanding of the trace file
 		format, trace files can be manually created. For several examples see the
@@ -182,7 +182,24 @@
 
 	* Generation
 		* the generation that was targeted by this collection. This column only
-		applies to generational collection policies, and will otherwise be set to 0. 
+		applies to generational collection policies, and will otherwise be set to 0.
 
 	* GC Time
 		* the amount of time (in seconds) taken for the collection to complete.
+
+
+## Contributors
+
+	*Please keep this up-to-date*
+
+	Professor(s): Dr. Kenneth B. Kent, Dr. Gerhard Dueck
+
+	Research Assistant(s): Aaron G. Graham
+
+	Post Doc(s): Md Mazder Rahman
+
+	Graduate Student(s): Konstantin Nasartschuk, Marcel Dombrowski, Tristan Basa, Panagiotis (Panos) Patros, Aaron Tabor, Johannes Ilisei, Andrii Kuch, Sasha Williams, Sam Kelley, Azden Bierbrauer, Scott Young
+
+<!-- Summer Students: -->
+
+<!-- Companies: -->
