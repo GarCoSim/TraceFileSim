@@ -37,6 +37,9 @@ extern FILE* balancedLogFile;
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern string globalFilename;
 
+//extern int lockNumber;
+extern int catchZombies;
+
 namespace traceFileSimulator {
 
 int (MemoryManager::*preAllocateObject)(int,int,size_t,size_t,int) = NULL;
@@ -75,11 +78,31 @@ MemoryManager::MemoryManager(size_t heapSize, size_t maxHeapSize, int highWaterm
 		preAllocateObject = &MemoryManager::preAllocateObjectDefault;
 }
 
+std::map<int, int> MemoryManager::getZombies(){
+	return zombies;
+}
+
 /** Loads in the class names from a file.
 *
 * @param traceFilePath
 * @return true if successful, false if not successful or if the class table is already loaded
 */
+std::map<int, int> MemoryManager::getObjectsAllocateLines(){
+	return objectsAllocateLines;
+}
+
+void MemoryManager::checkForDeadObjects() {
+	std::set<Object *> deadObjectsLocked = myGarbageCollectors[GENERATIONS-1]->getDeadObjectsLocked();
+
+	std::set<Object *>::iterator it;
+	for (it=deadObjectsLocked.begin(); it!=deadObjectsLocked.end(); ++it) {
+		if (myWriteBarrier && *it)
+			myWriteBarrier->alreadyDeadObject(*it);
+	}
+
+	myGarbageCollectors[GENERATIONS-1]->clearDeadObjectsLocked();	
+}
+
 bool MemoryManager::loadClassTable(string traceFilePath) {
 	ifstream classFile;
 	size_t found;
@@ -338,6 +361,33 @@ void *MemoryManager::allocate(size_t size, int generation) {
 }
 */
 
+void MemoryManager::increaseRootOperationCount(int id) {
+	std::map<int,int>::iterator it;
+	it = rootCounter.find(id);
+	if (it != rootCounter.end()) {
+		rootCounter.at(id) = (it->second)++;
+	}
+	else {
+		rootCounter.insert( std::pair<int,int>(id, 1) );
+	}
+}
+
+int MemoryManager::getRootOperationCount(int id) {
+	std::map<int,int>::iterator it;
+	it = rootCounter.find(id);
+
+	int operations;
+
+	if (it != rootCounter.end()) {
+		operations = it->second;
+	}
+	else {
+		fprintf(stderr, "Root Operation count for %i at " TRACE_FILE_LINE_FORMAT " not found!\n", id, gLineInTrace);
+	}
+
+	return operations;
+}
+
 /** Add object to correct container and add reference to
  *  remember sets where required.
  *
@@ -564,11 +614,29 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
 	object = new Object(id, address, size, refCount, getClassName(classID), allocationTypeObject);
 
 	object->setGeneration(0);
-	//add to Containers
-	addRootToContainers(object, thread);
 
-	if (myWriteBarrier){
-		myWriteBarrier->process(NULL, object);
+	//add to Containers
+	//addRootToContainers(object, thread);
+
+	for (int i = 0; i < GENERATIONS; i++) {
+		myObjectContainers[i]->add(object);
+	}
+
+	//No referencechanges here!
+	//if (myWriteBarrier)
+	//	myWriteBarrier->process(NULL, object);
+
+	objectsAllocateLines.insert( std::pair<int,int>(id, gLineInTrace) );
+
+	object->setGeneration(0);
+	
+	for (int i = 0; i < GENERATIONS; i++) {
+		myObjectContainers[i]->add(object);
+	}
+
+	if (DEBUG_MODE == 1) {	
+		myGarbageCollectors[GENERATIONS - 1]->collect(reasonDebug);
+		myGarbageCollectors[GENERATIONS - 1]->promotionPhase();
 	}
 
 #if DEBUG_MODE == 1
@@ -588,18 +656,30 @@ inline int MemoryManager::postAllocateObjectToRootset(int thread, int id,size_t 
  */
 int MemoryManager::requestRootDelete(int thread, int id){
 	Object* oldRoot = myObjectContainers[GENERATIONS - 1]->getRoot(thread, id);
-	myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, id);
-	//remove the root from rem sets.
-	int i;
-	for(i=0;i<GENERATIONS-1;i++){
-		myObjectContainers[i]->removeFromGenRoot(oldRoot);
-	}
 
-	if (myWriteBarrier) {
-		myWriteBarrier->process(oldRoot, NULL);
-#if ZOMBIE == 1
-		myGarbageCollectors[0]->collect(reasonFailedAlloc);
-#endif
+	if (oldRoot) {
+		myObjectContainers[GENERATIONS - 1]->removeFromRoot(thread, id);
+		//remove the root from rem sets.
+		int i;
+		for(i=0;i<GENERATIONS-1;i++){
+			myObjectContainers[i]->removeFromGenRoot(oldRoot);
+		}
+
+		if (myWriteBarrier) {
+			myWriteBarrier->process(oldRoot, NULL);
+		}
+
+		increaseRootOperationCount(id);
+	}
+	else {
+		if (catchZombies) {
+			if (!(myObjectContainers[GENERATIONS - 1]->getByID(id))) {
+				zombies.insert( std::pair<int,int>(id, gLineInTrace) );
+			}
+		}
+		else {
+			fprintf(stderr, "Unable to remove Object %i from roots. Line: " TRACE_FILE_LINE_FORMAT "\n", id, gLineInTrace);
+		}
 	}
 
 	return 0;
@@ -617,19 +697,48 @@ bool MemoryManager::isAlreadyRoot(int thread, int id) {
  * @return 0
  */
 int MemoryManager::requestRootAdd(int thread, int id){
-	if (isAlreadyRoot(thread, id))
-		return -1;
-
 	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
-	if (obj)
+	if (obj) {
 		myObjectContainers[GENERATIONS-1]->addToRoot(obj, thread);
-	else
-		printf("Unable to add Object %i to roots\n", id);
 
-	if (myWriteBarrier)
-		myWriteBarrier->process(NULL, obj);
+		if (myWriteBarrier)
+			myWriteBarrier->process(NULL, obj);
+
+		increaseRootOperationCount(id);
+	}
+	else {
+		if (catchZombies) {
+			zombies.insert( std::pair<int,int>(id, gLineInTrace) );
+		}
+		else {
+			fprintf(stderr, "Unable to add Object %i to roots. Line: " TRACE_FILE_LINE_FORMAT "\n", id, gLineInTrace);
+		}
+	}
 
 	return 0;
+}
+
+void MemoryManager::readObject(int id) {
+	Object* obj = myObjectContainers[GENERATIONS-1]->getByID(id);
+
+	//Check if obj should be dead. Only works if reference counting is used.
+	if (catchZombies) {
+		if (myWriteBarrier && obj) {
+			if (obj->getReferenceCount() == 0) {
+				myWriteBarrier->alreadyDeadObject(obj);
+				obj = myObjectContainers[GENERATIONS-1]->getByID(id);
+			}
+		}
+
+		if (!obj) {
+			zombies.insert( std::pair<int,int>(id, gLineInTrace) );
+		}
+	}
+	else {
+		if (!obj) {
+			fprintf(stderr, "Unable to read Object %i. Line: " TRACE_FILE_LINE_FORMAT "\n", id, gLineInTrace);
+		}
+	}
 }
 
 /** Removes all references to an object, starting at it's generation until
@@ -826,10 +935,15 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 			childGeneration = child->getGeneration();
 		}
 		else{
-			std::stringstream ss;
-			ss << "Child object " << childID << " does not exist. Ignoring trace file statement and continuing.\n"; //TODO: shouldn't there be an exit/ return failure?
-			ERRMSG(ss.str().c_str());
-			throw 19;
+			if (catchZombies) {
+				zombies.insert( std::pair<int,int>(childID, gLineInTrace) );
+			}
+			else {
+				std::stringstream ss;
+				ss << "Child object " << childID << " does not exist. Line: " << gLineInTrace << " Ignoring trace file statement and continuing.\n";
+				ERRMSG(ss.str().c_str());
+				throw 19;
+			}
 		}
 	}
 
@@ -845,6 +959,18 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 		throw 19;
 	}
 
+	//Add child to remsets
+	if (childID && parentGeneration > childGeneration) {
+		int i;
+		for (i = childGeneration; i < parentGeneration; i++) {
+			if (child)
+				myObjectContainers[i]->addToGenRoot(child);
+			if (WRITE_DETAILED_LOG == 1) {
+				fprintf(gDetLog,"(" TRACE_FILE_LINE_FORMAT ") Adding %d to remset %d (parent (%d) got a new pointer to me))\n",gLineInTrace, child->getID(),i, parent->getID());
+			}
+		}
+	}
+
 	//check old child, if it has remSet entries then delete them
 	if (oldChild && parentGeneration > oldChild->getGeneration()) {
 		int i;
@@ -858,6 +984,10 @@ int MemoryManager::setObjectPointer(int thread, int parentID, size_t parentSlot,
 				//TODO: shouldn't there be an exit/ return failure?
 			}
 		}
+
+		if (myWriteBarrier)
+			myWriteBarrier->process(oldChild, child);
+
 	}
 
 	if (parent){
@@ -984,6 +1114,17 @@ int MemoryManager::setArrayletPointer(int thread, int parentID, size_t parentSlo
 		myGarbageCollectors[0]->collect(reasonFailedAlloc);
 #endif
 	}
+	else{
+		if (catchZombies) {
+			zombies.insert( std::pair<int,int>(parentID, gLineInTrace) );
+		}
+		else {
+			std::stringstream ss;
+			ss << "Parent object " << parentID << " does not exist. Line: " << gLineInTrace << " Ignoring trace file statement and continuing.\n";
+			ERRMSG(ss.str().c_str());
+			return 0;
+		}
+	}
 
 	return 0;
 }
@@ -1025,6 +1166,21 @@ int MemoryManager::regionSetPointer(int thread, int parentID, size_t parentSlot,
 void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID) {
 	Object* myChild;
 	Object* myOldChild;
+	Object* obj;
+
+	if (objectID != 0)
+		obj = myObjectContainers[GENERATIONS-1]->getByID(objectID);
+	else
+		obj = NULL;
+
+	if (catchZombies && (objectID != 0) ) {
+		if ( !obj ) {
+			zombies.insert( std::pair<int,int>(objectID, gLineInTrace) );
+		}
+	}
+	else if ( (objectID != 0) && (!obj) ) {
+		fprintf(stderr, "Unable to set static pointer to Object %i. Line: " TRACE_FILE_LINE_FORMAT "\n", objectID, gLineInTrace);
+	}
 
 	myOldChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
 
@@ -1033,6 +1189,7 @@ void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID)
 	if (myWriteBarrier) {
 		myChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);
 		myWriteBarrier->process(myOldChild, myChild);
+
 #if ZOMBIE == 1
 		myGarbageCollectors[0]->collect(reasonFailedAlloc);
 #endif

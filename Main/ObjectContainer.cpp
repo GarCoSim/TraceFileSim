@@ -5,6 +5,7 @@
 #include <sstream>
 
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
+extern int catchZombies;
 
 namespace traceFileSimulator {
 
@@ -52,7 +53,13 @@ int ObjectContainer::add(Object* newObject) {
 }
 
 int ObjectContainer::removeFromRoot(int thread, int objectID){
-	rootset[thread].erase(objectID);
+	//rootset[thread].erase(objectID);
+
+	std::multimap<int,Object*>::iterator it;
+	it = rootset[thread].find(objectID);
+    if (it!=rootset[thread].end()) 
+    	rootset[thread].erase(it);
+
 	rootCount--;
 	return -1;
 }
@@ -70,7 +77,8 @@ int ObjectContainer::addToRoot(Object* newObject, int thread) {
 	if (!doesObjectExistInList(newObject)) {
 		add(newObject);
 	}
-	rootset[thread][newObject->getID()] = newObject;
+	//rootset[thread][newObject->getID()] = newObject;
+	rootset[thread].insert( std::pair<int,Object*>(newObject->getID(),newObject) );
 	rootCount++;
 
 	return 0;
@@ -102,14 +110,20 @@ vector<Object*> ObjectContainer::getLiveObjects() {
 
 Object* ObjectContainer::getByID(int id) {
 	//fprintf(stderr, "Getting object %i by id. Dings = %li\n", id, (long)objectMap[id]);
-	if (objectMap.find(id) == objectMap.end())
-		fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): object with this id (%d) was not found\n", gLineInTrace, id);
-	//fflush(stdin);
+	if (catchZombies != 1) {
+		if (objectMap.find(id) == objectMap.end())
+			fprintf(stderr, "ERROR(Line " TRACE_FILE_LINE_FORMAT "): object with this id (%d) was not found\n", gLineInTrace, id);
+	}
+
 	return objectMap[id];
 }
 
 Object* ObjectContainer::getRoot(int thread, int objectID) {
-	return rootset[thread][objectID];
+	//return rootset[thread][objectID];
+
+	std::multimap<int,Object*>::iterator it = rootset[thread].find(objectID);
+
+	return it->second;
 }
 
 int ObjectContainer::deleteObject(Object* object, bool deleteFlag) {
@@ -159,7 +173,7 @@ void ObjectContainer::setStaticReference(int classID, int fieldOffset, int objec
 	if (classReferences.size() <= (size_t) classID)
 		classReferences.resize((size_t)classID + 1);
 
-	if (objectID) {
+	if (objectID != 0) {
 		classReferences[classID][fieldOffset] = getByID(objectID);
 	}
 	else {

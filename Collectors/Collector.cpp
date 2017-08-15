@@ -16,10 +16,15 @@
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern FILE* traversalDepthFile;
+extern FILE* rootCountFile;
 
 extern FILE* gcFile;
 
 extern clock_t start, stop;
+
+extern int countTraversalDepth;
+extern int countRoots;
 
 namespace traceFileSimulator {
 
@@ -259,7 +264,92 @@ void Collector::preCollect(){
 }
 
 void Collector::lastStats() {
-	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (allGCs / (statGcNumber + 1)));
+
+	std::multimap<float,int>::iterator it;
+
+	if (countTraversalDepth) {
+	  	float totalAverageDepth = 0;
+	  	int divider = 0;
+
+	  	for (it=overallTraversalDepthStats.begin(); it!=overallTraversalDepthStats.end(); ++it) {
+	  		totalAverageDepth = totalAverageDepth + (float)(it->first * (float)it->second);
+	  		divider += it->second;
+
+	  	}
+	  	
+	  	totalAverageDepth = totalAverageDepth/(float)divider;
+	  	fprintf(traversalDepthFile, "\n\nOverall AverageDepth: %.2f\n", (float)totalAverageDepth);
+	}
+
+	if (countRoots) {
+	  	float totalAverageRootCount = 0;
+	  	int divider = 0;
+
+	  	for (it=overallRootStats.begin(); it!=overallRootStats.end(); ++it) {
+	  		totalAverageRootCount = totalAverageRootCount + (float)(it->first * (float)it->second);
+	  		divider += it->second;
+
+	  	}
+	  	
+	  	totalAverageRootCount = totalAverageRootCount/(float)divider;
+	  	fprintf(rootCountFile, "\n\nOverall AverageRootCount: %.2f\n", (float)totalAverageRootCount);
+	}
+
+  	fprintf(gLogFile, "Shortest GC: %0.3fs, Longest GC: %0.3fs, Average GC time: %0.3fs\n", shortestGC, longestGC, (double)(allGCs / (statGcNumber + 1)));
+}
+
+void Collector::printTraversalDepthStats() {
+	int totalTraversalDepth = 0;
+	unsigned int deepestDepth = traversalDepth.rbegin()->first;
+	std::map<int,int>::iterator it;
+
+	fprintf(traversalDepthFile, "GC %zu Stats:\n", statGcNumber);
+	fprintf(traversalDepthFile, "\nTraversalDepth per level:\n");
+	for (it=traversalDepth.begin(); it!=traversalDepth.end(); ++it) {
+		fprintf(traversalDepthFile, "%i : %i \n", it->first, it->second);
+		totalTraversalDepth += it->first * it->second;
+	}
+
+	float averageDepth = (float)totalTraversalDepth/(float)traversalDepthObjects.size();
+
+	fprintf(traversalDepthFile, "\nAverageDepth: %.2f  |  DeepestDepth: %u  |  RootObjects: %i  |  OtherObjcts: %i", averageDepth, deepestDepth, amountRootObjects, amountOtherObjects);
+
+
+	fprintf(traversalDepthFile, "\n\n------------------------------------------------------------------------------------\n\n");
+	fflush(traversalDepthFile);
+
+	overallTraversalDepthStats.insert ( std::pair<float,int>(averageDepth, amountRootObjects+amountOtherObjects) );
+}
+
+void Collector::printRootCountStats() {
+	std::map<int, int>::iterator it;
+	std::map<int, int> rootAmounts;
+	int totalRoots = 0;
+
+	fprintf(rootCountFile, "GC %zu Stats:\n", statGcNumber);
+	fprintf(rootCountFile, "\nRootCounts per Amount of Objects:\n");
+	//Counting root counts
+	for (it=rootObjects.begin(); it!=rootObjects.end(); ++it) {
+		if (rootAmounts.find(it->second) != rootAmounts.end())
+			rootAmounts.at(it->second) = rootAmounts.at(it->second) + 1;
+		else
+			rootAmounts.insert(std::pair<int, int>(it->second, 1));
+	}
+
+	//Printing root counts
+	for (it=rootAmounts.begin(); it!=rootAmounts.end(); ++it) {
+		fprintf(rootCountFile, "%i : %i \n", it->first, it->second);
+		totalRoots += it->first * it->second;
+	}
+
+	float averageRootCount = (float)totalRoots/(float)amountRootObjects;
+	fprintf(rootCountFile, "\nAverageRootCount: %.2f  |  HighestRootCount: %i  |  RootObjects: %i", averageRootCount, rootAmounts.rbegin()->first, amountRootObjects);
+
+
+	fprintf(rootCountFile, "\n\n------------------------------------------------------------------------------------\n\n");
+	fflush(rootCountFile);
+
+	overallRootStats.insert ( std::pair<float,int>(averageRootCount, amountRootObjects) );
 }
 
 /** Calls the MemoryManager::requestDelete(Object*, int) method on the object
@@ -281,6 +371,26 @@ void Collector::addCandidate(Object *obj) {
 
 bool Collector::candidatesNotContainObj(Object *obj) {
 	return false;
+}
+
+bool Collector::candidatesContainObj(Object *obj) {
+	return false;
+}
+
+void Collector::removeObjectFromCandidates(Object *obj) {
+	
+}
+
+std::set<Object *> Collector::getDeadObjectsLocked() {
+	return deadObjectsLocked;
+}
+
+void Collector::addDeadObjectLocked(Object *obj) {
+	deadObjectsLocked.insert(obj);
+}
+
+void Collector::clearDeadObjectsLocked() {
+	deadObjectsLocked.clear();
 }
 
 Collector::~Collector() {

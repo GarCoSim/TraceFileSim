@@ -24,6 +24,17 @@ int forceAGCAfterEveryStep = 0;
 string globalFilename;
 int hierDepth;
 
+FILE* zombieFile;
+FILE* lockingFile;
+FILE* traversalDepthFile;
+FILE* rootCountFile;
+
+int catchZombies;
+int countTraversalDepth;
+int countRoots;
+int lockingStats;
+int lockNumber;
+
 size_t setHeapSize(int argc, char *argv[], const char *option, const char *shortOption) {
 	int i;
 
@@ -122,9 +133,9 @@ string setLogLocation(int argc, char *argv[], const char *option, const char *sh
 				bool containsIllegalChar  = string::npos != arg.find('/')
 											|| string::npos != arg.find('\\');
 				if(containsIllegalChar){
-					const char* errorMsg =
-							"File name is a path, use the -d /path/to/directory option to specify a directory for log files.";
-					fprintf(stderr, errorMsg);
+					std::string errorMsg
+						= std::string("File name is a path, use the -d /path/to/directory option to specify a directory for log files.");
+					fprintf(stderr, "%s", errorMsg.c_str());
 					throw;
 				}
 				return arg;
@@ -208,6 +219,30 @@ int setArgs(int argc, char *argv[], const char *option, const char *shortOption)
 				if (!strcmp(argv[i + 1], "enabled"))
 					return 1;
 				return -1;
+			} else if (!strcmp(option, "--catchZombies") || !strcmp(shortOption, "-cZ")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
+			} else if (!strcmp(option, "--countTraversalDepth") || !strcmp(shortOption, "-ctd")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
+			} else if (!strcmp(option, "--printLockingStats") || !strcmp(shortOption, "-pls")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
+			} else if (!strcmp(option, "--countRoots") || !strcmp(shortOption, "-cr")) {
+				if (!strcmp(argv[i + 1], "disabled"))
+					return 0;
+				if (!strcmp(argv[i + 1], "enabled"))
+					return 1;
+				return -1;
 			}
 		}
 	}
@@ -261,6 +296,11 @@ int main(int argc, char *argv[]) {
 	string logDirectory = setLogDirectory(argc, argv, "--directory", "-d");
 	string customLog	= setLogLocation(argc, argv, "--logLocation", "-l");
 	forceAGCAfterEveryStep = setArgs(argc, argv, "--force", "-f");
+	catchZombies			= setArgs(argc, argv, "--catchZombies", "-cZ");
+	countRoots				= setArgs(argc, argv, "--countRoots", "-cr");
+	countTraversalDepth 	= setArgs(argc, argv, "--countTraversalDepth", "-ctd");
+	lockingStats 			= setArgs(argc, argv, "--printLockingStats", "-pls");
+
 	long long logIdentifier = setIdentifier(argc, argv);
 
 
@@ -276,6 +316,14 @@ int main(int argc, char *argv[]) {
 		writebarrier = (int)disabled;
 	if (finalGC == -1)
 		finalGC = FINAL_GC;
+	if (catchZombies == -1)
+		catchZombies = 0;
+	if (countTraversalDepth == -1)
+		countTraversalDepth = 0;
+	if (lockingStats == -1)
+		lockingStats = 0;
+	if (countRoots == -1)
+		countRoots = 0;
 	if (hierDepth == -1){
 		hierDepth = HIER_DEPTH_DEFAULT;
 	}
@@ -326,19 +374,21 @@ int main(int argc, char *argv[]) {
 	//set up global logfile
 	gLogFile = fopen((logDirectory + logFileName).c_str(), "w+");
 	if(NULL == gLogFile){
-		const char* errorMsg = "Log File failed to open\n";
-		fprintf(stderr, errorMsg);
+		std::string errorMsg = std::string("Log File failed to open\n");
+		fprintf(stderr, "%s", errorMsg.c_str());
 	}
 	if(logIdentifier!=-1){
 		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
 	}
+
 	balancedLogFile = fopen((logDirectory + balancedLogFileName).c_str(), "w+");
 	if(NULL == balancedLogFile){
-		const char* errorMsg = "Balanced Log File failed to open\n";
-		fprintf(stderr, errorMsg);
+		std::string errorMsg = std::string("Balanced Log File failed to open\n");
+		fprintf(stderr, "%s", errorMsg.c_str());
 	}
-	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nWatermark: %d\n\n",
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nCatchZombies: %s\nLockingStats: %s\nCountTraversalDepth: %s\nWatermark: %d\n\n",
+			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, ZOMBIES_STRING, LOCKING_STRING, TRAVERSALDEPTH_STRING, highWatermark);
+
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s | %15s | %12s | %21s\n",
 			"Line", "GC Reason", "Total GCs", "Objects Freed",
@@ -348,9 +398,36 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "The collector is '%s' and the selected traversal is '%s'\n", COLLECTOR_STRING, TRAVERSAL_STRING);
 	fprintf(stderr, "The allocator is '%s'\n", ALLOCATOR_STRING);
 	fprintf(stderr, "The writebarrier is '%s'\n", WRITEBARRIER_STRING);
-	fprintf(stderr, "The final GC is '%s'\n", FINALGC_STRING);
+	fprintf(stderr, "The finalGC is '%s'\n", FINALGC_STRING);
+	fprintf(stderr, "CatchZombies is '%s'\n", ZOMBIES_STRING);
+	fprintf(stderr, "LockingStats is '%s'\n", LOCKING_STRING);
+	fprintf(stderr, "CountTraversalDepth is '%s'\n", TRAVERSALDEPTH_STRING);
+	fprintf(stderr, "CountRoots is '%s'\n", COUNTROOTS_STRING);
 	if (forceAGCAfterEveryStep)
 		fprintf(stderr, "Forcing a GC after every step\n");
+
+
+	if (countTraversalDepth) {
+		string depthFileName = globalFilename + "TraversalDepth.log";
+		traversalDepthFile = fopen(depthFileName.c_str(), "w+");
+	}
+
+	if (countRoots) {
+		string countRootsFileName = globalFilename + "Roots.log";
+		rootCountFile = fopen(countRootsFileName.c_str(), "w+");
+	}
+
+	if (lockingStats) {
+		string lockingFileName;
+		lockingFileName = globalFilename + "locking.log";
+		lockingFile = fopen(lockingFileName.c_str(), "w+");
+	}
+
+	if (catchZombies) {
+		string zombieFileName;
+		zombieFileName = globalFilename + "Zombies.log";
+		zombieFile = fopen(zombieFileName.c_str(), "w+");
+	}
 
 	//start measuring time
 	clock_t start = clock();
@@ -380,14 +457,46 @@ int main(int argc, char *argv[]) {
 	simulator->printStats();
 	simulator->lastStats();
 
+	if (lockingStats) {
+		if (lockNumber == 0) {
+			simulator->updateUnlockedLines();
+		}
+		else {
+			fprintf(stderr, "Locking not zero at end of execution!\n");
+		}
+
+		fprintf(lockingFile,"UnLockedLines: %i\n", simulator->getUnlockedLines());
+		fprintf(lockingFile,"LockedLines: %i\n", simulator->getLockedLines());
+		std::vector<int> lockingCounter = simulator->getLockingCounter();
+		for (unsigned int p = 0 ; p < lockingCounter.size(); p++) {
+			fprintf(lockingFile,"%i %i\n", p, lockingCounter[p]);
+		}
+	}
+
 	clock_t end = clock();
 	double elapsed_secs = double(end - start)/CLOCKS_PER_SEC;
 	//double elapsed_msecs = (double)(double)(end - start)/(CLOCKS_PER_SEC/1000);
+
 	printf("Simulation ended successfully, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
 	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
 
+	if (countTraversalDepth) 
+		fclose(traversalDepthFile);
+
+	if (countRoots) 
+		fclose(rootCountFile);
+
+	if (lockingStats)
+		fclose(lockingFile);
+
+	if (catchZombies)
+		fclose(zombieFile);
+
 	fclose(gLogFile);
+
 	fclose(balancedLogFile);
+
+	fclose(traversalDepthFile);
 
 	delete(simulator);
 

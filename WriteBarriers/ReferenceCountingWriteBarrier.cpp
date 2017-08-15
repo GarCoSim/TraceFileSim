@@ -8,6 +8,7 @@
 
 #include "ReferenceCountingWriteBarrier.hpp"
 
+extern int lockNumber;
 
 namespace traceFileSimulator {
 
@@ -44,7 +45,7 @@ void ReferenceCountingWriteBarrier::deleteReference(Object *obj) {
 	if (obj) {
 		obj->decreaseReferenceCount();
 
-		if (obj->getReferenceCount() == 0) {
+		if (obj->getReferenceCount() == 0 && (lockNumber == 0) ) {
 
 			int children = obj->getPointersMax();
 			int i;
@@ -55,6 +56,30 @@ void ReferenceCountingWriteBarrier::deleteReference(Object *obj) {
 			}
 
 			myCollector->freeObject(obj);
+		}
+		else if ( (obj->getReferenceCount()) == 0 ) { //Reference count is zero but trace file locked.
+			myCollector->addDeadObjectLocked(obj);
+		}
+	}
+}
+
+
+void ReferenceCountingWriteBarrier::alreadyDeadObject(Object *obj) {
+	if (obj) {
+		if ( (obj->getReferenceCount()) == 0 && (lockNumber == 0) ) {
+
+			int children = obj->getPointersMax();
+			int i;
+			Object *child;
+			for (i = 0; i < children; i++) {
+				child = obj->getReferenceTo(i);
+				deleteReference(child);
+			}
+
+			myCollector->freeObject(obj);
+		}
+		else if ( (obj->getReferenceCount()) == 0 ) { //Reference count is zero but trace file locked.
+			myCollector->addDeadObjectLocked(obj);
 		}
 	}
 }

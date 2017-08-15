@@ -12,6 +12,7 @@
 #include "../defines.hpp"
 #include <map>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -36,6 +37,8 @@ public:
 	int setObjectPointer(int thread, int parentID, size_t parentSlot, int childID);
 	int setArrayletPointer(int thread, int parentID, size_t parentSlot, int childID);
 	int regionSetPointer(int thread, int parentID, size_t parentSlot,int childID);
+	int setPointer(int thread, int parentID, int parentSlot, int childID);
+	void readObject(int id);
 	void setStaticPointer(int classID, int fieldOffset, int objectID);
 	void requestDelete(Object* object, int gGC);
 	int requestPromotion(Object* object);
@@ -50,6 +53,10 @@ public:
 	void forceGC();
 	void lastStats();
 
+	std::map<int, int> getZombies();
+	std::map<int, int> getObjectsAllocateLines();
+
+	void checkForDeadObjects();
 
 private:
 	bool isAlreadyRoot(int thread, int id);
@@ -70,6 +77,12 @@ private:
 	collectorEnum _collector;
 	traversalEnum _traversal;
 	writebarriersEnum _writebarrier;
+
+	std::map<int,int> zombies; //ID, trace line of zombie creation
+ 	std::map<int,int> objectsAllocateLines; //ID, trace line of allocation
+ 	std::map<int,int> rootCounter; //ID, amount of root references
+ 	void increaseRootOperationCount(int id);
+ 	int getRootOperationCount(int id);
 
 	bool classTableLoaded;
 	map< int, string > classTable;

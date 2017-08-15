@@ -16,6 +16,9 @@
 extern TRACE_FILE_LINE_SIZE gLineInTrace;
 extern FILE* gLogFile;
 extern FILE* gDetLog;
+extern int lockNumber;
+extern int countRoots;
+extern int countTraversalDepth;
 
 FILE* gcFile;
 
@@ -30,13 +33,29 @@ MarkSweepCollector::MarkSweepCollector() {
  *
  */
 void MarkSweepCollector::collect(int reason) {
+	if (lockNumber != 0) {
+		fprintf(stderr, "GC triggered and lockNumber is not zero: %i\n", lockNumber);
+	} 
 	statCollectionReason = reason;
 	stop = clock();
 	double elapsed_secs = double(stop - start)/CLOCKS_PER_SEC;
-	fprintf(stderr, "GC #%zu at %0.3fs", statGcNumber + 1, elapsed_secs);
+
+	traversalDepthObjects.clear();
+	traversalDepth.clear();
+	rootObjects.clear();
+	amountRootObjects = 0;
+	amountOtherObjects = 0;
+
+	fprintf(stderr, "GC #%zu at %0.3fs at line " TRACE_FILE_LINE_FORMAT "", statGcNumber + 1, elapsed_secs, gLineInTrace);
 	preCollect();
 	mark();
 	sweep();
+
+	if (countTraversalDepth)
+		printTraversalDepthStats();
+
+	if (countRoots)
+		printRootCountStats();
 	/* Uncomment this to enable compaction
 	if (statFreedDuringThisGC > 0) {
 		compact();
@@ -62,8 +81,11 @@ void MarkSweepCollector::mark() {
 	initializeMarkPhase();
 	enqueueAllRoots();
 
+	amountRootObjects = traversalDepthObjects.size();
+
 	//breadth first through the tree
 	size_t i;
+	int childDepth;
 	while (!myQueue.empty()) {
 		Object* currentObj = myQueue.front();
 		myQueue.pop();
@@ -78,9 +100,19 @@ void MarkSweepCollector::mark() {
 			if (child && !child->getVisited() && child->getGeneration() <= myGeneration) {
 				child->setVisited(true);
 				myQueue.push(child);
+
+				if (countTraversalDepth) {
+					childDepth = (traversalDepthObjects.find(currentObj->getID())->second) + 1;
+					traversalDepthObjects.insert( std::pair<int,int>(child->getID(), childDepth));
+					if (traversalDepth.find(childDepth) != traversalDepth.end())
+						traversalDepth.at(childDepth) = traversalDepth.at(childDepth) + 1;
+					else
+						traversalDepth.insert(std::pair<int, int>(childDepth, 1));
+				}
 			}
 		}
 	}
+	amountOtherObjects = traversalDepthObjects.size() - amountRootObjects;
 }
 
 /** Deletes all unmarked objects in all generations
@@ -143,6 +175,14 @@ void MarkSweepCollector::enqueueAllRoots() {
 			roots = myObjectContainer->getRoots(i);
 			for (j = 0; j < roots.size(); j++) {
 				currentObj = roots[j];
+
+				if (currentObj && (countRoots) ) {
+					if (rootObjects.find(currentObj->getID()) != rootObjects.end())
+						rootObjects.at(currentObj->getID()) = rootObjects.at(currentObj->getID()) + 1;
+					else
+						rootObjects.insert(std::pair<int, int>(currentObj->getID(),1));
+				}
+
 				if (currentObj && !currentObj->getVisited()) {
 					currentObj->setVisited(true);
 					//add to rem set if the root is in a younger generation.
@@ -150,15 +190,39 @@ void MarkSweepCollector::enqueueAllRoots() {
 						myMemManager->requestRemSetAdd(currentObj);
 					}
 					myQueue.push(currentObj);
+
+					if (countTraversalDepth) {
+						traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
+						if (traversalDepth.find(1) != traversalDepth.end())
+							traversalDepth.at(1) = traversalDepth.at(1) + 1;
+						else
+							traversalDepth.insert(std::pair<int, int>(1,1));
+					}
 				}
 			}
 		}
 	} else {
 		for (j = 0; j < myObjectContainer->getGenRootSize(); j++) {
 			currentObj = myObjectContainer->getGenRoot(j);
+
+			if (currentObj && (countRoots) ) {
+				if (rootObjects.find(currentObj->getID()) != rootObjects.end())
+					rootObjects.at(currentObj->getID()) = rootObjects.at(currentObj->getID()) + 1;
+				else
+					rootObjects.insert(std::pair<int, int>(currentObj->getID(),1));
+			}
+
 			if (currentObj && !currentObj->getVisited()) {
 				currentObj->setVisited(true);
 				myQueue.push(currentObj);
+
+				if (countTraversalDepth) {
+					traversalDepthObjects.insert( std::pair<int,int>(currentObj->getID(), 1) );
+					if (traversalDepth.find(1) != traversalDepth.end())
+						traversalDepth.at(1) = traversalDepth.at(1) + 1;
+					else
+						traversalDepth.insert(std::pair<int, int>(1,1));
+				}
 			}
 		}
 	}

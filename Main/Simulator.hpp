@@ -11,6 +11,7 @@
 #include <fstream>
 #include <ctime>
 #include "Optional.cpp"
+#include <vector>
 
 #define ONE_SECOND_PASSED ((double(clock() - start) / CLOCKS_PER_SEC) >= 1.0f)
 
@@ -36,6 +37,7 @@ typedef struct TraceFileLine {
 	Optional<size_t> maxPointers;
 	Optional<size_t> size;
 	Optional<int> threadID;
+	Optional<int> lockStatus;
 } TraceFileLine;
 
 class Simulator {
@@ -46,6 +48,11 @@ public:
 	int doNextStep();
 	void printStats();
 	void lastStats();
+
+	std::vector<int> getLockingCounter();
+	int getLockedLines();
+	int getUnlockedLines();
+	void updateUnlockedLines();
 
 private:
 	void getNextLine(TraceFileLine *line);
@@ -58,12 +65,20 @@ private:
 	void referenceOperationClassField(TraceFileLine line);
 	void readOperation(TraceFileLine line);
 	void storeOperation(TraceFileLine line);
+	void lockOperation(TraceFileLine line);
 
 	ifstream myTraceFile;
 
 	int myLastStepWorked;
 	int myFinalGC;
 	MemoryManager* myMemManager;
+
+	unsigned int amountAllocatedObjects;
+	int lockedLines;
+	int unlockedLines;
+	int lastLockLine;
+	std::vector<int> lockingCounter;
+	std::vector<int> operationCounter;
 
 	//debug
 	int counter;

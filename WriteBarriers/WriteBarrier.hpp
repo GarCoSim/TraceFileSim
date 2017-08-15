@@ -10,6 +10,7 @@
 
 #include "../defines.hpp"
 #include "../Main/Object.hpp"
+#include <stdio.h>
 
  #include <map>
 
@@ -29,6 +30,7 @@ public:
 	void setEnvironment(Collector* collector);
 
 	virtual void process(Object *oldChild, Object *child) = 0;
+	virtual void alreadyDeadObject(Object *obj) = 0;
 
 protected:
 	Collector* myCollector;
