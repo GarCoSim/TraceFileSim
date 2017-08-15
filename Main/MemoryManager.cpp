@@ -382,7 +382,7 @@ int MemoryManager::getRootOperationCount(int id) {
 		operations = it->second;
 	}
 	else {
-		fprintf(stderr, "Root Operation count for %i at %i not found!\n", id, gLineInTrace);
+		fprintf(stderr, "Root Operation count for %i at " TRACE_FILE_LINE_FORMAT " not found!\n", id, gLineInTrace);
 	}
 
 	return operations;
@@ -678,7 +678,7 @@ int MemoryManager::requestRootDelete(int thread, int id){
 			}
 		}
 		else {
-			fprintf(stderr, "Unable to remove Object %i from roots. Line: %d\n", id, gLineInTrace);
+			fprintf(stderr, "Unable to remove Object %i from roots. Line: " TRACE_FILE_LINE_FORMAT "\n", id, gLineInTrace);
 		}
 	}
 
@@ -711,7 +711,7 @@ int MemoryManager::requestRootAdd(int thread, int id){
 			zombies.insert( std::pair<int,int>(id, gLineInTrace) );
 		}
 		else {
-			fprintf(stderr, "Unable to add Object %i to roots. Line: %d\n", id, gLineInTrace);
+			fprintf(stderr, "Unable to add Object %i to roots. Line: " TRACE_FILE_LINE_FORMAT "\n", id, gLineInTrace);
 		}
 	}
 
@@ -736,7 +736,7 @@ void MemoryManager::readObject(int id) {
 	}
 	else {
 		if (!obj) {
-			fprintf(stderr, "Unable to read Object %i. Line: %d\n", id, gLineInTrace);
+			fprintf(stderr, "Unable to read Object %i. Line: " TRACE_FILE_LINE_FORMAT "\n", id, gLineInTrace);
 		}
 	}
 }
@@ -1179,7 +1179,7 @@ void MemoryManager::setStaticPointer(int classID, int fieldOffset, int objectID)
 		}
 	}
 	else if ( (objectID != 0) && (!obj) ) {
-		fprintf(stderr, "Unable to set static pointer to Object %i. Line: %d\n", objectID, gLineInTrace);
+		fprintf(stderr, "Unable to set static pointer to Object %i. Line: " TRACE_FILE_LINE_FORMAT "\n", objectID, gLineInTrace);
 	}
 
 	myOldChild = myObjectContainers[GENERATIONS - 1]->getStaticReference(classID, fieldOffset);

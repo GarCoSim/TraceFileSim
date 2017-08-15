@@ -46,7 +46,7 @@ void MarkSweepCollector::collect(int reason) {
 	amountRootObjects = 0;
 	amountOtherObjects = 0;
 
-	fprintf(stderr, "GC #%d at %0.3fs at line %d", statGcNumber + 1, elapsed_secs, gLineInTrace);
+	fprintf(stderr, "GC #%zu at %0.3fs at line " TRACE_FILE_LINE_FORMAT "", statGcNumber + 1, elapsed_secs, gLineInTrace);
 	preCollect();
 	mark();
 	sweep();

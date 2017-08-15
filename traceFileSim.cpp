@@ -133,9 +133,9 @@ string setLogLocation(int argc, char *argv[], const char *option, const char *sh
 				bool containsIllegalChar  = string::npos != arg.find('/')
 											|| string::npos != arg.find('\\');
 				if(containsIllegalChar){
-					const char* errorMsg =
-							"File name is a path, use the -d /path/to/directory option to specify a directory for log files.";
-					fprintf(stderr, errorMsg);
+					std::string errorMsg
+						= std::string("File name is a path, use the -d /path/to/directory option to specify a directory for log files.");
+					fprintf(stderr, "%s", errorMsg.c_str());
 					throw;
 				}
 				return arg;
@@ -374,8 +374,8 @@ int main(int argc, char *argv[]) {
 	//set up global logfile
 	gLogFile = fopen((logDirectory + logFileName).c_str(), "w+");
 	if(NULL == gLogFile){
-		const char* errorMsg = "Log File failed to open\n";
-		fprintf(stderr, errorMsg);
+		std::string errorMsg = std::string("Log File failed to open\n");
+		fprintf(stderr, "%s", errorMsg.c_str());
 	}
 	if(logIdentifier!=-1){
 		fprintf(gLogFile, "ID: %lli\n", logIdentifier);
@@ -383,8 +383,8 @@ int main(int argc, char *argv[]) {
 
 	balancedLogFile = fopen((logDirectory + balancedLogFileName).c_str(), "w+");
 	if(NULL == balancedLogFile){
-		const char* errorMsg = "Balanced Log File failed to open\n";
-		fprintf(stderr, errorMsg);
+		std::string errorMsg = std::string("Balanced Log File failed to open\n");
+		fprintf(stderr, "%s", errorMsg.c_str());
 	}
 	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nCatchZombies: %s\nLockingStats: %s\nCountTraversalDepth: %s\nWatermark: %d\n\n",
 			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, ZOMBIES_STRING, LOCKING_STRING, TRAVERSALDEPTH_STRING, highWatermark);

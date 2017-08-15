@@ -303,7 +303,7 @@ void Collector::printTraversalDepthStats() {
 	unsigned int deepestDepth = traversalDepth.rbegin()->first;
 	std::map<int,int>::iterator it;
 
-	fprintf(traversalDepthFile, "GC %i Stats:\n", statGcNumber);
+	fprintf(traversalDepthFile, "GC %zu Stats:\n", statGcNumber);
 	fprintf(traversalDepthFile, "\nTraversalDepth per level:\n");
 	for (it=traversalDepth.begin(); it!=traversalDepth.end(); ++it) {
 		fprintf(traversalDepthFile, "%i : %i \n", it->first, it->second);
@@ -326,7 +326,7 @@ void Collector::printRootCountStats() {
 	std::map<int, int> rootAmounts;
 	int totalRoots = 0;
 
-	fprintf(rootCountFile, "GC %i Stats:\n", statGcNumber);
+	fprintf(rootCountFile, "GC %zu Stats:\n", statGcNumber);
 	fprintf(rootCountFile, "\nRootCounts per Amount of Objects:\n");
 	//Counting root counts
 	for (it=rootObjects.begin(); it!=rootObjects.end(); ++it) {

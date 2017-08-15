@@ -141,7 +141,7 @@ void Simulator::initializeTraceFileLine(TraceFileLine *line) {
 	line->maxPointers = Optional<size_t>();
 	line->size = Optional<size_t>();
 	line->threadID = Optional<int>();
-	line->lockStatus = -1;
+	line->lockStatus = Optional<int>();
 }
 
 /** Modifies the line to contain the correct contents based on the next line in the trace file.
@@ -237,9 +237,12 @@ void Simulator::getNextLine(TraceFileLine *line){
 				line->threadID.setValue(tID);
 				break;
 			case ('L'):
-				line->lockStatus = val; break;
+				int lockStatus;
+				sstream >> lockStatus;
+				line->lockStatus.setValue(lockStatus);
+				break;
 			default:
-				fprintf(stderr, "Invalid form in getNextLine, execution should never reach this line. Line: %i . Attribute: %c\n", gLineInTrace, attributeID);
+				fprintf(stderr, "Invalid form in getNextLine, execution should never reach this line. Line: " TRACE_FILE_LINE_FORMAT " . Attribute: %c\n", gLineInTrace, attributeID);
 				break;
 		}
 	}
@@ -313,7 +316,6 @@ int Simulator::doNextStep(){
 				operationCounter[7]++;
 				break;	
 
->>>>>>> Added an operation counter.
 			default:
 				//gLineInTrace++;
 			break;
@@ -439,10 +441,10 @@ void Simulator::lockOperation(TraceFileLine line){
 			lockedLines = lockedLines + (gLineInTrace - lastLockLine) - 1;
 	}
 
-	if (line.lockStatus == 1) {
+	if (line.lockStatus.getValue() == 1) {
 		lockNumber = lockNumber + 1;
 	}
-	else if (line.lockStatus == 0) {
+	else if (line.lockStatus.getValue() == 0) {
 		lockNumber = lockNumber - 1;
 	}
 	else {
@@ -450,7 +452,7 @@ void Simulator::lockOperation(TraceFileLine line){
 	}
 
 	if (lockNumber < 0) {
-		fprintf(stderr, "Negative lockNumber at line: %i\n", gLineInTrace);
+		fprintf(stderr, "Negative lockNumber at line: " TRACE_FILE_LINE_FORMAT "\n", gLineInTrace);
 	}
 
 	if (lockingStats) {
@@ -470,8 +472,8 @@ void Simulator::lockOperation(TraceFileLine line){
  */
 void Simulator::readOperation(TraceFileLine line){
 	//Check if object is already a zombie
-	if (line.objectID != -1)
-		myMemManager->readObject(line.objectID);
+	if (line.objectID.isSet())
+		myMemManager->readObject(line.objectID.getValue());
 
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field    
 	bool offsetFlag = false; 	 // to decide either offest or index is given
@@ -511,8 +513,8 @@ void Simulator::readOperation(TraceFileLine line){
  */
 void Simulator::storeOperation(TraceFileLine line){
 	//Check if object is already a zombie
-	if (line.objectID != -1)
-		myMemManager->readObject(line.objectID);
+	if (line.objectID.isSet())
+		myMemManager->readObject(line.objectID.getValue());
 
 	bool staticFlag = false; 	 // To decide reading is either from a class field ( static field) or an object field
 	bool offsetFlag = false; 	 // to decide either offest or index is given

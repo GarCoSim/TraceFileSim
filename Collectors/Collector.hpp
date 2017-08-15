@@ -49,6 +49,8 @@ public:
 	//Methods for the recycler
 	virtual void addCandidate(Object *obj);
 	virtual bool candidatesNotContainObj(Object *obj);
+	virtual bool candidatesContainObj(Object *obj);
+	virtual void removeObjectFromCandidates(Object *obj);
 
 	void addDeadObjectLocked(Object *obj);
 	std::set<Object *> getDeadObjectsLocked();

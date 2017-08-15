@@ -37,7 +37,7 @@ typedef struct TraceFileLine {
 	Optional<size_t> maxPointers;
 	Optional<size_t> size;
 	Optional<int> threadID;
-	int lockStatus;
+	Optional<int> lockStatus;
 } TraceFileLine;
 
 class Simulator {
