@@ -8,8 +8,18 @@
 #ifndef _DEFINES_HPP_
 #define _DEFINES_HPP_
 
-#ifndef VERSION
-#define VERSION "4.0.0"
+#ifndef TRACEFILESIM_VERSION
+/* TraceFileSim Version Number Information
+ *
+ * Follows Semantic Versioning: http://semver.org/spec/v2.0.0.html
+ *
+ * TRACEFILESIM_VERSION % 100 is the patch level
+ * TRACEFILESIM_VERSION / 100 % 1000 is the minor version
+ * TRACEFILESIM_VERSION / 100000 is the major version
+ *
+ * TRACEFILESIM_VERSION: Major Version: [x] Minor Version: [xxx] Patch Level: [xx]
+ */
+#define TRACEFILESIM_VERSION 400000
 #endif
 
 #ifndef NUM_THREADS

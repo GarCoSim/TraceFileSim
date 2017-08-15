@@ -261,7 +261,7 @@ long long setIdentifier(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 
-	fprintf(stderr, "TraceFileSimulator Version: %s\n\n", VERSION);
+	fprintf(stderr, "TraceFileSimulator Version: %d.%d.%d\n\n", (TRACEFILESIM_VERSION / 100000), ((TRACEFILESIM_VERSION / 100) % 1000), (TRACEFILESIM_VERSION % 100));
 
 	if(argc < 2) {
 		fprintf(stderr, "Usage: TraceFileSimulator traceFile [OPTIONS]\n" \
@@ -386,8 +386,8 @@ int main(int argc, char *argv[]) {
 		std::string errorMsg = std::string("Balanced Log File failed to open\n");
 		fprintf(stderr, "%s", errorMsg.c_str());
 	}
-	fprintf(gLogFile, "TraceFileSimulator Version: %s\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nCatchZombies: %s\nLockingStats: %s\nCountTraversalDepth: %s\nWatermark: %d\n\n",
-			VERSION, COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, ZOMBIES_STRING, LOCKING_STRING, TRAVERSALDEPTH_STRING, highWatermark);
+	fprintf(gLogFile, "TraceFileSimulator Version: %d.%d.%d\nCollector: %s\nTraversal: %s\nAllocator: %s\nHeapsize: %zu%s\nMaximumHeapsize: %zu\nWriteBarrier: %s\nFinal GC: %s\nCatchZombies: %s\nLockingStats: %s\nCountTraversalDepth: %s\nWatermark: %d\n\n",
+            (TRACEFILESIM_VERSION / 100000), ((TRACEFILESIM_VERSION / 100) % 1000), (TRACEFILESIM_VERSION % 100), COLLECTOR_STRING, TRAVERSAL_STRING, ALLOCATOR_STRING, heapSize, collector == traversalGC ? " (split heap)" : "", maxHeapSize, WRITEBARRIER_STRING, FINALGC_STRING, ZOMBIES_STRING, LOCKING_STRING, TRAVERSALDEPTH_STRING, highWatermark);
 
 	fprintf(gLogFile, "%8s | %14s | %10s | %14s "
 			"| %13s | %10s | %10s | %10s | %7s | %15s | %12s | %21s\n",
@@ -480,10 +480,10 @@ int main(int argc, char *argv[]) {
 	printf("Simulation ended successfully, processed " TRACE_FILE_LINE_FORMAT " lines and execution took %0.3f seconds\n", gLineInTrace, elapsed_secs);
 	fprintf(gLogFile,"Execution finished successfully after %0.3f seconds\n", elapsed_secs);
 
-	if (countTraversalDepth) 
+	if (countTraversalDepth)
 		fclose(traversalDepthFile);
 
-	if (countRoots) 
+	if (countRoots)
 		fclose(rootCountFile);
 
 	if (lockingStats)
