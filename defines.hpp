@@ -19,7 +19,7 @@
  *
  * TRACEFILESIM_VERSION: Major Version: [x] Minor Version: [xxx] Patch Level: [xx]
  */
-#define TRACEFILESIM_VERSION 400000
+#define TRACEFILESIM_VERSION 500000
 #endif
 
 #ifndef NUM_THREADS
